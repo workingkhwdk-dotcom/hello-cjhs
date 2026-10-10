@@ -4,10 +4,10 @@
 const KEY = "cjhs_m_tour_done_v1";
 
 const STEPS = [
-  { sel: ".m-promo-card.promo-apply", title: "입학 상담 신청", text: "방문·전화 상담을 여기서 바로 신청할 수 있어요." },
-  { sel: ".m-promo-card.promo-chat", title: "AI 챗봇 중앙이", text: "입학·교육과정·학교생활, 궁금한 점을 언제든 물어보세요." },
+  { sel: '.m-tabbar .m-tab[data-sec="apply"]', title: "입학 상담 신청", text: "방문·전화 상담을 여기서 바로 신청할 수 있어요." },
+  { sel: '.m-tabbar .m-tab[data-sec="chat"]', title: "챗봇 중앙이", text: "입학·교육과정·학교생활, 궁금한 점을 AI 챗봇에게 언제든 물어보세요." },
   { sel: ".m-tabs-sticky .content-tabs", title: "학교 둘러보기", text: "인사말·교육과정·과목선택·갤러리·특색활동을 탭으로 넘겨 보세요." },
-  { sel: '.m-tabbar .m-tab[data-sec="qna"]', title: "Q&A 게시판", text: "직접 질문을 남기면 선생님이 답변해 드려요. 아래 메뉴로 언제든 이동할 수 있어요." },
+  { sel: '.m-tabbar .m-tab[data-sec="qna"]', title: "Q&A 게시판", text: "직접 질문을 남기면 선생님이 답변해 드려요." },
 ];
 
 function store(fn) { try { return fn(localStorage); } catch (e) { return null; } }
