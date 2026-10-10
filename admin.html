@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<script>
+  (function(){
+    if(new URLSearchParams(location.search).get('force') === 'desktop') return;
+    var ua = navigator.userAgent || '';
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua) || window.innerWidth <= 768;
+    if(isMobile) location.replace('admin-mobile.html' + location.search);
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>관리자 - 입학 상담 신청 현황</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/admin-icon-192.png?v=e53e741f">
+<link rel="apple-touch-icon" href="icons/admin-apple-touch-icon.png?v=dd8d05b9">
+<link rel="manifest" href="admin-manifest.json">
+<meta name="theme-color" content="#0F1937">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="중앙고 관리자">
+
+<link rel="stylesheet" href="css/style.css">
+<style>
+  @keyframes deep-flash{ 0%,60%{ box-shadow:0 0 0 3px #f5b400; background:#fff8dc; } 100%{ box-shadow:none; } }
+  .deep-flash{ animation:deep-flash 2.4s ease-out; }
+  .safety-badge{
+    display:inline-block; min-width:18px; height:18px; padding:0 5px; margin-left:6px;
+    border-radius:9px; background:#e0433d; color:#fff; font-size:11px; line-height:18px;
+    text-align:center; font-weight:700; vertical-align:middle;
+  }
+  .safety-alert-box{ border-left:3px solid #e0433d; }
+  .safety-alert-box.acked{ border-left-color:var(--sep); opacity:.65; }
+</style>
+</head>
+<body>
+
+<div class="page-wrap" style="max-width:1400px;">
+
+  <a href="index.html" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    홈화면
+  </a>
+
+  <!-- 로그인 전 화면 -->
+  <section class="panel panel-accent accent-navy subpage-panel login-box" id="login-box">
+    <h1>관리자 로그인</h1>
+    <p class="lede">입학 상담 신청 현황과 Q&amp;A 답변 관리는 관리자만 이용할 수 있습니다.<br>Firebase Authentication(이메일/비밀번호)에 등록되고, admins 컬렉션에도 등록된 계정으로 로그인해 주세요.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="email">이메일</label>
+        <input type="email" id="email" required placeholder="admin@example.com">
+      </div>
+      <div class="field">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-point btn-block">로그인</button>
+      <div class="form-msg" id="login-msg"></div>
+    </form>
+  </section>
+
+  <!-- 로그인 후 화면 -->
+  <div id="dashboard" style="display:none;">
+    <div class="admin-toolbar">
+      <div>
+        <h1 style="font-family:var(--title); font-size:20px; margin:0;">창원중앙고 입학 상담 관리자</h1>
+        <div class="count" id="who-am-i"></div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="logout-btn">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="on" data-view="consultations">상담 신청 현황</button>
+      <button data-view="applyopts">상담 신청 항목 관리</button>
+      <button data-view="qna">Q&amp;A 관리</button>
+      <button data-view="content">학교 소개 관리</button>
+      <button data-view="safety">위기 신호 알림<span id="safety-badge" class="safety-badge" style="display:none;"></span></button>
+      <button data-view="unanswered">챗봇 질문 점검<span id="unanswered-badge" class="safety-badge" style="display:none;"></span></button>
+      <button data-view="trash">휴지통</button>
+    </div>
+
+    <!-- 탭 1: 상담 신청 현황 (신청 목록만) -->
+    <div class="admin-view on" id="view-consultations">
+      <div class="stats-grid" id="consult-stats"></div>
+
+      <div class="admin-tabs" id="consult-filter" style="margin-bottom:14px;">
+        <button class="on" data-filter="all">전체</button>
+        <button data-filter="전화">전화 상담</button>
+        <button data-filter="방문">방문 상담</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+        <input id="consult-search" type="search" placeholder="이름·연락처·중학교·내용 검색" style="flex:1; min-width:220px; max-width:360px; font-family:var(--ui); font-size:13.5px; border:1.5px solid var(--sep); border-radius:12px; padding:9px 13px; background:#fff;">
+        <button class="btn btn-ghost btn-table" id="consult-export">엑셀(CSV) 내려받기</button>
+        <div class="count" id="row-count" style="margin-left:auto;"></div>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="consult-table">
+          <thead>
+            <tr>
+              <th data-sort="createdAt">접수일시</th>
+              <th data-sort="middleSchool">중학교</th>
+              <th data-sort="guardianName">보호자</th>
+              <th data-sort="topics">관심 분야</th>
+              <th data-sort="consultType">상담 유형</th>
+              <th data-sort="phone">연락처</th>
+              <th data-sort="visitDates">희망일시</th>
+              <th>문의내용</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr><td colspan="9" class="empty-state">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 탭 2: 상담 신청 항목 관리 (신청 폼의 선택지 편집) -->
+    <div class="admin-view" id="view-applyopts">
+      <div class="content-editor-section" id="section-ao">
+        <div class="content-editor-header">
+          <span class="content-editor-badge">✎</span>
+          <div>
+            <h3>상담 신청 항목 관리</h3>
+            <div class="content-editor-target">상담 신청 페이지(apply.html)의 선택지 — 문항 구성은 그대로 두고 보기만 편집됩니다</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>중학교 선택지 ("그 외"는 자동으로 항상 맨 뒤에 추가됩니다)</label>
+          <div id="ao-schools"></div>
+          <button type="button" class="btn btn-ghost" id="ao-add-school" style="margin-top:8px;">+ 학교 추가</button>
+        </div>
+        <div class="field">
+          <label>관심 분야 선택지 ("기타"는 자동으로 항상 맨 뒤에 추가됩니다)</label>
+          <div id="ao-topics"></div>
+          <button type="button" class="btn btn-ghost" id="ao-add-topic" style="margin-top:8px;">+ 분야 추가</button>
+        </div>
+        <div class="field">
+          <label>방문 상담 희망 날짜 선택지</label>
+          <div id="ao-dates"></div>
+          <button type="button" class="btn btn-ghost" id="ao-add-date" style="margin-top:8px;">+ 날짜 추가</button>
+        </div>
+        <div class="content-editor-footer">
+          <span class="content-editor-status" id="ao-status">저장됨</span>
+          <button class="btn btn-point btn-block" id="ao-save">이 구역 저장하기</button>
+        </div>
+        <div class="form-msg" id="ao-msg"></div>
+      </div>
+    </div>
+
+    <!-- 탭 3: Q&A 관리 -->
+    <div class="admin-view" id="view-qna">
+      <div class="count" id="qna-count" style="margin-bottom:10px;"></div>
+      <div class="qna-list" id="admin-qna-list">
+        <div class="qna-empty">불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- 탭 4: 학교 소개 관리 -->
+    <div class="admin-view" id="view-content">
+      <div class="hint" style="margin-bottom:16px;">여기서 저장하면 메인 페이지에 바로 반영됩니다. 각 구역 상단에 메인 페이지 어느 탭에 해당하는지 표시되어 있어요. <strong>고친 내용은 그 구역의 저장 버튼을 눌러야 반영됩니다</strong> — 저장하지 않고 페이지를 벗어나면 브라우저가 한 번 더 확인해 줍니다.</div>
+
+      <!-- 학교장 인사말 -->
+      <div class="content-editor-section" id="section-cg">
+        <div class="content-editor-header">
+          <span class="content-editor-badge">1</span>
+          <div>
+            <h3>학교장 인사말</h3>
+            <div class="content-editor-target">메인 페이지 · <strong>학교장 인사말</strong> 탭</div>
+          </div>
+        </div>
+        <div class="field"><label>탭 제목</label><input id="cg-title"></div>
+        <div class="field"><label>태그라인</label><input id="cg-tagline"></div>
+        <div class="field">
+          <label>학교장 사진</label>
+          <div class="content-photo-preview" id="cg-photo-preview"></div>
+          <input type="file" id="cg-photo-file" accept="image/*">
+          <button type="button" class="btn btn-ghost" id="cg-photo-clear" style="margin-top:8px;">기본 일러스트로 되돌리기</button>
+        </div>
+        <div class="field">
+          <label>인사말 문단</label>
+          <div id="cg-paragraphs"></div>
+          <button type="button" class="btn btn-ghost" id="cg-add-paragraph" style="margin-top:8px;">+ 문단 추가</button>
+        </div>
+        <div class="field"><label>서명</label><input id="cg-signoff"></div>
+        <div class="content-editor-footer">
+          <span class="content-editor-status" id="cg-status">저장됨</span>
+          <button class="btn btn-point btn-block" id="cg-save">이 구역 저장하기</button>
+        </div>
+        <div class="form-msg" id="cg-msg"></div>
+      </div>
+
+      <!-- 학교생활 갤러리 -->
+      <div class="content-editor-section" id="section-gl">
+        <div class="content-editor-header">
+          <span class="content-editor-badge">2</span>
+          <div>
+            <h3>학교생활 갤러리</h3>
+            <div class="content-editor-target">메인 페이지 · <strong>학교생활 갤러리</strong> 탭 (캐러셀)</div>
+          </div>
+        </div>
+        <div class="field"><label>탭 제목</label><input id="gl-title"></div>
+        <div class="field"><label>태그라인</label><input id="gl-tagline"></div>
+        <div class="field"><label>소개 문구</label><textarea id="gl-desc"></textarea></div>
+        <div class="field">
+          <label>대표 사진 (캐러셀 첫 장)</label>
+          <div class="content-photo-preview" id="gl-hero-preview"></div>
+          <input type="file" id="gl-hero-file" accept="image/*">
+          <div class="pw-row" style="margin-top:8px;">
+            <input id="gl-hero-title" placeholder="사진 제목 (예: 체육대회)">
+            <input id="gl-hero-desc" placeholder="사진 설명">
+          </div>
+        </div>
+        <div class="field">
+          <label>이어지는 사진들 (최대 6장, 대표 사진 다음 순서로 캐러셀에 표시)</label>
+          <div id="gl-items"></div>
+          <button type="button" class="btn btn-ghost" id="gl-add-item" style="margin-top:8px;">+ 사진 추가</button>
+        </div>
+        <div class="content-editor-footer">
+          <span class="content-editor-status" id="gl-status">저장됨</span>
+          <button class="btn btn-point btn-block" id="gl-save">이 구역 저장하기</button>
+        </div>
+        <div class="form-msg" id="gl-msg"></div>
+      </div>
+    </div>
+
+    <!-- 탭 5: 위기 신호 알림 (챗봇이 감지한 자해·자살 관련 신호) -->
+    <div class="admin-view" id="view-safety">
+      <div class="hint" style="margin-bottom:14px;">챗봇 대화 중 자해·자살과 관련된 표현이 감지되면 여기에 익명으로 기록됩니다(신원은 알 수 없고, 감지된 시각만 남아요). 최근 상담·설명회 방문 기록과 함께 살펴보시고, 확인한 알림은 "확인함"으로 표시해 주세요.</div>
+      <div class="count" id="safety-count" style="margin-bottom:10px;"></div>
+      <div class="qna-list" id="admin-safety-list">
+        <div class="qna-empty">불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- 탭 6: 챗봇 질문 점검 (챗봇이 근거 없이 답했거나 답하기 어려웠던 질문) -->
+    <div class="admin-view" id="view-unanswered">
+      <div class="hint" style="margin-bottom:14px;">챗봇이 학교 자료에서 근거를 충분히 찾지 못했거나 "확정해서 안내하기 어렵다"고 답한 질문이 익명으로 모입니다(신원·기기 정보는 저장하지 않고, 이메일·전화번호는 가려서 기록해요). 많이 들어온 질문부터 보이니, 필요한 내용은 챗봇 자료에 추가해 주시고 "처리함"으로 표시해 주세요. 같은 질문이 다시 들어오면 미처리로 되돌아옵니다.</div>
+      <div class="count" id="unanswered-count" style="margin-bottom:10px;"></div>
+      <div class="qna-list" id="admin-unanswered-list">
+        <div class="qna-empty">불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- 탭 7: 휴지통 -->
+    <div class="admin-view" id="view-trash">
+      <div class="hint" style="margin-bottom:14px;">삭제한 항목은 바로 지워지지 않고 여기 보관됩니다. 필요하면 복구하거나, 더 이상 필요 없으면 완전히 삭제할 수 있습니다.</div>
+
+      <h3 style="font-size:14.5px; margin:0 0 8px;">상담 신청</h3>
+      <div class="qna-list" id="trash-consult-list" style="margin-bottom:26px;">
+        <div class="qna-empty">불러오는 중...</div>
+      </div>
+
+      <h3 style="font-size:14.5px; margin:0 0 8px;">Q&amp;A 질문</h3>
+      <div class="qna-list" id="trash-qna-list">
+        <div class="qna-empty">불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- =========================================================
+     Firebase 연동
+     1) firebaseConfig 값을 실제 프로젝트 값으로 교체하세요.
+     2) Firebase Console > Authentication > 로그인 방법 에서
+        이메일/비밀번호 제공업체를 사용 설정하고, 관리자 계정을
+        최소 1개 직접 생성해 주세요.
+     3) 그 계정으로 한 번 로그인해 UID를 확인한 뒤, Firestore의
+        admins 컬렉션에 그 UID를 문서 ID로 하는 문서를 만들어 주세요.
+        (예: 필드 값은 { role: "admin" } 정도) — 이 문서가 없으면
+        로그인은 되어도 데이터를 읽지 못합니다 (firestore.rules 참고).
+     4) firestore.rules 를 배포하세요.
+
+     삭제 방식 안내:
+     - "삭제"는 실제로 지우지 않고 deleted:true 로 표시만 합니다(휴지통 이동).
+     - 휴지통에서 "복구"하면 deleted 필드를 지워 원래대로 되돌리고,
+       "완전 삭제"를 누르면 그때 실제로 문서를 지웁니다(되돌릴 수 없음).
+     ========================================================= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { getMessaging, getToken, onMessage }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+  import { SITE_CONTENT_DEFAULTS as CONTENT_DEFAULTS, APPLY_OPTIONS_DEFAULTS } from "./js/content-defaults.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAnGmSChA8ENvs4EM-biLnjG3PNH4JAzXY",
+    authDomain: "hello-cjhs.firebaseapp.com",
+    projectId: "hello-cjhs",
+    storageBucket: "hello-cjhs.firebasestorage.app",
+    messagingSenderId: "331353969542",
+    appId: "1:331353969542:web:6d528577f2c7a9f0a49207",
+    measurementId: "G-899YV6G5YB"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // Firebase Console > 프로젝트 설정 > Cloud Messaging > 웹 푸시 인증서에서
+  // 발급받은 키 쌍의 "키 페어" 값.
+  const VAPID_KEY = "BLGjgZUnDXnhLmTHzZUqigtZQB0HEjF1-RNCfzmeeh0vjPraVS7ggFmawA9i9LFnhG6stR_4kwBylcD0Jq4BChY";
+
+  // 알림은 항상 켜짐 — 로그인하면 이 기기를 자동으로 등록한다(버튼 없음).
+  // 권한을 이미 거부했거나 브라우저가 지원하지 않으면 조용히 넘어간다.
+  async function enablePushNotifications(){
+    try{
+      if(!('Notification' in window) || !('serviceWorker' in navigator)) return;
+      if(Notification.permission === 'denied') return;
+      const permission = await Notification.requestPermission();
+      if(permission !== 'granted') return;
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const messaging = getMessaging(app);
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+      if(!token) return;
+      await setDoc(doc(db, 'admin_fcm_tokens', token), {
+        token, createdAt: serverTimestamp(), ua: navigator.userAgent
+      });
+      onMessage(messaging, (payload)=>{
+        showToast((payload.data && payload.data.title) || '새 알림');
+      });
+    }catch(err){
+      console.error(err);
+    }
+  }
+
+  const loginBox = document.getElementById('login-box');
+  const dashboard = document.getElementById('dashboard');
+  const loginForm = document.getElementById('login-form');
+  const loginMsg = document.getElementById('login-msg');
+
+  loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    loginMsg.className = 'form-msg';
+    try{
+      await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
+    }catch(err){
+      loginMsg.textContent = '로그인 실패: 이메일 또는 비밀번호를 확인해 주세요.';
+      loginMsg.classList.add('show','err');
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', ()=> signOut(auth));
+
+  onAuthStateChanged(auth, (user)=>{
+    if(user){
+      loginBox.style.display = 'none';
+      dashboard.style.display = 'block';
+      document.getElementById('who-am-i').textContent = user.email || '';
+      refreshAll();
+      loadContentEditors();
+      enablePushNotifications();
+    }else{
+      loginBox.style.display = 'block';
+      dashboard.style.display = 'none';
+    }
+  });
+
+  // ---------------------------------------------------------------
+  // 탭 전환
+  // ---------------------------------------------------------------
+  document.querySelectorAll('.admin-tabs button[data-view]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.admin-tabs button[data-view]').forEach(b=>b.classList.remove('on'));
+      document.querySelectorAll('.admin-view').forEach(v=>v.classList.remove('on'));
+      btn.classList.add('on');
+      document.getElementById('view-' + btn.dataset.view).classList.add('on');
+    });
+  });
+
+  function fmtDate(ts){
+    if(!ts) return '-';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+  function escapeHtml(str){
+    return (str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  let toastTimer = null;
+  function showToast(text){
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toast.classList.remove('show'), 2400);
+  }
+
+  // ---------------------------------------------------------------
+  // 데이터 로딩 (한 번 불러와서 여러 탭이 같이 씀)
+  // ---------------------------------------------------------------
+  let consultCache = [];
+  let qnaCache = [];
+  let safetyCache = [];
+  let unansweredCache = [];
+  let consultFilter = 'all';
+
+  document.querySelectorAll('#consult-filter button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#consult-filter button').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      consultFilter = btn.dataset.filter;
+      renderConsultTable();
+    });
+  });
+
+
+  // ---------------- 검색 + 엑셀(CSV) 내보내기 ----------------
+  let consultQuery = '';
+  function matchConsultQuery(d){
+    if(!consultQuery) return true;
+    const hay = [d.guardianName, d.phone, d.middleSchool, d.detail, (d.topics || []).join(' '), d.topicOther, d.consultType].join(' ').toLowerCase();
+    return hay.includes(consultQuery.toLowerCase());
+  }
+  function csvCell(v){
+    let t = String(v == null ? '' : v).replace(/\r?\n/g, ' ');
+    if(/^[=+\-@]/.test(t)) t = "'" + t; // 엑셀 수식 실행 방지
+    return '"' + t.replace(/"/g, '""') + '"';
+  }
+  function exportConsultCsv(list){
+    if(!list.length){ showToast('내보낼 신청이 없어요.'); return; }
+    const head = ['접수일시','중학교','보호자','관심분야','상담유형','연락처','희망일시','문의내용','상태'];
+    const rows = list.map(d => [
+      fmtDate(d.createdAt), d.middleSchool, d.guardianName,
+      (d.topics || []).map(t => t === '기타' && d.topicOther ? `기타(${d.topicOther})` : t).join(', '),
+      d.consultType, d.phone, (d.visitDates || []).join(', '), d.detail, d.status === 'done' ? '처리완료' : '신규'
+    ]);
+    const csv = '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+    a.download = `상담신청_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+  }
+  document.getElementById('consult-search').addEventListener('input', (e)=>{
+    consultQuery = e.target.value.trim();
+    renderConsultTable();
+  });
+  document.getElementById('consult-export').addEventListener('click', ()=>{
+    exportConsultCsv(consultCache && consultCache.filter(d => !d.deleted && (consultFilter === 'all' || d.consultType === consultFilter) && matchConsultQuery(d)) || []);
+  });
+
+  async function refreshAll(){
+    await Promise.all([loadConsultCache(), loadQnaCache(), loadSafetyCache(), loadUnansweredCache()]);
+    renderConsultTable();
+    renderQnaList();
+    renderSafetyList();
+    renderUnansweredList();
+    renderTrash();
+    applyPendingOpen();
+  }
+
+  // 푸시 알림을 눌러 들어온 경우: 해당 상담 신청/질문으로 바로 이동
+  //   ?open=consult|qna&id=문서ID  (앱이 이미 열려 있으면 서비스워커가 메시지로 알려줌)
+  //   ?open=safety (id 없음) — 위기 신호 알림 탭으로 바로 이동
+
+  let pendingOpen = null;
+  (function(){
+    const p = new URLSearchParams(location.search);
+    if(p.get('open') === 'safety'){
+      pendingOpen = { kind: 'safety' };
+      history.replaceState(null, '', location.pathname);
+    }else if(p.get('open') && p.get('id')){
+      pendingOpen = { kind: p.get('open'), id: p.get('id') };
+      history.replaceState(null, '', location.pathname);
+    }
+  })();
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', (e)=>{
+      const m = e.data || {};
+      if(m.type === 'open-link' && m.link && auth.currentUser){
+        const p = new URL(m.link, location.origin).searchParams;
+        if(p.get('open') === 'safety') pendingOpen = { kind: 'safety' };
+        else pendingOpen = { kind: p.get('open'), id: p.get('id') };
+        refreshAll();
+      }
+    });
+  }
+  function applyPendingOpen(){
+    if(!pendingOpen || !auth.currentUser || (consultCache === null && qnaCache === null)) return;
+    const { kind, id } = pendingOpen;
+    pendingOpen = null;
+    if(kind === 'safety'){
+      document.querySelector('.admin-tabs button[data-view="safety"]').click();
+      return;
+    }
+    const isQna = kind === 'qna';
+    document.querySelector(`.admin-tabs button[data-view="${isQna ? 'qna' : 'consultations'}"]`).click();
+    const el = document.querySelector(isQna ? `#admin-qna-list [data-id="${id}"]` : `#table-body tr[data-id="${id}"]`);
+    if(!el){ showToast('이미 삭제됐거나 목록에 없는 항목이에요.'); return; }
+    el.scrollIntoView({ block:'center', behavior:'smooth' });
+    el.classList.remove('deep-flash'); void el.offsetWidth; el.classList.add('deep-flash');
+  }
+
+  async function loadConsultCache(){
+    try{
+      const q = query(collection(db, 'consultations'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      // pinHash(취소용 비밀번호 해시)는 화면에서 쓰지 않으므로 캐시에 담지 않는다
+      consultCache = snap.docs.map(d => { const { pinHash, ...rest } = d.data(); return { id:d.id, ...rest }; });
+    }catch(err){
+      console.error(err);
+      consultCache = null; // 오류 표시용
+    }
+  }
+
+  async function loadSafetyCache(){
+    try{
+      const q = query(collection(db, 'chat_safety_alerts'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      safetyCache = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    }catch(err){
+      console.error(err);
+      safetyCache = null; // 오류 표시용(규칙 미배포 등)
+    }
+  }
+
+  async function loadUnansweredCache(){
+    try{
+      const snap = await getDocs(collection(db, 'chat_unanswered'));
+      unansweredCache = snap.docs.map(d => ({ id:d.id, ...d.data() }))
+        .sort((a,b) => (a.resolved === b.resolved ? 0 : a.resolved ? 1 : -1) || (b.count||0) - (a.count||0));
+    }catch(err){
+      console.error(err);
+      unansweredCache = null;
+    }
+  }
+
+  // 비공개 글의 답변은 qna_secrets에만 저장(공개 컬렉션에는 answered:true만 표시)
+  async function saveQnaAnswer(id, answer){
+    const q = (qnaCache || []).find(d => d.id === id);
+    if(q && q.isPrivate){
+      await updateDoc(doc(db, 'qna_secrets', id), { answer });
+      await updateDoc(doc(db, 'qna_questions', id), { answer: null, answered: true, answeredAt: serverTimestamp() });
+    }else{
+      await updateDoc(doc(db, 'qna_questions', id), { answer, answered: true, answeredAt: serverTimestamp() });
+    }
+  }
+
+  async function loadQnaCache(){
+    try{
+      const q = query(collection(db, 'qna_questions'), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      const list = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+
+      // 비공개 글은 title/body가 null이므로, 답변을 위해 관리자 권한으로
+      // qna_secrets에서 실제 내용을 함께 가져온다 (isAdmin()만 읽기 허용됨).
+      // 1회성 정리: 예전 방식으로 공개 컬렉션에 남아 있는 비공개 글 답변은 qna_secrets로 옮기고,
+      // deleted 필드가 없는 글(예전에 복구한 글)은 deleted:false를 채운다(공개 목록 조회 조건).
+      await Promise.all(list.map(async (q)=>{
+        try{
+          if(q.isPrivate && q.answer){
+            await updateDoc(doc(db, 'qna_secrets', q.id), { answer: q.answer });
+            await updateDoc(doc(db, 'qna_questions', q.id), { answer: null, answered: true });
+          }
+          if(q.deleted === undefined){
+            await updateDoc(doc(db, 'qna_questions', q.id), { deleted: false });
+            q.deleted = false;
+          }
+        }catch(err){ console.error('Q&A 정리 실패', q.id, err); }
+      }));
+
+      await Promise.all(list.filter(q => q.isPrivate).map(async (q)=>{
+        try{
+          const secretSnap = await getDoc(doc(db, 'qna_secrets', q.id));
+          if(secretSnap.exists()){
+            q.title = secretSnap.data().title;
+            q.body = secretSnap.data().body;
+            q.answer = secretSnap.data().answer || q.answer || null;
+          }
+        }catch(err){ console.error('비공개 질문 원문 로드 실패', q.id, err); }
+      }));
+
+      qnaCache = list;
+    }catch(err){
+      console.error(err);
+      qnaCache = null;
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // 탭 1: 상담 신청 현황
+  // ---------------------------------------------------------------
+  let sortKey = 'createdAt';
+  let sortDir = 'desc';
+
+  const SORT_ACCESSORS = {
+    createdAt: d => (d.createdAt && d.createdAt.seconds) || 0,
+    middleSchool: d => d.middleSchool || '',
+    guardianName: d => d.guardianName || '',
+    topics: d => (d.topics || []).length,
+    consultType: d => d.consultType || '',
+    phone: d => d.phone || '',
+    visitDates: d => (d.visitDates && d.visitDates[0]) || ''
+  };
+
+  document.querySelectorAll('#consult-table thead th[data-sort]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.sort;
+      if(sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      renderConsultTable();
+    });
+  });
+
+  function updateSortHeaders(){
+    document.querySelectorAll('#consult-table thead th[data-sort]').forEach(th=>{
+      th.classList.toggle('sorted', th.dataset.sort === sortKey);
+      th.dataset.dir = th.dataset.sort === sortKey ? sortDir : '';
+    });
+  }
+
+  function renderConsultStats(){
+    const statsEl = document.getElementById('consult-stats');
+    if(consultCache === null){ statsEl.innerHTML = ''; return; }
+    const all = consultCache.filter(d => !d.deleted);
+
+    const byType = {};
+    const bySchool = {};
+    const byTopic = {};
+    let doneCount = 0;
+    all.forEach(d=>{
+      byType[d.consultType] = (byType[d.consultType] || 0) + 1;
+      if(d.middleSchool) bySchool[d.middleSchool] = (bySchool[d.middleSchool] || 0) + 1;
+      (d.topics || []).forEach(t=>{ byTopic[t] = (byTopic[t] || 0) + 1; });
+      if(d.status === 'done') doneCount++;
+    });
+
+    const topSchools = Object.entries(bySchool).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>`${k} ${v}`).join(' · ') || '-';
+    const topTopics = Object.entries(byTopic).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>`${k} ${v}`).join(' · ') || '-';
+
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-num">${all.length}</div><div class="stat-label">총 신청 건수</div></div>
+      <div class="stat-card"><div class="stat-num">${byType['전화'] || 0} / ${byType['방문'] || 0}</div><div class="stat-label">전화 / 방문</div></div>
+      <div class="stat-card"><div class="stat-num">${doneCount} / ${all.length - doneCount}</div><div class="stat-label">처리완료 / 신규</div></div>
+      <div class="stat-card stat-wide"><div class="stat-label">중학교별</div><div class="stat-detail">${escapeHtml(topSchools)}</div></div>
+      <div class="stat-card stat-wide"><div class="stat-label">관심 분야별</div><div class="stat-detail">${escapeHtml(topTopics)}</div></div>
+    `;
+  }
+
+  function renderConsultTable(){
+    renderConsultStats();
+    updateSortHeaders();
+
+    const tbody = document.getElementById('table-body');
+    if(consultCache === null){
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">데이터를 불러오지 못했습니다. (Firebase 설정/규칙, admins 컬렉션 등록 여부를 확인해 주세요)</td></tr>';
+      return;
+    }
+    const active = consultCache.filter(d => !d.deleted && (consultFilter === 'all' || d.consultType === consultFilter) && matchConsultQuery(d));
+    document.getElementById('row-count').textContent = `총 ${active.length}건`;
+
+    if(active.length === 0){
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">접수된 상담 신청이 없습니다.</td></tr>';
+      return;
+    }
+
+    const accessor = SORT_ACCESSORS[sortKey] || SORT_ACCESSORS.createdAt;
+    active.sort((a,b)=>{
+      const av = accessor(a), bv = accessor(b);
+      const cmp = av > bv ? 1 : av < bv ? -1 : 0;
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+    tbody.innerHTML = active.map(d=>{
+      const topics = [...(d.topics || [])];
+      const topicsText = topics.length ? topics.map(t => t === '기타' && d.topicOther ? `기타(${d.topicOther})` : t).join(', ') : '-';
+      const visitText = (d.visitDates || []).join(', ') || '-';
+      return `
+        <tr data-id="${d.id}">
+          <td>${fmtDate(d.createdAt)}</td>
+          <td>${escapeHtml(d.middleSchool) || '-'}</td>
+          <td>${escapeHtml(d.guardianName) || '-'}</td>
+          <td style="max-width:170px;">${escapeHtml(topicsText)}</td>
+          <td>${escapeHtml(d.consultType) || '-'}</td>
+          <td>${escapeHtml(d.phone) || '-'}</td>
+          <td style="max-width:150px; white-space:pre-wrap;">${escapeHtml(visitText)}</td>
+          <td style="max-width:220px; white-space:pre-wrap;">${escapeHtml(d.detail) || '-'}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="status-pill ${d.status === 'done' ? 'done' : 'new'}" data-id="${d.id}" data-status="${d.status || 'new'}" title="클릭하면 상태가 바뀝니다">${d.status === 'done' ? '처리완료' : '신규'}</button>
+              <button class="btn btn-ghost btn-table consult-delete-btn" data-id="${d.id}" data-name="${escapeHtml(d.guardianName) || ''}">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.status-pill').forEach(pill=>{
+      pill.addEventListener('click', async ()=>{
+        const id = pill.dataset.id;
+        const next = pill.dataset.status === 'done' ? 'new' : 'done';
+        try{
+          await updateDoc(doc(db, 'consultations', id), { status: next });
+          await loadConsultCache();
+          renderConsultTable();
+        }catch(err){ console.error(err); }
+      });
+    });
+
+    tbody.querySelectorAll('.consult-delete-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const ok = confirm(`${btn.dataset.name || '이'} 상담 신청 내역을 휴지통으로 이동할까요?\n휴지통에서 다시 복구할 수 있습니다.`);
+        if(!ok) return;
+        btn.disabled = true;
+        try{
+          await updateDoc(doc(db, 'consultations', id), { deleted: true, deletedAt: serverTimestamp() });
+          await loadConsultCache();
+          renderConsultTable();
+          renderTrash();
+        }catch(err){
+          console.error(err);
+          alert('삭제에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 탭 3: Q&A 관리
+  // ---------------------------------------------------------------
+  function renderQnaList(){
+    const listEl = document.getElementById('admin-qna-list');
+    if(qnaCache === null){
+      listEl.innerHTML = '<div class="qna-empty">목록을 불러오지 못했습니다. (Firebase 설정/규칙, admins 컬렉션 등록 여부를 확인해 주세요)</div>';
+      return;
+    }
+    const active = qnaCache.filter(d => !d.deleted);
+    document.getElementById('qna-count').textContent = `총 ${active.length}건 (답변대기 ${active.filter(d=>!d.answer).length}건)`;
+
+    if(active.length === 0){
+      listEl.innerHTML = '<div class="qna-empty">등록된 질문이 없습니다.</div>';
+      return;
+    }
+
+    listEl.innerHTML = active.map(d => `
+      <div class="qna-detail-box" data-id="${d.id}">
+        <div class="qna-item-top">
+          <h3 class="q-title" style="margin:0;">${d.isPrivate ? '<span class="qna-private-badge">비공개</span> ' : ''}${escapeHtml(d.title)}</h3>
+          <span class="qna-status ${d.answer ? 'done' : 'wait'}">${d.answer ? '답변완료' : '답변대기'}</span>
+        </div>
+        <div class="q-meta">${escapeHtml(d.authorName)} · ${fmtDate(d.createdAt)}</div>
+        <div class="q-body">${escapeHtml(d.body)}</div>
+        <div class="answer-form">
+          <textarea placeholder="답변을 입력해 주세요.">${escapeHtml(d.answer || '')}</textarea>
+          <button class="btn btn-point qna-answer-btn" data-id="${d.id}">${d.answer ? '답변 수정' : '답변 등록'}</button>
+        </div>
+        <div style="margin-top:8px; text-align:right;">
+          <button class="btn btn-ghost qna-delete-btn" data-id="${d.id}" data-title="${escapeHtml(d.title)}" style="padding:6px 10px; font-size:12px; color:var(--danger);">삭제</button>
+        </div>
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('.qna-answer-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const textarea = btn.closest('.answer-form').querySelector('textarea');
+        const answer = textarea.value.trim();
+        if(!answer){ alert('답변 내용을 입력해 주세요.'); return; }
+        btn.disabled = true;
+        try{
+          await saveQnaAnswer(id, answer);
+          await loadQnaCache();
+          renderQnaList();
+          showToast('답변이 저장됐어요.');
+        }catch(err){
+          console.error(err);
+          alert('답변 저장에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+
+    listEl.querySelectorAll('.qna-delete-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const ok = confirm(`"${btn.dataset.title}" 질문을 휴지통으로 이동할까요?\n게시판에서는 즉시 보이지 않게 되고, 휴지통에서 복구할 수 있습니다.`);
+        if(!ok) return;
+        btn.disabled = true;
+        try{
+          await updateDoc(doc(db, 'qna_questions', id), { deleted: true, deletedAt: serverTimestamp() });
+          await loadQnaCache();
+          renderQnaList();
+          renderTrash();
+        }catch(err){
+          console.error(err);
+          alert('삭제에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 탭 5: 위기 신호 알림
+  // ---------------------------------------------------------------
+  function renderSafetyList(){
+    const listEl = document.getElementById('admin-safety-list');
+    const badge = document.getElementById('safety-badge');
+    if(safetyCache === null){
+      listEl.innerHTML = '<div class="qna-empty">목록을 불러오지 못했습니다. (firestore.rules에 chat_safety_alerts 규칙이 배포됐는지 확인해 주세요)</div>';
+      badge.style.display = 'none';
+      return;
+    }
+    const unacked = safetyCache.filter(d => !d.acknowledged);
+    document.getElementById('safety-count').textContent = `총 ${safetyCache.length}건 (미확인 ${unacked.length}건)`;
+    if(unacked.length > 0){
+      badge.textContent = unacked.length;
+      badge.style.display = 'inline-block';
+    }else{
+      badge.style.display = 'none';
+    }
+
+    if(safetyCache.length === 0){
+      listEl.innerHTML = '<div class="qna-empty">아직 감지된 위기 신호가 없습니다.</div>';
+      return;
+    }
+
+    listEl.innerHTML = safetyCache.map(d => `
+      <div class="qna-detail-box safety-alert-box ${d.acknowledged ? 'acked' : ''}" data-id="${d.id}">
+        <div class="qna-item-top">
+          <h3 class="q-title" style="margin:0;">자해·자살 관련 표현 감지</h3>
+          <span class="qna-status ${d.acknowledged ? 'done' : 'wait'}">${d.acknowledged ? '확인함' : '미확인'}</span>
+        </div>
+        <div class="q-meta">감지 시각: ${fmtDate(d.createdAt)}${d.acknowledged ? ` · 확인 시각: ${fmtDate(d.acknowledgedAt)}` : ''}</div>
+        <div class="q-body" style="color:var(--ink-soft, #666);">대화 내용은 신원 보호를 위해 저장하지 않습니다. 최근 상담 신청·설명회 방문 기록 중 확인이 필요한 학생이 있는지 함께 살펴봐 주세요.</div>
+        ${!d.acknowledged ? `<div style="margin-top:10px; text-align:right;"><button class="btn btn-point safety-ack-btn" data-id="${d.id}">확인함으로 표시</button></div>` : ''}
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('.safety-ack-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        try{
+          await updateDoc(doc(db, 'chat_safety_alerts', id), { acknowledged: true, acknowledgedAt: serverTimestamp() });
+          await loadSafetyCache();
+          renderSafetyList();
+        }catch(err){
+          console.error(err);
+          alert('처리에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 탭 6: 챗봇 질문 점검
+  // ---------------------------------------------------------------
+  function renderUnansweredList(){
+    const listEl = document.getElementById('admin-unanswered-list');
+    const badge = document.getElementById('unanswered-badge');
+    if(unansweredCache === null){
+      listEl.innerHTML = '<div class="qna-empty">목록을 불러오지 못했습니다. (firestore.rules에 chat_unanswered 규칙이 배포됐는지 확인해 주세요)</div>';
+      badge.style.display = 'none';
+      return;
+    }
+    const open = unansweredCache.filter(d => !d.resolved);
+    document.getElementById('unanswered-count').textContent = `총 ${unansweredCache.length}건 (미처리 ${open.length}건)`;
+    if(open.length > 0){ badge.textContent = open.length; badge.style.display = 'inline-block'; }
+    else{ badge.style.display = 'none'; }
+    if(unansweredCache.length === 0){
+      listEl.innerHTML = '<div class="qna-empty">아직 기록된 질문이 없습니다.</div>';
+      return;
+    }
+    listEl.innerHTML = unansweredCache.map(d => `
+      <div class="qna-detail-box ${d.resolved ? 'safety-alert-box acked' : ''}" data-id="${d.id}">
+        <div class="qna-item-top">
+          <h3 class="q-title" style="margin:0;">${escapeHtml(d.question || '')}</h3>
+          <span class="qna-status ${d.resolved ? 'done' : 'wait'}">${d.resolved ? '처리함' : `${d.count || 1}회`}</span>
+        </div>
+        <div class="q-meta">${d.count || 1}회 질문 · 마지막 ${fmtDate(d.lastAt)}</div>
+        <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+          ${!d.resolved ? `<button class="btn btn-point unanswered-done-btn" data-id="${d.id}">처리함으로 표시</button>` : ''}
+          <button class="btn btn-ghost unanswered-delete-btn" data-id="${d.id}" style="color:var(--danger);">삭제</button>
+        </div>
+      </div>
+    `).join('');
+    listEl.querySelectorAll('.unanswered-delete-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('이 질문을 완전히 삭제할까요?\n휴지통으로 이동하지 않고 바로 삭제되며 되돌릴 수 없습니다.')) return;
+        btn.disabled = true;
+        try{
+          await deleteDoc(doc(db, 'chat_unanswered', btn.dataset.id));
+          await loadUnansweredCache();
+          renderUnansweredList();
+        }catch(err){
+          console.error(err);
+          alert('삭제에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+    listEl.querySelectorAll('.unanswered-done-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        btn.disabled = true;
+        try{
+          await updateDoc(doc(db, 'chat_unanswered', btn.dataset.id), { resolved: true });
+          await loadUnansweredCache();
+          renderUnansweredList();
+        }catch(err){
+          console.error(err);
+          alert('처리에 실패했습니다.');
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // 탭 7: 휴지통 (복구 / 완전 삭제)
+  // ---------------------------------------------------------------
+  function renderTrash(){
+    const consultTrashEl = document.getElementById('trash-consult-list');
+    const qnaTrashEl = document.getElementById('trash-qna-list');
+
+    // 상담 신청 휴지통
+    if(consultCache === null){
+      consultTrashEl.innerHTML = '<div class="qna-empty">불러오지 못했습니다.</div>';
+    }else{
+      const trashed = consultCache.filter(d => d.deleted);
+      consultTrashEl.innerHTML = trashed.length === 0
+        ? '<div class="qna-empty">휴지통이 비어있습니다.</div>'
+        : trashed.map(d => `
+            <div class="qna-detail-box">
+              <div class="qna-item-top">
+                <h3 class="q-title" style="margin:0;">${escapeHtml(d.guardianName) || '보호자 미상'} · ${escapeHtml(d.consultType) || '-'} 상담</h3>
+                <span class="qna-status wait">삭제됨</span>
+              </div>
+              <div class="q-meta">삭제일: ${fmtDate(d.deletedAt)} · 접수일: ${fmtDate(d.createdAt)}</div>
+              <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-ghost consult-restore-btn" data-id="${d.id}">복구</button>
+                <button class="btn btn-ghost consult-purge-btn" data-id="${d.id}" data-name="${escapeHtml(d.guardianName) || ''}" style="color:var(--danger);">완전 삭제</button>
+              </div>
+            </div>
+          `).join('');
+
+      consultTrashEl.querySelectorAll('.consult-restore-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          btn.disabled = true;
+          try{
+            await updateDoc(doc(db, 'consultations', btn.dataset.id), { deleted: deleteField(), deletedAt: deleteField() });
+            await loadConsultCache();
+            renderConsultTable();
+            renderTrash();
+          }catch(err){ console.error(err); alert('복구에 실패했습니다.'); btn.disabled = false; }
+        });
+      });
+      consultTrashEl.querySelectorAll('.consult-purge-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const ok = confirm(`${btn.dataset.name || '이'} 상담 신청 내역을 완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`);
+          if(!ok) return;
+          btn.disabled = true;
+          try{
+            await deleteDoc(doc(db, 'consultations', btn.dataset.id));
+            await loadConsultCache();
+            renderTrash();
+          }catch(err){ console.error(err); alert('삭제에 실패했습니다.'); btn.disabled = false; }
+        });
+      });
+    }
+
+    // Q&A 휴지통
+    if(qnaCache === null){
+      qnaTrashEl.innerHTML = '<div class="qna-empty">불러오지 못했습니다.</div>';
+    }else{
+      const trashed = qnaCache.filter(d => d.deleted);
+      qnaTrashEl.innerHTML = trashed.length === 0
+        ? '<div class="qna-empty">휴지통이 비어있습니다.</div>'
+        : trashed.map(d => `
+            <div class="qna-detail-box">
+              <div class="qna-item-top">
+                <h3 class="q-title" style="margin:0;">${escapeHtml(d.title)}</h3>
+                <span class="qna-status wait">삭제됨</span>
+              </div>
+              <div class="q-meta">${escapeHtml(d.authorName)} · 삭제일: ${fmtDate(d.deletedAt)}</div>
+              <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-ghost qna-restore-btn" data-id="${d.id}">복구</button>
+                <button class="btn btn-ghost qna-purge-btn" data-id="${d.id}" data-title="${escapeHtml(d.title)}" style="color:var(--danger);">완전 삭제</button>
+              </div>
+            </div>
+          `).join('');
+
+      qnaTrashEl.querySelectorAll('.qna-restore-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          btn.disabled = true;
+          try{
+            await updateDoc(doc(db, 'qna_questions', btn.dataset.id), { deleted: false, deletedAt: deleteField() });
+            await loadQnaCache();
+            renderQnaList();
+            renderTrash();
+          }catch(err){ console.error(err); alert('복구에 실패했습니다.'); btn.disabled = false; }
+        });
+      });
+      qnaTrashEl.querySelectorAll('.qna-purge-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const ok = confirm(`"${btn.dataset.title}" 질문을 완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`);
+          if(!ok) return;
+          btn.disabled = true;
+          try{
+            await deleteDoc(doc(db, 'qna_questions', btn.dataset.id));
+            await deleteDoc(doc(db, 'qna_secrets', btn.dataset.id)).catch(()=>{}); // 없거나 이미 지워졌어도 무시
+            await loadQnaCache();
+            renderTrash();
+          }catch(err){ console.error(err); alert('삭제에 실패했습니다.'); btn.disabled = false; }
+        });
+      });
+    }
+  }
+
+  // ===================================================================
+  // 탭 4: 학교 소개 관리 — index.html의 5개 탭(site_content 컬렉션)을 편집.
+  // 기본값(CONTENT_DEFAULTS)은 js/content-defaults.js에서 가져온다 —
+  // index.html도 같은 파일을 쓰므로 두 화면이 서로 어긋날 일이 없다.
+  // ===================================================================
+  const MAX_GALLERY_ITEMS = 6;
+
+  async function fetchSiteContent(id){
+    try{
+      const snap = await getDoc(doc(db, 'site_content', id));
+      return snap.exists() ? snap.data() : null;
+    }catch(err){ console.error('site_content 로딩 실패', id, err); return null; }
+  }
+
+  async function uploadContentImage(file, prefix){
+    const path = `site-images/${prefix}-${Date.now()}-${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+  }
+
+  /**
+   * 사진을 재업로드하거나 카드/사진 행을 삭제할 때, Storage에 남는 이전
+   * 파일을 같이 지운다. 실패해도(이미 지워졌거나 URL 형식이 이상하거나)
+   * 조용히 무시한다 — 정리가 안 되는 것뿐이지 위험한 상황은 아니다.
+   */
+  async function deleteOldImage(url){
+    if(!url) return;
+    try{ await deleteObject(ref(storage, url)); }
+    catch(err){ console.warn('이전 이미지 삭제 실패(무시):', err); }
+  }
+
+  // ---------- 문단 목록(학교장 인사말) ----------
+  function addParagraphRow(value){
+    const container = document.getElementById('cg-paragraphs');
+    const row = document.createElement('div');
+    row.className = 'stacked-row';
+    row.innerHTML = `<textarea class="cg-paragraph-input">${escapeHtml(value || '')}</textarea><button type="button" class="btn btn-ghost btn-table remove-row">삭제</button>`;
+    row.querySelector('.remove-row').addEventListener('click', ()=> row.remove());
+    container.appendChild(row);
+  }
+  function readParagraphs(){
+    return [...document.querySelectorAll('#cg-paragraphs .cg-paragraph-input')].map(t=>t.value.trim()).filter(Boolean);
+  }
+
+  // ---------- 사진 미리보기 공통 ----------
+  function renderPhotoPreview(previewId, url, fallbackText){
+    const el = document.getElementById(previewId);
+    el.innerHTML = url ? `<img src="${url}" alt="">` : (fallbackText || '사진 없음');
+  }
+
+  // ---------- 학교장 인사말 ----------
+  let cgPhotoUrl = null;
+  async function loadGreetingEditor(){
+    const data = Object.assign({}, CONTENT_DEFAULTS.greeting, (await fetchSiteContent('greeting')) || {});
+    document.getElementById('cg-title').value = data.headTitle;
+    document.getElementById('cg-tagline').value = data.tagline;
+    document.getElementById('cg-signoff').value = data.signOff;
+    cgPhotoUrl = data.photoUrl || null;
+    renderPhotoPreview('cg-photo-preview', cgPhotoUrl, '기본 일러스트 사용 중');
+    document.getElementById('cg-paragraphs').innerHTML = '';
+    (data.paragraphs || []).forEach(p => addParagraphRow(p));
+  }
+  document.getElementById('cg-add-paragraph').addEventListener('click', ()=> addParagraphRow(''));
+  document.getElementById('cg-photo-clear').addEventListener('click', async ()=>{
+    await deleteOldImage(cgPhotoUrl);
+    cgPhotoUrl = null;
+    renderPhotoPreview('cg-photo-preview', null, '기본 일러스트 사용 중');
+  });
+  document.getElementById('cg-photo-file').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const oldUrl = cgPhotoUrl;
+    try{
+      cgPhotoUrl = await uploadContentImage(file, 'greeting');
+      renderPhotoPreview('cg-photo-preview', cgPhotoUrl);
+      await deleteOldImage(oldUrl);
+    }catch(err){ console.error(err); alert('사진 업로드에 실패했습니다.\n(' + (err.code || err.message || err) + ')'); }
+  });
+  document.getElementById('cg-save').addEventListener('click', async ()=>{
+    const msg = document.getElementById('cg-msg');
+    msg.className = 'form-msg';
+    try{
+      await setDoc(doc(db, 'site_content', 'greeting'), {
+        headTitle: document.getElementById('cg-title').value.trim(),
+        tagline: document.getElementById('cg-tagline').value.trim(),
+        signOff: document.getElementById('cg-signoff').value.trim(),
+        paragraphs: readParagraphs(),
+        photoUrl: cgPhotoUrl
+      });
+      msg.textContent = '저장했습니다.'; msg.classList.add('show','ok');
+      markClean('cg');
+      showToast('학교장 인사말이 저장됐어요.');
+    }catch(err){ console.error(err); msg.textContent = '저장에 실패했습니다.'; msg.classList.add('show','err'); }
+  });
+
+  // ---------- 학교생활 갤러리 ----------
+  let glHeroUrl = null;
+  function galleryItemRowHtml(item){
+    return `
+      <div class="gi-preview">${item.photoUrl ? `<img src="${escapeHtml(item.photoUrl)}" alt="">` : '사진 없음'}</div>
+      <div class="gi-fields">
+        <input class="gi-title" placeholder="사진 제목" value="${escapeHtml(item.title || '')}">
+        <input class="gi-desc" placeholder="사진 설명" value="${escapeHtml(item.desc || '')}">
+        <input type="file" class="gi-file" accept="image/*">
+        <input type="hidden" class="gi-photo-url" value="${escapeHtml(item.photoUrl || '')}">
+      </div>
+      <button type="button" class="btn btn-ghost btn-table remove-row">삭제</button>
+    `;
+  }
+  function addGalleryItemRow(item){
+    const container = document.getElementById('gl-items');
+    if(container.children.length >= MAX_GALLERY_ITEMS){ alert(`사진은 최대 ${MAX_GALLERY_ITEMS}장까지 추가할 수 있어요.`); return; }
+    const row = document.createElement('div');
+    row.className = 'gallery-item-row';
+    row.innerHTML = galleryItemRowHtml(item || {});
+    row.querySelector('.remove-row').addEventListener('click', async ()=>{
+      await deleteOldImage(row.querySelector('.gi-photo-url').value.trim());
+      row.remove();
+    });
+    row.querySelector('.gi-file').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const urlField = row.querySelector('.gi-photo-url');
+      const oldUrl = urlField.value.trim();
+      try{
+        const url = await uploadContentImage(file, 'gallery-item');
+        urlField.value = url;
+        row.querySelector('.gi-preview').innerHTML = `<img src="${url}" alt="">`;
+        await deleteOldImage(oldUrl);
+      }catch(err){ console.error(err); alert('사진 업로드에 실패했습니다.\n(' + (err.code || err.message || err) + ')'); }
+    });
+    container.appendChild(row);
+  }
+  function readGalleryItems(){
+    return [...document.querySelectorAll('#gl-items .gallery-item-row')].map(row => ({
+      title: row.querySelector('.gi-title').value.trim(),
+      desc: row.querySelector('.gi-desc').value.trim(),
+      photoUrl: row.querySelector('.gi-photo-url').value.trim() || null
+    })).filter(it => it.title || it.desc || it.photoUrl);
+  }
+  async function loadGalleryEditor(){
+    const data = Object.assign({}, CONTENT_DEFAULTS.gallery, (await fetchSiteContent('gallery')) || {});
+    document.getElementById('gl-title').value = data.headTitle;
+    document.getElementById('gl-tagline').value = data.tagline;
+    document.getElementById('gl-desc').value = data.desc;
+    const hero = data.hero || CONTENT_DEFAULTS.gallery.hero;
+    glHeroUrl = hero.photoUrl || null;
+    renderPhotoPreview('gl-hero-preview', glHeroUrl, '사진 없음');
+    document.getElementById('gl-hero-title').value = hero.title || '';
+    document.getElementById('gl-hero-desc').value = hero.desc || '';
+    document.getElementById('gl-items').innerHTML = '';
+    (data.items || []).forEach(it => addGalleryItemRow(it));
+  }
+  document.getElementById('gl-hero-file').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const oldUrl = glHeroUrl;
+    try{
+      glHeroUrl = await uploadContentImage(file, 'gallery-hero');
+      renderPhotoPreview('gl-hero-preview', glHeroUrl);
+      await deleteOldImage(oldUrl);
+    }catch(err){ console.error(err); alert('사진 업로드에 실패했습니다.\n(' + (err.code || err.message || err) + ')'); }
+  });
+  document.getElementById('gl-add-item').addEventListener('click', ()=> addGalleryItemRow());
+  document.getElementById('gl-save').addEventListener('click', async ()=>{
+    const msg = document.getElementById('gl-msg');
+    msg.className = 'form-msg';
+    try{
+      await setDoc(doc(db, 'site_content', 'gallery'), {
+        headTitle: document.getElementById('gl-title').value.trim(),
+        tagline: document.getElementById('gl-tagline').value.trim(),
+        desc: document.getElementById('gl-desc').value.trim(),
+        hero: {
+          title: document.getElementById('gl-hero-title').value.trim(),
+          desc: document.getElementById('gl-hero-desc').value.trim(),
+          photoUrl: glHeroUrl
+        },
+        items: readGalleryItems()
+      });
+      msg.textContent = '저장했습니다.'; msg.classList.add('show','ok');
+      markClean('gl');
+      showToast('학교생활 갤러리가 저장됐어요.');
+    }catch(err){ console.error(err); msg.textContent = '저장에 실패했습니다.'; msg.classList.add('show','err'); }
+  });
+
+  // ---------- 상담 신청 항목(apply.html 선택지) 편집 ----------
+  function addListRow(containerId, value){
+    const container = document.getElementById(containerId);
+    const row = document.createElement('div');
+    row.className = 'stacked-row';
+    row.innerHTML = `<input class="list-item-input" value="${escapeHtml(value || '')}"><button type="button" class="btn btn-ghost btn-table remove-row">삭제</button>`;
+    row.querySelector('.remove-row').addEventListener('click', ()=> row.remove());
+    container.appendChild(row);
+  }
+  function readListItems(containerId){
+    return [...document.querySelectorAll(`#${containerId} .list-item-input`)].map(i => i.value.trim()).filter(Boolean);
+  }
+  async function loadApplyOptionsEditor(){
+    const data = Object.assign({}, APPLY_OPTIONS_DEFAULTS, (await fetchSiteContent('applyOptions')) || {});
+    document.getElementById('ao-schools').innerHTML = '';
+    (data.schools || []).forEach(s => addListRow('ao-schools', s));
+    document.getElementById('ao-topics').innerHTML = '';
+    (data.topics || []).forEach(t => addListRow('ao-topics', t));
+    document.getElementById('ao-dates').innerHTML = '';
+    (data.visitDates || []).forEach(d => addListRow('ao-dates', d));
+  }
+  document.getElementById('ao-add-school').addEventListener('click', ()=> addListRow('ao-schools', ''));
+  document.getElementById('ao-add-topic').addEventListener('click', ()=> addListRow('ao-topics', ''));
+  document.getElementById('ao-add-date').addEventListener('click', ()=> addListRow('ao-dates', ''));
+  document.getElementById('ao-save').addEventListener('click', async ()=>{
+    const msg = document.getElementById('ao-msg');
+    msg.className = 'form-msg';
+    try{
+      await setDoc(doc(db, 'site_content', 'applyOptions'), {
+        schools: readListItems('ao-schools'),
+        topics: readListItems('ao-topics'),
+        visitDates: readListItems('ao-dates')
+      });
+      msg.textContent = '저장했습니다.'; msg.classList.add('show','ok');
+      markClean('ao');
+      showToast('상담 신청 선택지가 저장됐어요.');
+    }catch(err){ console.error(err); msg.textContent = '저장에 실패했습니다.'; msg.classList.add('show','err'); }
+  });
+
+  // ---------- 저장 여부 추적 — 저장 안 하고 나가면 브라우저가 한 번 확인해 줌 ----------
+  const dirtySections = new Set();
+  function markDirty(prefix){
+    dirtySections.add(prefix);
+    const status = document.getElementById(`${prefix}-status`);
+    if(status){ status.textContent = '저장 안 된 변경사항 있음'; status.classList.add('dirty'); }
+    const section = document.getElementById(`section-${prefix}`);
+    if(section) section.classList.add('is-dirty');
+  }
+  function markClean(prefix){
+    dirtySections.delete(prefix);
+    const status = document.getElementById(`${prefix}-status`);
+    if(status){ status.textContent = '저장됨'; status.classList.remove('dirty'); }
+    const section = document.getElementById(`section-${prefix}`);
+    if(section) section.classList.remove('is-dirty');
+  }
+  ['cg', 'gl', 'ao'].forEach(prefix => {
+    const section = document.getElementById(`section-${prefix}`);
+    if(!section) return;
+    // 새 요소(문단/카드/사진)가 나중에 추가돼도 이벤트 위임이라 그대로 잡힘.
+    section.addEventListener('input', () => markDirty(prefix));
+    section.addEventListener('click', (e) => { if(e.target.closest('button')) markDirty(prefix); });
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if(dirtySections.size === 0) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  let contentEditorsLoaded = false;
+  async function loadContentEditors(){
+    if(contentEditorsLoaded) return; // 로그인할 때 한 번만 불러오면 충분(같은 세션 안에서 반복 로드 불필요)
+    contentEditorsLoaded = true;
+    await Promise.all([
+      loadGreetingEditor(),
+      loadGalleryEditor(),
+      loadApplyOptionsEditor()
+    ]);
+    ['cg', 'gl', 'ao'].forEach(markClean); // 방금 불러온 값은 "저장된" 상태로 취급
+  }
+</script>
+
+</body>
+</html>

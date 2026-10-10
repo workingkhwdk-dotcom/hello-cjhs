@@ -1,0 +1,938 @@
+{
+  "version": "2.9",
+  "school_name": "창원중앙고등학교",
+  "default_entry_year": 2027,
+  "identity_source": "사용자가 지정한 운영 대상",
+  "official_contact_source_id": "CW01S",
+  "official_homepage": "https://cwjungang-h.gne.go.kr/cwjungang-h/main.do",
+  "contacts": {
+    "academic_office": "055-239-3109",
+    "administrative_office": "055-239-3107",
+    "verified_at": "2026-09-25",
+    "representative": "055-239-3100"
+  },
+  "menus": {
+    "family_notice": "https://cwjungang-h.gne.go.kr/cwjungang-h/na/ntt/selectNttList.do?bbsId=97884&mi=116084",
+    "school_rules": "https://cwjungang-h.gne.go.kr/cwjungang-h/na/ntt/selectNttList.do?bbsId=98470&mi=570147",
+    "curriculum": "https://cwjungang-h.gne.go.kr/cwjungang-h/cm/cntnts/cntntsView.do?cntntsId=24411&mi=570114"
+  },
+  "has_live_lookup": false,
+  "has_staff_ticket_integration": false,
+  "school_operating_facts": [
+    {
+      "key": "absence_assessment",
+      "value": {
+        "performance_assessment_makeup": true,
+        "written_exam_makeup": false,
+        "sick_absence_score": "인정점의 80%",
+        "excused_absence_score": "인정점의 100%",
+        "recognized_score_definition": "전체 평균·시험 난이도·본인의 이전 성적 등을 종합해 산정한 점수"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW13S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP19"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "수행평가는 대체 평가가 있지만, 지필평가는 대체 시험이 없습니다. 병결로 지필평가에 응시하지 못하면 과목별 상의는 가능하나, 원칙적으로 '인정점'(전체 평균·시험 난이도·본인의 이전 성적 등을 종합 산정한 점수)의 80%를 받습니다. 인정결석의 경우에는 인정점의 100%를 받습니다.",
+      "source_ids": [
+        "CW13S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "admission_assignment",
+      "value": {
+        "proximity_priority": false,
+        "allocation_basis": "평준화 지역 — 동일 성적대에서 지원자가 많으면 지원 우선순위대로 배정, 정원 초과 시 추첨"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW12S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP44"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "집이 가깝다는 이유만으로 창원중앙고에 우선 배정되지는 않습니다. 평준화 지역이라 같은 성적대에서 지원자가 많으면 지원 우선순위대로 배정하고, 그래도 정원을 넘으면 추첨으로 정해집니다.",
+      "source_ids": [
+        "CW12S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "after_school",
+      "value": {
+        "night_study": {
+          "participation": "희망자 선택",
+          "school_recommendation": "적극 추천",
+          "days": [
+            "월",
+            "화",
+            "수",
+            "목"
+          ],
+          "start_time": "18:30",
+          "end_time": "21:00",
+          "timezone": "Asia/Seoul",
+          "application_cycle": "매월",
+          "participation_change": "매월 가능",
+          "same_day_absence_procedure": {
+            "approver": "그날 야자 감독 교사",
+            "method": null
+          },
+          "early_leave_procedure": {
+            "approver": "그날 야자 감독 교사",
+            "method": null
+          },
+          "mid_month_change": null
+        },
+        "recommendation_rationale": "학교는 야자를 배운 내용을 스스로 정리하고, 자신이 아는 것과 모르는 것을 점검하는 메타인지와 자기주도학습을 기르는 시간으로 권장합니다. 특히 내신 공부를 위해 그날 배운 내용을 스스로 복습하는 시간을 중요하게 생각합니다. 학원 수강이 필요한 경우에는 야자 이후나 주말을 활용하도록 추천합니다. 이는 학교의 권장 사항이며 의무는 아닙니다.",
+        "after_school_class_policy": null
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW06S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP10"
+      ],
+      "priority": "highest",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교 야간자율학습은 희망자 선택이며, 학교는 참여를 적극 추천합니다. 월·화·수·목요일 18:30~21:00에 운영하고, 매달 신청을 받아 매월 참여 여부를 변경할 수 있습니다. 야자 당일 불참이나 중도 귀가가 필요하면 그날 야자 감독 교사에게 허락받아야 합니다.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW03S",
+          "school_year": 2026,
+          "verified_scope": "2026 학생생활제규정 게시와 PDF 첨부 존재 확인. 첨부 본문 미확보. 야자·휴대폰·복장에 관한 개별 조항은 미검증.",
+          "attachment_content_verified": false
+        }
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변",
+      "source_ids": [
+        "CW06S",
+        "CW07S"
+      ]
+    },
+    {
+      "key": "assessment_appeal",
+      "value": {
+        "appeal_available": true,
+        "basis": "학업성적관리규정",
+        "window": "규정에 정해진 기간 (연도별 공지 확인 필요)"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW14S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP23"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "네, 이의제기가 가능합니다. 학업성적관리규정에 따라 정해진 이의제기 가능 기간 안에 해당 과목 선생님께 신청하면 됩니다.",
+      "source_ids": [
+        "CW14S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "assessment_plan",
+      "value": {
+        "school_wide_uniform_criteria": false,
+        "criteria_authority": "교과 담당 교사 재량",
+        "conducted_in_class_only": true,
+        "parent_or_outsider_help_allowed": false
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW13S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP17",
+        "FP18",
+        "FP22",
+        "FP38"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "수행평가의 구체적인 기준(발표 비중, 지각제출 처리, 모둠 평가 방식 등)은 교과 담당 선생님의 고유 권한이라 학교 차원의 일괄 기준은 없습니다. 다만 수행평가는 학교 수업 시간 내에서 이루어지는 것이 원칙이라, 부모님이나 다른 사람의 도움을 받아 대신 작성·수정할 수는 없습니다.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW04S",
+          "school_year": 2026,
+          "verified_scope": "2026학년도 2학기 평가계획·1차 정기시험 안내 게시와 PDF 첨부 존재 확인. 시험 날짜·비율·과목별 세부 평가기준은 미검증.",
+          "attachment_content_verified": false
+        }
+      ],
+      "source_ids": [
+        "CW13S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "assignment_ai",
+      "value": {
+        "school_wide_uniform_rule": false,
+        "authority": "교과 담당 교사",
+        "school_stance_on_ai": "무조건 금지는 실효성 없고 불가능; 교육적 목적에 맞는 효과적 활용이 중요하며 그렇게 평가를 설계하려 노력 중"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW15S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP24"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "수행평가에서 AI 활용을 어디까지 허용할지는 교과 담당 선생님마다 다를 수 있어 학교 차원에서 일괄적으로 안내하기는 어렵습니다. 다만 AI 사용을 무조건 막는 것은 실효성도 없고 가능하지도 않다고 보고 있으며, AI를 교육적 목적에 맞게 효과적으로 활용하도록 평가를 설계하려 노력하고 있습니다.",
+      "source_ids": [
+        "CW15S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "attendance",
+      "value": {
+        "affects_grades": true,
+        "penalized_absence_types": [
+          "미인정 결석"
+        ],
+        "non_penalized_absence_types": [
+          "질병 결석",
+          "인정 결석",
+          "기타 결석"
+        ],
+        "seteuk_note": "학생부종합전형에서는 미인정 결석이 아니어도 결석이 지나치게 많으면 성실성에 의문을 줄 수 있음; 미인정 결석은 상위권 대학 전형에 치명적일 수 있음"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW13S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP20"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "출결은 내신 성적에 영향을 줍니다. 다만 질병 결석·인정 결석·기타 결석은 감점 요인이 아니라서 내신 점수에는 불이익이 없고, 미인정 결석만 감점 요인이 됩니다. 학생부종합전형을 준비한다면 미인정 결석이 아니더라도 결석이 지나치게 많으면 성실성에 의문을 줄 수 있고, 미인정 결석은 특히 상위권 대학 전형에서는 치명적일 수 있습니다.",
+      "source_ids": [
+        "CW13S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "briefing",
+      "value": {
+        "restricted_topics": false,
+        "note": "정해진 질문 주제 없음, 무엇이든 질문 가능"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW16S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP45"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "학교 설명회에서는 궁금한 것은 무엇이든 편하게 물어보시면 됩니다. 정해진 질문 주제가 따로 있는 것은 아닙니다.",
+      "source_ids": [
+        "CW16S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "class_movement",
+      "value": {
+        "classroom_changes_by_subject": true,
+        "grouping_basis": "동일 선택과목 수강생",
+        "room_assignment_basis": "수강 인원"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW16S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP13"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "네, 선택과목마다 교실과 함께 듣는 친구가 달라집니다. 같은 과목을 선택한 학생들끼리 모여 수업을 듣고, 수강 인원에 따라 교실이 배정됩니다.",
+      "source_ids": [
+        "CW16S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "clubs",
+      "value": {
+        "guaranteed_placement": false,
+        "popular_clubs_may_be_full": true,
+        "membership_criteria": "동아리별 자체 결정",
+        "student_founded_club_allowed": true
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW13S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP14"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "인기 있는 동아리(공학·의학 계열 등)는 원한다고 반드시 들어갈 수 있는 것은 아니며, 가입 조건은 동아리별로 자체 결정합니다. 다만 학교생활을 꼭 진로에 맞출 필요는 없고, 다양한 분야에서 최선을 다하는 모습이 학생부종합전형에는 더 유리할 수 있습니다. 원하는 활동이 없으면 학생이 직접 동아리를 개설할 수도 있습니다.",
+      "source_ids": [
+        "CW13S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "contact_routes",
+      "value": {
+        "general_life": "담임교사",
+        "curriculum_course_selection": "교육과정부 소속 교사",
+        "career": "진로상담교사",
+        "subject_class_evaluation": "해당 교과교사"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW16S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP40"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "입학 후 상담이나 지원이 필요하면 사안에 따라 연락하시면 됩니다: 학교생활 전반은 담임교사, 과목 선택 등 교육과정 관련은 교육과정부 소속 교사, 진로 관련은 진로상담교사, 수업·평가 관련은 해당 교과교사에게 문의하세요.",
+      "source_ids": [
+        "CW16S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "counseling",
+      "value": {
+        "wee_class_open_to_all": true,
+        "not_only_for_severe_cases": true
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW16S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP29",
+        "FP30"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "위(Wee)클래스는 문제가 심한 학생만 가는 곳이 아니라 누구에게나 열려 있습니다. 가벼운 고민이라도 편하게 이용하실 수 있고, 혼자 버티기보다 담임선생님이나 위클래스에 상담을 요청하시면 됩니다.",
+      "source_ids": [
+        "CW16S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "counseling_confidentiality",
+      "value": {
+        "confidentiality_principle": true,
+        "exception": "안전을 위해 꼭 필요한 특별한 경우"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW14S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP31"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "학생 본인이 원하지 않으면, 안전을 위해 꼭 필요한 등 특별한 경우를 제외하고는 상담 내용이 부모님이나 선생님께 알려지지 않는 것이 원칙입니다.",
+      "source_ids": [
+        "CW14S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "course_selection_process",
+      "value": {
+        "decision_maker": "학생 본인",
+        "parent_role": "정보 확인·일정 지원",
+        "school_support": "충분한 상담과 안내 제공"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW14S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP36"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "과목 선택은 학생 본인이 직접 하는 것이 원칙입니다. 다만 학교에서 충분한 상담과 안내를 제공하니, 부모님은 정보를 함께 살펴보고 일정을 챙겨주는 역할을 하시면 됩니다.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW02S",
+          "school_year": 2026,
+          "verified_scope": "2026 공지 본문의 리로스쿨 최종 수강신청 경로 확인. 첨부 PDF 미확보. 마감일 표기에 오탈자 가능성이 있어 날짜는 확정하지 않음. 대상 학년·입학 연도·2027 적용은 미확인.",
+          "attachment_content_verified": false
+        }
+      ],
+      "source_ids": [
+        "CW14S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "daily_schedule",
+      "value": {
+        "classroom_seated_by": "08:30",
+        "regular_dismissal": "16:30",
+        "timezone": "Asia/Seoul",
+        "weekday_exceptions": null
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW07S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP09"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교는 08:30까지 교실에 착석해야 하며, 정규 일과 후 하교 시각은 16:30입니다. 야자 참여자는 별도 일정인 월·화·수·목요일 18:30~21:00에 참여합니다.",
+      "source_ids": [
+        "CW07S"
+      ],
+      "checked_at": "2026-09-26"
+    },
+    {
+      "key": "devices",
+      "value": {
+        "purchase_required": false,
+        "provided_by": "경상남도교육청 (아이북 지급)",
+        "note": "지나치게 성능 좋은 개인 기기는 오히려 학습에 방해가 될 수 있음"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW12S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP04"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "따로 새로 사지 않아도 됩니다. 경상남도교육청에서 학습용 기기(아이북)를 지급하며, 지나치게 성능 좋은 개인 기기는 오히려 공부에 방해가 될 수 있습니다.",
+      "source_ids": [
+        "CW12S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "experiential_learning",
+      "value": {
+        "family_trip_recognized": true,
+        "pre_application_required": true,
+        "pre_application_window_days": "약 3~7일 전",
+        "post_report_required": true,
+        "post_report_window_days": "약 3~7일 이내",
+        "report_quality_matters": true,
+        "detail_varies_yearly": true
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW14S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP21"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "가족여행도 체험학습 신청 절차를 거치면 출석으로 인정됩니다. 학교가 안내하는 기간 전에 미리 신청서를 제출해야 하고(사전 약 3~7일 전), 다녀온 후에도 정해진 기간 안에(사후 약 3~7일 이내) 보고서를 제출해야 합니다. 보고서 내용이 부실하면 출석 인정이 되지 않을 수 있습니다.",
+      "source_ids": [
+        "CW14S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "facilities_clothing",
+      "value": {
+        "indoor_shoes_required": true,
+        "appearance_restriction": "지나치게 화려하거나 선정적·폭력적인 것은 안 됨",
+        "restriction_item_scope": [
+          "옷",
+          "신발",
+          "겉옷"
+        ],
+        "shoe_style_or_color": null,
+        "locker_details": null
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW08S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP16"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교는 실내화가 필요합니다. 복장 관련 안내에서는 지나치게 화려하거나 선정적·폭력적인 것은 허용하지 않습니다.",
+      "source_ids": [
+        "CW08S",
+        "CW11S"
+      ],
+      "checked_at": "2026-09-26"
+    },
+    {
+      "key": "first_day",
+      "value": {
+        "dress_code": "단정한 복장",
+        "attitude": "건전한 마음가짐",
+        "bring": [
+          "교과서"
+        ]
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW14S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP08"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "첫 등교일에는 단정한 복장과 건전한 마음가짐으로 오시면 되고, 교과서를 챙겨오시면 됩니다.",
+      "source_ids": [
+        "CW14S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "learning_support",
+      "value": {
+        "academy_required": false,
+        "key_factor": "자기주도 학습 시간 확보(주로 야간자율학습을 통해 이뤄짐)",
+        "conflict_with_night_study": true
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW13S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP02"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "학생마다 상황이 달라 일괄적으로 답하기는 어렵습니다. 성적이 좋다고 모두 학원을 다니는 것도, 학원을 다닌다고 성적이 확실히 오르는 것도 아닙니다. 다만 성적이 오르거나 상위권을 유지하는 학생들의 공통점은 스스로 공부하는 시간을 충분히 확보했다는 점이고, 이는 주로 야간자율학습을 통해 이뤄집니다. 대부분의 학원 수업이 야자 시간대와 겹쳐 서로 상충 관계에 있다는 점은 참고하세요.",
+      "source_ids": [
+        "CW13S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "meals",
+      "value": {
+        "dinner": {
+          "applicants_only": true,
+          "paid": true,
+          "application_independent_of_night_study": true,
+          "price": null,
+          "application_route": null,
+          "refund_policy": null
+        },
+        "allergy_accommodation_procedure": null
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW06S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP11"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "석식은 신청자에게 유료로 제공되며, 야자와 별도로 신청합니다. 야자 신청이 석식 신청을 대신하지 않습니다.",
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "notice_conflict",
+      "value": {
+        "priority": "학교 공식 공지가 항상 우선"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW16S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP47"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "학교의 공식 공지가 우선입니다. 선배의 경험담과 다르게 느껴지는 부분이 있다면, 최신 공식 공지를 기준으로 확인하시면 됩니다.",
+      "source_ids": [
+        "CW16S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "orientation",
+      "value": {
+        "absence_cancels_admission": false,
+        "recommendation": "중요 정보가 많아 가급적 참석 권장"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW12S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP06"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "예비소집에 못 가더라도 그 이유만으로 입학이 취소되지는 않습니다. 다만 입학 전 꼭 필요한 중요 정보를 많이 안내하니 가급적 참석하시길 권장합니다.",
+      "source_ids": [
+        "CW12S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "outcome_statistics",
+      "value": {
+        "good_school_equals_good_outcomes": false,
+        "outcome_definition_is_ambiguous": true,
+        "operator_perspective": "다수가 원하는 학교에 가는 것과 소수가 명문대에 가는 것 중 무엇이 더 좋은 결과인지는 단정하기 어려움"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW15S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP42"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "대학 진학 실적이 좋다고 해서 반드시 좋은 학교라고 할 수는 없습니다. 대입 결과가 좋다는 기준 자체가 명확하지 않기 때문입니다. 다수의 학생이 원하는 학교에 진학하는 것과 소수의 학생이 이름 있는 대학에 진학하는 것 중 어느 쪽이 더 좋은 결과인지는 단정하기 어렵고, 흔히 후자를 기준으로 삼는 경우가 많지만 실제로는 전자가 더 바람직한 결과일 수도 있습니다.",
+      "source_ids": [
+        "CW15S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "parent_consultation",
+      "value": "자녀의 특성과 희망 진로를 담임교사가 미리 알고 있으면 상담이 더 도움이 됩니다. 질문·자료는 구체적일수록 좋고, 상담 전 가정에서 자녀와 충분히 이야기해 성향과 고민을 구체적으로 정리해 전달하는 것을 권장합니다.",
+      "status": "operator_confirmed_partial",
+      "source": "CW17S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP35"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "자녀의 특성과 희망 진로를 담임교사가 미리 알고 있으면 상담이 더 도움이 됩니다. 질문·자료는 구체적일수록 좋고, 상담 전 가정에서 자녀와 충분히 이야기해 성향과 고민을 구체적으로 정리해 전달하는 것을 권장합니다.",
+      "source_ids": [
+        "CW17S"
+      ],
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "key": "parent_portal",
+      "value": "나이스(NEIS) 학부모서비스에서 성적·출결 등 공식 자료는 확인 가능합니다. 다만 자녀의 구체적인 학교생활 모습까지 확인하기는 어렵고, 담임교사 상담을 통해 파악하는 것이 좋습니다.",
+      "status": "operator_confirmed_partial",
+      "source": "CW17S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP34"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "나이스(NEIS) 학부모서비스에서 성적·출결 등 공식 자료는 확인 가능합니다. 다만 자녀의 구체적인 학교생활 모습까지 확인하기는 어렵고, 담임교사 상담을 통해 파악하는 것이 좋습니다.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW05S",
+          "school_year": 2026,
+          "verified_scope": "학부모 리로스쿨 가입 안내 게시와 가입·사용방법 PDF 첨부 존재 확인. 실제 가입 화면·자녀 연결 절차·권한은 미검증.",
+          "attachment_content_verified": false
+        }
+      ],
+      "source_ids": [
+        "CW17S"
+      ],
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "key": "phone_policy",
+      "value": {
+        "collection_principle": true,
+        "collection_time": null,
+        "return_time": "종례 시",
+        "night_study_use": {
+          "decision_authority": "학년부",
+          "basis": "그때그때 상황 판단",
+          "current_decision": null
+        }
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW08S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP12"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교는 휴대폰 수거가 원칙입니다. 야자 중 휴대폰 사용 가능 여부는 학년부가 그때그때 상황을 판단해 결정하므로, 해당 시점의 학년부 안내를 따라야 합니다. 종례 때 돌려줍니다.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW03S",
+          "school_year": 2026,
+          "verified_scope": "2026 학생생활제규정 게시와 PDF 첨부 존재 확인. 첨부 본문 미확보. 야자·휴대폰·복장에 관한 개별 조항은 미검증.",
+          "attachment_content_verified": false
+        }
+      ],
+      "source_ids": [
+        "CW07S",
+        "CW08S",
+        "CW11S"
+      ],
+      "checked_at": "2026-09-26"
+    },
+    {
+      "key": "preentry_tasks",
+      "value": {
+        "mandatory": false,
+        "may_exist": true,
+        "announced_at": "예비소집(OT)",
+        "detail_varies_yearly": true
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW15S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP07"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "입학 전 간단한 과제가 있을 수 있지만 꼭 해야 하는 필수 과제는 아닙니다. 구체적인 내용은 매년 달라질 수 있고, 예비소집(OT)에서 안내합니다.",
+      "source_ids": [
+        "CW15S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "programs",
+      "value": {
+        "all_mandatory": false,
+        "participation_varies": "전체 참여형과 희망자 참여형이 모두 있음"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW15S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP46"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "홈페이지에 있는 프로그램이 모두 전교생 필수 참여는 아닙니다. 프로그램에 따라 전체 학생이 참여하는 것도 있고, 희망자만 참여하는 것도 있습니다.",
+      "source_ids": [
+        "CW15S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "school_comparison",
+      "value": "창원중앙고는 창원 지역의 명문 고등학교로 손꼽히며, 우수한 학생들이 모여 면학 분위기가 좋습니다. 오랜 전통과 탄탄한 동문 네트워크를 갖추고 있고, AI 교육을 앞장서 도입하는 학교로서 변화하는 교육 환경에 발맞춰 나가고 있습니다. 타 학교와의 수치 비교는 제공하지 않습니다.",
+      "status": "operator_confirmed_partial",
+      "source": "CW18S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP48"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "창원중앙고는 창원 지역의 명문 고등학교로 손꼽히며, 우수한 학생들이 모여 면학 분위기가 좋습니다. 오랜 전통과 탄탄한 동문 네트워크를 갖추고 있고, AI 교육을 앞장서 도입하는 학교로서 변화하는 교육 환경에 발맞춰 나가고 있습니다. 타 학교와의 수치 비교는 제공하지 않습니다.",
+      "operator_pending_note": "운영자 요청으로 보류 — 장점 비교 답변은 추후 보강 예정 (2026-09-26)",
+      "source_ids": [
+        "CW18S"
+      ],
+      "checked_at": "2026-09-27"
+    },
+    {
+      "key": "school_disclosure",
+      "value": "학교알리미는 적극적으로 활용하는 소통 창구가 아니며 법정 공시정보 확인 용도입니다. 학교의 다양한 소식과 안내는 리로스쿨을 통해 받는 것이 더 실질적입니다.",
+      "status": "operator_confirmed_partial",
+      "source": "CW17S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP43"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "학교알리미는 적극적으로 활용하는 소통 창구가 아니며 법정 공시정보 확인 용도입니다. 학교의 다양한 소식과 안내는 리로스쿨을 통해 받는 것이 더 실질적입니다.",
+      "source_ids": [
+        "CW17S"
+      ],
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "key": "student_support",
+      "value": "혼자 참지 않아도 됩니다. 위협 상황이면 먼저 안전한 곳으로 이동하고, 담임선생님께 가장 먼저 연락하면 상담을 통해 대응 방법을 정할 수 있습니다. 보호자에게도 알리는 것이 좋습니다.",
+      "status": "operator_confirmed_partial",
+      "source": "CW17S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP32"
+      ],
+      "priority": "normal",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "혼자 참지 않아도 됩니다. 위협 상황이면 먼저 안전한 곳으로 이동하고, 담임선생님께 가장 먼저 연락하면 상담을 통해 대응 방법을 정할 수 있습니다. 보호자에게도 알리는 것이 좋습니다.",
+      "source_ids": [
+        "CW17S"
+      ],
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "key": "textbooks",
+      "value": {
+        "advance_purchase_required": false,
+        "guidance_source": "각 과목 담당 교사가 수업 중 안내"
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW12S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP03"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "미리 사지 않아도 됩니다. 과목별 문제집·참고서는 입학 후 각 과목 담당 교사가 필요한 교재를 안내합니다.",
+      "source_ids": [
+        "CW12S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "transport_dormitory",
+      "value": {
+        "school_operated_bus": false,
+        "dormitory": false
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW12S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP15"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교는 학교에서 운영하는 통학버스가 없고, 기숙사도 운영하지 않습니다.",
+      "source_ids": [
+        "CW12S"
+      ],
+      "checked_at": "2026-09-26",
+      "school_year_basis": "2027 고1 기준 질문에 대한 운영자 답변"
+    },
+    {
+      "key": "uniforms",
+      "value": {
+        "sportswear_commute": {
+          "summer": true,
+          "spring": false,
+          "autumn": false,
+          "winter": false,
+          "season_dates": null
+        },
+        "sportswear_inside_school": null,
+        "purchase_details": null
+      },
+      "status": "operator_confirmed_partial",
+      "source": "CW08S",
+      "school_year": 2027,
+      "related_faq_ids": [
+        "FP05"
+      ],
+      "priority": "high",
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "우리 학교는 여름철 체육복 등하교가 가능하지만, 봄·가을·겨울에는 체육복 등하교가 허용되지 않습니다. 교복·체육복 구매와 치수 측정·수령 일정은 2027학년도 신입생 안내에 맞춰 준비해 주세요.",
+      "prior_year_evidence": [
+        {
+          "source_id": "CW03S",
+          "school_year": 2026,
+          "verified_scope": "2026 학생생활제규정 게시와 PDF 첨부 존재 확인. 첨부 본문 미확보. 야자·휴대폰·복장에 관한 개별 조항은 미검증.",
+          "attachment_content_verified": false
+        }
+      ],
+      "source_ids": [
+        "CW08S"
+      ],
+      "checked_at": "2026-09-26"
+    },
+    {
+      "fact_key": "academic_calendar",
+      "question": "2027학년도 학사일정은 언제 나오나요?",
+      "value": "2027학년도 학사일정은 2027학년도 학교 교육계획이 확정되어야 안내 가능. 확정 전에는 교무실(055-239-3109) 안내.",
+      "status": "operator_confirmed_partial",
+      "source": "CW19S",
+      "source_ids": [
+        "CW19S"
+      ],
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "2027학년도 학사일정(입학식·방학·시험 기간 등)은 2027학년도 학교 교육계획이 확정되어야 안내드릴 수 있습니다. 계획이 확정되는 대로 반영하겠습니다. 급하게 확인이 필요하시면 교무실(055-239-3109)로 문의해 주세요.",
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "fact_key": "assessment_schedule_2027",
+      "question": "2027학년도 시험 일정과 평가 비율은 어떻게 되나요?",
+      "value": "2027학년도 평가계획(시험일·평가 비율)이 확정되어야 안내 가능. 확정 전에는 교무실(055-239-3109) 안내.",
+      "status": "operator_confirmed_partial",
+      "source": "CW19S",
+      "source_ids": [
+        "CW19S"
+      ],
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "2027학년도 시험 일정과 평가 비율(반영 비율 등)은 2027학년도 평가계획이 확정되어야 안내드릴 수 있습니다. 계획이 확정되는 대로 반영하겠습니다. 급하게 확인이 필요하시면 교무실(055-239-3109)로 문의해 주세요.",
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    },
+    {
+      "fact_key": "scholarship",
+      "question": "장학금 지급 대상이나 조건이 궁금해요.",
+      "value": "장학금 지급 대상·조건·금액은 2027학년도 계획이 확정되어야 안내 가능. 확정 전에는 행정실(055-239-3107) 안내.",
+      "status": "operator_confirmed_partial",
+      "source": "CW19S",
+      "source_ids": [
+        "CW19S"
+      ],
+      "student_answer_policy": "answer_confirmed_fields_directly",
+      "approved_answer": "장학금 지급 대상·조건·금액은 2027학년도 계획이 확정되어야 안내드릴 수 있습니다. 계획이 확정되는 대로 반영하겠습니다. 급하게 확인이 필요하시면 행정실(055-239-3107)로 문의해 주세요.",
+      "checked_at": "2026-09-27",
+      "school_year_basis": "2027"
+    }
+  ],
+  "student_unknown_policy": "확정된 부분을 먼저 답하고, 핵심 결론 미확인 시 검증된 연락 경로를 짧게 제공. 거짓 확정·거짓 접수·거짓 후속 연락 약속 금지.",
+  "full_school_qa_ready": false,
+  "after_school_required_fields": [
+    "야간자율학습 운영 여부",
+    "참여 의무/선택 및 예외",
+    "대상 학년",
+    "운영 요일·종료 시각",
+    "신청·변경·불참 절차",
+    "2027 적용 여부와 승인 근거"
+  ],
+  "verified_notice_records": [
+    "CW02",
+    "CW03",
+    "CW04",
+    "CW05"
+  ],
+  "evidence_interpretation": "공식 웹 자료와 운영자 직접 제공 정보를 구분한다. 확인된 필드는 직접 답하고 미확인 세부 항목만 운영자에게 확인한다.",
+  "basic_disclosure_file": "43_school_basic_disclosure.json"
+}

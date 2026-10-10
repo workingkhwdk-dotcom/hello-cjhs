@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// ---------------------------------------------------------------
+// 학교소개 이미지(학교장 사진, 갤러리 사진 등) 업로드용 Storage 규칙.
+// - 사이트에는 회원가입 기능이 전혀 없어서, Firebase Authentication으로
+//   로그인 가능한 계정은 사실상 관리자(admin.html용 계정)뿐입니다.
+//   그래서 여기서는 "로그인 = 관리자"로 단순화해도 안전합니다.
+// - 공개 웹사이트에 쓸 이미지라 조회(read)는 누구나 가능해야 합니다.
+// ---------------------------------------------------------------
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /site-images/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 30 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
