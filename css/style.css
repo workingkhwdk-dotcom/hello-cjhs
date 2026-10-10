@@ -35,6 +35,8 @@ html,body{ margin:0; }
 body{
   background:var(--bg); color:var(--ink); font-family:var(--ui); font-size:15px; line-height:1.6;
   position:relative; overflow-x:hidden;
+  /* 한글 단어 중간에서 줄이 바뀌지 않게(예: "신\n청"). 한 줄보다 긴 영문·주소만 예외로 끊는다 */
+  word-break:keep-all; overflow-wrap:break-word;
 }
 a{ color:inherit; }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
@@ -533,7 +535,7 @@ input[type="checkbox"].chk:focus-visible{ outline:2px solid var(--accent-2); out
 .msg.typing span:nth-child(2){ animation-delay:.15s; } .msg.typing span:nth-child(3){ animation-delay:.3s; }
 @keyframes blink{ 0%,80%,100%{ opacity:.25; } 40%{ opacity:1; } }
 .chat-input-row{ display:flex; gap:8px; border-top:1px solid var(--sep); padding-top:14px; margin-top:6px; }
-.chat-input-row input{ flex:1; border:1.5px solid var(--sep); border-radius:12px; padding:11px 14px; font-size:14px; font-family:var(--ui); }
+.chat-input-row input{ flex:1; min-width:0; border:1.5px solid var(--sep); border-radius:12px; padding:11px 14px; font-size:14px; font-family:var(--ui); }
 .chat-input-row input:focus{ outline:none; border-color:var(--accent-2); }
 .chat-input-row button{ width:46px; height:46px; border-radius:12px; flex-shrink:0; }
 .quick-chip-row{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px; }
@@ -1221,7 +1223,7 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 @media (max-width:768px){
   .cur26 .cur26-catbody details.cur26-group{ margin-left:0; border-left-width:6px; } /* 하위 토글도 큰 칸과 같은 폭 */
   .cur26 .cur26-catbody details.cur26-group > summary::before{ margin:2px 0 0 0; }
-  .cur26 .cur26-catbody details.cur26-group .cur26-gtxt, .cur26 .cur26-catbody details.cur26-group .cur26-name{ min-width:0; overflow-wrap:anywhere; word-break:normal; }
+  .cur26 .cur26-catbody details.cur26-group .cur26-gtxt, .cur26 .cur26-catbody details.cur26-group .cur26-name{ min-width:0; overflow-wrap:anywhere; word-break:keep-all; }
   .cur26 .cur26-catbody details.cur26-group .cur26-gbody, .cur26 .cur26-catbody details.cur26-group .cur26-catbody{ padding-left:10px; padding-right:10px; }
   .cur26 .cur26-catbody details.cur26-group > summary{ padding:12px 10px; }
   .cur26 .cur26-catbody details.cur26-group .cur26-toggle{ margin-left:auto; }
@@ -1284,3 +1286,25 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .visit-counter b{ font-weight:700; color:var(--ink-2); margin-left:2px; }
 .visit-counter i{ font-style:normal; opacity:.6; }
 .visit-counter-pc{ justify-content:flex-end; margin-top:18px; padding-right:4px; }
+
+/* ===== 좁은 휴대폰(≤400px) 교육과정 가독성 보정 (2026-10-10) =====
+   - 선택군(A~I군) 머리글: "ㄴ" 표시·번호칸·간격을 줄여 글 칸을 넓히고, 배지가 펼침 버튼 위로 넘치지 않게 줄바꿈 허용
+   - 학점 막대(학교 지정 / 학생 선택 / 창체): 칸이 좁으면 글자와 숫자를 위아래로 놓아 잘리지 않게 */
+@media (max-width:400px){
+  .cur26 .cur26-catbody{ padding-left:8px; padding-right:8px; }
+  .cur26 .cur26-catbody details.cur26-group > summary::before{ display:none; }
+  .cur26 .cur26-catbody details.cur26-group > summary{ gap:8px; padding:12px 8px; }
+  .cur26 .cur26-catbody details.cur26-group .cur26-gid{ width:36px; height:36px; font-size:13px; }
+  .cur26 .cur26-group > summary .cur26-toggle{ width:34px; height:34px; }
+  .cur26 .cur26-gtxt .cur26-badge{ white-space:normal; }
+}
+@media (max-width:360px){
+  .cur26-splitbar i{ flex-direction:column; gap:0; font-size:11.5px; line-height:1.15; }
+  .cur26-splitbar i b{ font-size:17px; }
+}
+/* 석차등급 비율 막대: 휴대폰에서는 1·5등급 칸(10%)이 "1등급/~10%"를 잘라 먹으므로 다섯 칸을 같은 폭으로(비율은 아래 % 글자로 전달) */
+@media (max-width:760px){
+  .cur26-rank i{ flex:1 1 0 !important; }
+  .cur26-rank b{ font-size:12.5px; }
+  .cur26-rank small{ font-size:11px; }
+}

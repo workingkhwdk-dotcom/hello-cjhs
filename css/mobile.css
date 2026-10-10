@@ -24,6 +24,13 @@
 .m-promo-card.promo-chat::after{ animation-delay:.9s; }
 @keyframes m-promo-shine{ 0%{ left:-60%; } 55%,100%{ left:130%; } }
 
+@media (max-width:360px){
+  .m-promo-card{ flex-direction:column; align-items:flex-start; gap:6px; padding:12px 12px 13px; }
+  .m-promo-card svg{ width:34px; height:34px; padding:7px; }
+  .m-promo-card .t{ font-size:14.5px; }
+  .m-promo-card .d{ font-size:11px; }
+}
+
 /* (3) 홈의 인사말·교육과정… 탭 바: 화면 위에 따라붙지 않고 제자리(카드 맨 위)에 둔다 */
 .m-tabs-sticky{ position:static; top:auto; z-index:auto; }
 
