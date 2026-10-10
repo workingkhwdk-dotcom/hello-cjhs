@@ -1186,7 +1186,7 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
   .pl-next{ width:auto; }
 }
 @media (max-width:760px){
-  .cur26-cat{ scroll-margin-top:96px; } /* 모바일 고정 탭 바(약 81px)에 칸 제목이 가리지 않게 */
+  .cur26-cat{ scroll-margin-top:12px; } /* 모바일 홈 탭 바가 더 이상 화면 위에 고정되지 않으므로 작은 여백만 둔다 */
   .cur26-catbody{ padding:12px 12px 14px; }
   .cur26-sub .cur26-gtxt b{ font-size:16.5px; }
   .pl-opts{ grid-template-columns:1fr; }
@@ -1274,3 +1274,13 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 
 /* PC 인사말 탭: 상단 "학교장 인사말 / 환영합니다…" 머리줄 숨김 (2026-10-07). 관리자 페이지에서 쓰는 문구 데이터와 HTML은 그대로 두고 화면에서만 감춘다. */
 .intro-panel .tab-panel[data-panel="greeting"] > .tab-head{ display:none; }
+
+/* =========================================================
+   방문자 수(TODAY / TOTAL) — PC 메인(index.html) 오른쪽 아래, 모바일 홈 맨 아래(css/mobile.css)
+   눈에 띄지 않도록 작고 옅은 글씨. 숫자를 못 받으면 hidden 그대로 둔다(js/visitor-counter.js).
+   ========================================================= */
+.visit-counter{ display:flex; align-items:center; gap:6px; font-family:var(--ui); font-size:11px; letter-spacing:.04em; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+.visit-counter[hidden]{ display:none; }
+.visit-counter b{ font-weight:700; color:var(--ink-2); margin-left:2px; }
+.visit-counter i{ font-style:normal; opacity:.6; }
+.visit-counter-pc{ justify-content:flex-end; margin-top:18px; padding-right:4px; }

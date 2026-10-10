@@ -1,3 +1,19 @@
+# 2026-10-10 모바일 첫 화면 개선 · 첫 방문 안내 · 방문자 수
+
+## 1) 모바일 홈 (`css/mobile.css` 맨 끝, `mobile.render.js`)
+- **상담 신청 / 챗봇 바로가기 카드 강조**: 카드 높이·글자·아이콘을 키우고(제목 12.5→15px, 아이콘 22→40px 원형 배경) 그림자를 더함. 처음 열 때 카드 위로 빛이 두 번 지나감(동작 줄이기 설정이면 생략). 문구: "방문·전화 상담 접수", "AI 챗봇 중앙이".
+- **홈 탭 바(인사말·교육과정·과목선택·갤러리·특색활동) 고정 해제**: 스크롤해도 화면 위에 따라붙던 것을 카드 맨 위 제자리에 두어, 아래로 내리면 사라지게 함. 그에 맞춰 교육과정 칸 `scroll-margin-top` 96px → 12px(`css/style.css`).
+- **첫 방문 안내**(신규 `js/mobile-tour.js`): 처음 모바일로 들어오면 ① 상담 신청 ② 챗봇 ③ 학교 둘러보기 탭 ④ 하단 Q&A 순서로 펄스 표시 + 말풍선. "건너뛰기" 가능, 한 번 보면 다시 안 뜸(localStorage `cjhs_m_tour_done_v1`). 홈 맨 아래 "사용법 다시 보기"로 다시 볼 수 있음.
+
+## 2) 방문자 수 TODAY / TOTAL (PC·모바일 공통)
+- 신규 `js/visitor-counter.js`: PC 메인 오른쪽 아래, 모바일 홈 맨 아래에 작고 옅은 글씨로 표시. 같은 브라우저는 한국 날짜 기준 하루 한 번만 셈. 숫자를 못 받으면 숨김.
+- 신규 함수 `visitCounter`(`functions/visit_counter.js`, `functions/index.js`): Firestore `site_stats/visitors`(전체), `site_stats_daily/{YYYY-MM-DD}`(일별)에 저장. Admin SDK로만 접근하므로 Firestore 규칙 변경 없음. 같은 IP는 하루 300회까지만 숫자를 올림(`LIMITS.visitPerDay`). App Check 검사는 다른 공개 함수와 동일.
+- 테스트: `npm run test:visit` 추가.
+
+배포: `firebase deploy --only functions:visitCounter,hosting` (함수를 먼저 배포해야 숫자가 보입니다. 배포 전에는 방문자 수 줄만 숨겨지고 다른 기능은 그대로입니다.)
+
+---
+
 # 2026-10-04 (2) App Check(reCAPTCHA v3) 도입 · 계산/AI 질문 구성을 서버로 이동
 
 - **(추가)** `js/app-check.js`의 `SITE_KEY`에 reCAPTCHA v3 사이트 키 반영 완료. 비밀 키는 코드·저장소에 넣지 않고 Firebase 콘솔 App Check에만 등록합니다.
