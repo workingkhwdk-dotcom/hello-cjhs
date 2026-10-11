@@ -14,15 +14,22 @@ export async function mountVisitorCounter(el) {
   const newVisit = store((ls) => ls.getItem(KEY)) !== today;
   // 먼저 표시해 두어야 PC 페이지와 모바일 페이지가 거의 동시에 열려도 두 번 세지 않는다. 실패하면 되돌린다.
   if (newVisit) store((ls) => ls.setItem(KEY, today));
+  let res;
   try {
-    const res = await fetch(URL_, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newVisit }) });
+    res = await fetch(URL_, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newVisit }) });
+  } catch (e) {
+    // 서버에 닿지도 못했을 때만 표시를 되돌려 다음 방문 때 다시 센다(서버가 응답했다면 이미 셌을 수 있음)
+    if (newVisit) store((ls) => ls.removeItem(KEY));
+    el.hidden = true;
+    return;
+  }
+  try {
     if (!res.ok) throw new Error(String(res.status));
     const d = await res.json();
     el.innerHTML = `<span>TODAY <b>${fmt(d.today)}</b></span><i aria-hidden="true">·</i><span>TOTAL <b>${fmt(d.total)}</b></span>`;
     el.setAttribute("aria-label", `오늘 방문자 ${fmt(d.today)}명, 전체 방문자 ${fmt(d.total)}명`);
     el.hidden = false;
   } catch (e) {
-    if (newVisit) store((ls) => ls.removeItem(KEY));
     el.hidden = true;
   }
 }

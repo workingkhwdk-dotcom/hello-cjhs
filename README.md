@@ -15,7 +15,7 @@
 ├── js/content-defaults.js  index.html/admin.html/mobile.html이 함께 쓰는 학교소개·상담신청 기본값
 ├── image/                이미지 파일
 ├── functions/
-│   ├── index.js         Cloud Functions: chatWithAI(챗봇 프록시), createConsultation / listMyConsultations / cancelMyConsultations(상담 신청·취소), Q&A 함수들, 푸시/메일 알림
+│   ├── index.js         Cloud Functions: chatWithAI(챗봇 프록시), createConsultation / listMyConsultations / cancelMyConsultations(상담 신청·취소), Q&A 함수들, visitCounter(메인 화면 방문자 수), 푸시/메일 알림
 │   └── package.json
 ├── firebase.json        Hosting + Functions 배포 설정
 ├── .firebaserc          프로젝트 ID 연결 (본인 프로젝트 ID로 교체 필요)
