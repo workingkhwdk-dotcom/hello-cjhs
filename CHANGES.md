@@ -1,3 +1,30 @@
+# 2026-10-12 모바일 하단 아이콘 · 선택 초기화 · 이미지 속도 · AI 커리큘럼 분석 · 챗봇 말투
+
+## 1) 하단 링크를 아이콘으로, 선택 초기화는 과목선택 탭으로
+- 홈 맨 아래 글자 링크를 원형 아이콘 버튼으로 교체: **홈 화면에 추가**(신규), **사용법**(기존 "사용법 다시 보기"). 이미 홈 화면 앱으로 열었으면 "홈 화면에 추가"는 숨김.
+- 신규 `js/a2hs-guide.js`: 아이폰(사파리)/안드로이드(크롬) 방법을 바텀시트로 안내(크롬이 설치 창을 허용하면 "지금 추가하기" 버튼도 표시). 스타일은 `css/mobile.css` (5)(6).
+- **내 선택 초기화**: 과목선택 탭 맨 위(`js/subject-guide.js`)에 "내 선택 N/19과목 + 진행 막대 + 빨간 ‘내 선택 초기화’ 버튼" 줄을 항상 표시. 칸을 펼치지 않아도 보이고, 고른 과목이 없으면 비활성. 초기화하면 저장된 AI 분석도 함께 지움. 기존 결과 화면의 "처음부터 다시 고르기"는 이 버튼으로 통합.
+
+## 2) 이미지 로딩 개편
+- `image/results/r01~28.jpg`(5.4MB) → **WebP**(3.0MB, -44%), `top banner.png`(631KB) → `top-banner.webp`(42KB, -93%). 코드 참조 교체. 원본 JPG/PNG는 저장소에 남기되 `firebase.json`에서 배포 제외.
+- `image/**` 캐시를 1년 immutable로(주소에 `?v=해시`가 붙어 안전, `tools/bump-version.js`). 아이콘은 기존 1주일 유지.
+- **관리자 사진 업로드 자동 축소**(`admin.html` `uploadContentImage`): 긴 변 1600px·WebP로 줄여 올림(보통 3~8MB → 150~300KB). 방문자 화면에서 가장 느렸던 원인(원본 휴대폰 사진 그대로 업로드)을 막음. **이미 올려 둔 사진은 그대로이므로 관리자 화면에서 다시 올려야 효과가 있음.**
+- 갤러리 썸네일·특색 카드 사진에 `loading="lazy" decoding="async"`, 학교장 사진 `fetchpriority="high"`.
+- 구글 폰트 CSS를 렌더 차단 없이 불러오기(`mobile.html`, `index.html`).
+
+## 3) 내 커리큘럼 AI 분석
+- 3년 과목 짜보기를 19과목 모두 고르면 "내 교육과정" 탭에 **교과별 학점 막대**(학교 지정/내 선택)와 **AI 분석** 버튼이 나옴.
+- 신규 함수 `analyzePlan`(`functions/index.js`, `functions/plan_analysis.js`): 학점·정원 계산은 `evaluatePlan`(서버)이 하고, 모델(`gpt-5.4`, 추론 high, strict JSON 스키마)은 총평·강점·아쉬운 점·어울리는 전공 3~5개(점수)·바꿔 볼 제안만 해석. 편성표에 없는 과목 제안은 걸러 냄. 같은 선택이면 브라우저에 저장한 결과를 재사용.
+- `evaluatePlan` 결과에 `fields`(교과별 학점), `types`(유형별 학점), 선택 과목의 `field` 추가.
+- 한도: 한 IP 시간당 30회, 전체 하루 3000회(`rate_limit.js`). 테스트: `npm run test:plan`.
+
+## 4) 챗봇 말투
+- `functions/index.js`의 `[말투]` 규칙을 다시 씀: 말하듯 짧은 존댓말, 답부터 시작, 가끔 가벼운 유머, 규정·학폭·건강·숫자 안내에서는 유머 금지, 단정/모름을 솔직하게, AI투 표현("도움이 되었기를 바랍니다" 등) 금지. 사실·서식 규칙은 그대로. 범위 밖/부적절 질문 고정 문구도 한결 사람답게.
+
+배포: `firebase deploy --only functions:analyzePlan,functions:chatWithAI,functions:curriculumAdvice,functions:evaluatePlan,hosting`
+
+---
+
 # 2026-10-11 배포 전 점검
 
 - **호스팅 공개 범위 정리(`firebase.json` ignore)**: `public: "."`이라 아래 파일이 사이트 주소로 그대로 열리던 것을 배포 대상에서 뺌(파일 자체는 저장소에 그대로).

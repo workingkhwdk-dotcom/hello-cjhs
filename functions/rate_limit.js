@@ -23,6 +23,9 @@ const LIMITS = {
   chatGlobalPerDay: 10000,
   // 3년 과목 짜보기 결과 계산(evaluatePlan, OpenAI 호출 없음): 한 IP에서 분당 120회
   planPerMin: { windowMs: MIN, max: 120 },
+  // 내 커리큘럼 AI 분석(analyzePlan, 상위 모델 호출이라 비쌈): 한 IP에서 시간당 30회, 전체는 하루 3000회까지.
+  analyzePerHour: { windowMs: 60 * MIN, max: 30 },
+  analyzeGlobalPerDay: 3000,
   // 메인 화면 방문자 수 올리기(visitCounter): 한 IP에서 하루 300회까지만 숫자를 올린다(학교 와이파이 공유 고려).
   //   넘어도 오류 없이 현재 숫자만 돌려준다. 숫자 조회 자체는 분당 120회.
   visitPerDay: { windowMs: DAY, max: 300 },

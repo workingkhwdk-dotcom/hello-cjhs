@@ -13,7 +13,11 @@
       "**/* [0-9].*",
       "firestore.rules",
       "storage.rules",
-      "tools/**"
+      "tools/**",
+      "image/results/*.jpg",
+      "image/AIbot.png",
+      "image/sincheong.png",
+      "image/top banner.png"
     ],
     "headers": [
       {
@@ -26,7 +30,16 @@
         ]
       },
       {
-        "source": "{image,icons}/**",
+        "source": "image/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "icons/**",
         "headers": [
           {
             "key": "Cache-Control",

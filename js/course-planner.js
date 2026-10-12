@@ -3,7 +3,9 @@
 import { SEM, ELECTIVE, TOTALS, typeChip, badge } from "./curriculum-2026.js";
 
 const PLAN_URL = "https://asia-northeast3-hello-cjhs.cloudfunctions.net/evaluatePlan";
+const ANALYZE_URL = "https://asia-northeast3-hello-cjhs.cloudfunctions.net/analyzePlan";
 const KEY = "cjhs_course_plan_v1";
+const AI_KEY = "cjhs_plan_analysis_v1"; // 같은 선택이면 AI 분석을 다시 부르지 않고 저장해 둔 결과를 보여 준다
 const SEM_TABS = [2, 3, 4, 5]; // 학생 선택 과목이 있는 학기(2-1 ~ 3-2)
 const TOTAL_PICKS = ELECTIVE.reduce((n, g) => n + g.pick, 0);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -22,9 +24,15 @@ function load() {
   return picks;
 }
 const save = picks => { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch (e) { /* 저장 못 해도 화면은 동작 */ } };
+const picksKey = picks => JSON.stringify(ELECTIVE.map(g => [g.id, [...picks[g.id]].sort()]));
+const loadAi = picks => { try { const o = JSON.parse(localStorage.getItem(AI_KEY) || "null"); return o && o.k === picksKey(picks) ? o.a : null; } catch (e) { return null; } };
+const saveAi = (picks, a) => { try { localStorage.setItem(AI_KEY, JSON.stringify({ k: picksKey(picks), a })); } catch (e) { /* 저장 못 해도 화면은 동작 */ } };
+const clearAi = () => { try { localStorage.removeItem(AI_KEY); } catch (e) { /* 무시 */ } };
 
-export function renderPlanner(root) {
-  if (!root) return;
+// onChange({ count, total })는 화면을 다시 그릴 때마다 불린다(과목선택 탭 맨 위의 "내 선택" 줄이 같은 값을 보여 준다).
+// 돌려주는 reset()은 확인 창을 거쳐 고른 과목을 모두 지운다.
+export function renderPlanner(root, { onChange } = {}) {
+  if (!root) return null;
   let picks = load();
   let tab = 0; // 0~3: 학기, 4: 내 교육과정
 
@@ -71,8 +79,14 @@ export function renderPlanner(root) {
       return `<div class="cur26-sem"><div class="cur26-semhead"><h5>${esc(sm.name)}</h5><span><b>${sm.credit}</b> / ${sm.total}학점</span></div>
         <ul class="cur26-list">${fixed}${mine}</ul></div>`;
     }).join("");
+    const max = Math.max(1, ...r.fields.map(f => f.total));
+    const fields = `<div class="pl-fields"><h5>교과별 학점</h5>
+      <p class="pl-flegend"><i class="f"></i>학교 지정 <i class="e"></i>내가 고른 과목</p>
+      ${r.fields.map(f => `<div class="pl-frow"><span class="pl-fname">${esc(f.field)}</span>
+        <span class="pl-fbar" aria-hidden="true"><i class="f" style="width:${f.fixed / max * 100}%"></i><i class="e" style="width:${f.picked / max * 100}%"></i></span>
+        <b>${f.total}<small>학점</small></b></div>`).join("")}</div>`;
     return `<p class="pl-semsum">선택 과목 <b>${r.pickedCount}</b> / ${r.totalPicks}과목 · 교과 학점 <b>${r.credit}</b> / ${r.total} ${r.complete ? "· 3년 교육과정이 완성됐어요!" : ""}</p>
-      <div class="cur26-gradepanel on">${cards}</div>`;
+      ${fields}<div class="cur26-gradepanel on">${cards}</div>`;
   }
 
   let seq = 0;
@@ -94,9 +108,65 @@ export function renderPlanner(root) {
     if (my === seq && box.isConnected) box.innerHTML = html; // 그 사이 탭을 옮겼다면 버린다
   }
 
+  function analysisHtml(a) {
+    const list = items => `<ul class="pl-ai-list">${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+    return `<div class="pl-ai-card">
+      <p class="pl-ai-headline">${esc(a.headline)}</p>
+      ${a.balance ? `<p class="pl-ai-text">${esc(a.balance)}</p>` : ""}
+      ${a.strengths.length ? `<h6>이런 점이 좋아요</h6>${list(a.strengths)}` : ""}
+      ${a.gaps.length ? `<h6>이런 점은 아쉬워요</h6>${list(a.gaps)}` : ""}
+      <h6>이 커리큘럼과 어울리는 전공</h6>
+      <ol class="pl-majors">${a.majors.map((m, i) => `<li class="${i === 0 ? "top" : ""}">
+        <div class="pl-mhead"><span class="pl-mname">${i === 0 ? '<em>가장 잘 맞아요</em>' : ""}${esc(m.track)}</span><b>${m.score}<small>점</small></b></div>
+        <span class="pl-mbar" aria-hidden="true"><i style="width:${m.score}%"></i></span>
+        <p>${esc(m.reason)}</p>${m.caution ? `<p class="pl-mcaut">${esc(m.caution)}</p>` : ""}</li>`).join("")}</ol>
+      ${a.tips.length ? `<h6>이렇게 바꿔 보면 어때요</h6>${list(a.tips)}` : ""}
+      <p class="cur26-note">${esc(a.caveat)} 점수는 ‘이 과목 조합이 그 전공 준비에 얼마나 맞는지’를 본 AI의 참고용 판단이에요. 합격 가능성이 아니고, 실제 개설·반 편성은 학교 안내를 따라 주세요.</p>
+      <button type="button" class="btn btn-ghost pl-ai-redo" data-ai="go">다시 분석하기</button>
+    </div>`;
+  }
+
+  // 선택을 끝까지 마쳤을 때만 AI 분석을 받을 수 있다. 같은 선택이면 저장해 둔 결과를 바로 보여 준다.
+  function aiPanel() {
+    const left = TOTAL_PICKS - pickedCount();
+    if (left > 0) return `<div class="pl-ai"><h5 class="pl-ai-title">내 커리큘럼 AI 분석</h5><p class="pl-ai-wait">선택과목을 모두 고르면 분석을 받을 수 있어요. <b>${left}과목</b> 남았어요.</p></div>`;
+    const saved = loadAi(picks);
+    return `<div class="pl-ai"><h5 class="pl-ai-title">내 커리큘럼 AI 분석</h5>
+      <div class="pl-ai-out" aria-live="polite">${saved ? analysisHtml(saved) : `<p class="pl-ai-wait">교과별 학점 균형은 어떤지, 이 조합으로 어느 전공 준비에 유리한지 중앙이가 짚어 줘요.</p>
+        <button type="button" class="btn btn-point pl-ai-go" data-ai="go">AI 분석 받기</button>`}</div></div>`;
+  }
+
+  let aiSeq = 0;
+  async function runAnalysis() {
+    const out = root.querySelector(".pl-ai-out");
+    if (!out) return;
+    const my = ++aiSeq, sentPicks = JSON.parse(JSON.stringify(picks));
+    out.innerHTML = `<div class="pl-ai-loading"><span class="pl-spin" aria-hidden="true"></span><p>중앙이가 고른 과목을 꼼꼼히 살펴보고 있어요.<br>정확하게 보느라 20~40초쯤 걸려요.</p></div>`;
+    let html;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
+    try {
+      const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks }), signal: ctl.signal });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.analysis) { saveAi(sentPicks, data.analysis); html = analysisHtml(data.analysis); }
+      else html = `<p class="pl-ai-wait">${esc(data.error || "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요.")}</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
+    } catch (err) {
+      console.error(err);
+      html = `<p class="pl-ai-wait">${err && err.name === "AbortError" ? "분석이 너무 오래 걸려서 멈췄어요." : "AI 서버에 연결하지 못했어요."} 잠시 후 다시 시도해 주세요.</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
+    } finally { clearTimeout(timer); }
+    if (my === aiSeq && out.isConnected) out.innerHTML = html; // 그 사이 선택을 바꿨거나 탭을 옮겼다면 버린다
+  }
+
   function resultPanel() {
-    return `<div class="pl-result"></div>
-      <button type="button" class="btn btn-ghost pl-reset" data-k="reset" data-reset="1">처음부터 다시 고르기</button>`;
+    return `<div class="pl-result"></div>${aiPanel()}`;
+  }
+
+  function reset() {
+    if (!pickedCount()) return;
+    if (!confirm("지금까지 고른 과목을 모두 지울까요?")) return;
+    ELECTIVE.forEach(g => { picks[g.id] = []; });
+    save(picks); clearAi(); aiSeq++;
+    tab = 0;
+    draw();
   }
 
   function draw(focusKey) {
@@ -108,12 +178,14 @@ export function renderPlanner(root) {
     const el = focusKey && root.querySelector(`[data-k="${CSS.escape(focusKey)}"]`);
     if (el) el.focus({ preventScroll: true });
     if (tab === SEM_TABS.length) loadResult();
+    if (onChange) onChange({ count: pickedCount(), total: TOTAL_PICKS });
   }
 
   root.addEventListener("click", e => {
     const b = e.target.closest("button");
     if (!b || !root.contains(b)) return;
     if (b.dataset.retry) { loadResult(); return; }
+    if (b.dataset.ai) { runAnalysis(); return; }
     if (b.dataset.n) {
       const sel = picks[b.dataset.g], g = ELECTIVE.find(x => x.id === b.dataset.g);
       if (sel.includes(b.dataset.n)) picks[g.id] = sel.filter(n => n !== b.dataset.n);
@@ -124,14 +196,10 @@ export function renderPlanner(root) {
       draw(b.dataset.k);
       root.querySelector(".cur26-seg").scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
-    } else if (b.dataset.reset) {
-      if (!confirm("지금까지 고른 과목을 모두 지울까요?")) return;
-      ELECTIVE.forEach(g => { picks[g.id] = []; });
-      save(picks);
-      tab = 0;
     } else return;
     draw(b.dataset.k);
   });
 
   draw();
+  return { reset };
 }

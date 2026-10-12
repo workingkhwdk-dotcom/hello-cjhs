@@ -26,7 +26,7 @@
     "test:schoolfacts": "node test/run_school_facts_tests.js",
     "test:appcheck": "node test/run_app_check_tests.js",
     "test:advice": "node test/run_advice_tests.js",
-    "test:plan": "node test/run_plan_tests.js",
+    "test:plan": "node test/run_plan_tests.js && node test/run_plan_analysis_tests.js",
     "test:visit": "node test/run_visit_counter_tests.js"
   },
   "dependencies": {
