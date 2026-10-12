@@ -38,6 +38,13 @@ const deviceId = () => {
 };
 const newId = () => (self.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
 const clearAi = () => { try { localStorage.removeItem(AI_KEY); } catch (e) { /* 무시 */ } };
+const RESET_EVENT = "cjhs:plan-reset";
+
+/** 이 기기에 저장된 3년 과목 선택을 지운다(모바일 홈 "내 선택 초기화" 등). 열려 있는 짜보기 화면도 처음 상태로 돌아간다. */
+export function clearPlan() {
+  try { localStorage.removeItem(KEY); } catch (e) { /* 저장소 사용 불가 */ }
+  window.dispatchEvent(new Event(RESET_EVENT));
+}
 
 // onChange({ count, total })는 화면을 다시 그릴 때마다 불린다(과목선택 탭 맨 위의 "내 선택" 줄이 같은 값을 보여 준다).
 // 돌려주는 reset()은 확인 창을 거쳐 고른 과목을 모두 지운다.
@@ -216,6 +223,13 @@ export function renderPlanner(root, { onChange } = {}) {
       return;
     } else return;
     draw(b.dataset.k);
+  });
+
+  window.addEventListener(RESET_EVENT, () => {
+    if (!root.isConnected) return;
+    picks = load();
+    tab = 0;
+    draw();
   });
 
   draw();

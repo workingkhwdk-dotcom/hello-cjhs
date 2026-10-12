@@ -23,6 +23,23 @@
 └── storage.rules        Storage(사진 업로드) 보안 규칙
 ```
 
+## 한 번에 배포하기 (tools/deploy.sh)
+
+GitHub에서 PR을 main에 병합(Merge)한 뒤, 맥 "터미널"(윈도우는 Git Bash)에서:
+
+```bash
+# 처음 한 번 (배포용 폴더 ~/hello-cjhs 를 만들고 바로 배포)
+git clone https://github.com/workingkhwdk-dotcom/hello-cjhs.git ~/hello-cjhs && bash ~/hello-cjhs/tools/deploy.sh
+
+# 그다음부터는 이 한 줄
+bash ~/hello-cjhs/tools/deploy.sh
+```
+
+- 하는 일: main 최신본 받기 → 서버 함수 테스트(`functions/npm test`) → `firebase deploy`(사이트·서버 함수·보안 규칙 전체). 테스트가 실패하면 배포하지 않음.
+- 화면(사이트)만 올릴 때: `bash ~/hello-cjhs/tools/deploy.sh hosting`
+- 배포용 폴더는 main 사본으로 쓴다. 폴더에서 직접 고친 파일이 있으면 버릴지 먼저 묻는다.
+- 처음 한 번 필요: Node.js 22, `firebase login`(Firebase CLI가 없으면 `npx firebase-tools`로 자동 실행).
+
 ## 지금 바로 되는 것 / 아직 안 되는 것
 
 | 기능 | 상태 |
