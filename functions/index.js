@@ -81,11 +81,11 @@ const { parseResponse, finalizeReply } = require("./web_search");
 const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
-const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily } = require("./rate_limit");
+const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota } = require("./rate_limit");
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
-const { ANALYSIS_MODEL, ANALYSIS_REASONING, ANALYSIS_SCHEMA, INSTRUCTIONS: ANALYSIS_INSTRUCTIONS, buildAnalysisInput, sanitizeAnalysis } = require("./plan_analysis");
+const { ANALYSIS_MODEL, ANALYSIS_REASONING, ANALYSIS_SCHEMA, INSTRUCTIONS: ANALYSIS_INSTRUCTIONS, buildAnalysisInput, sanitizeAnalysis, buildChatContext } = require("./plan_analysis");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -354,7 +354,7 @@ async function replyForGuardFailure(res, guard) {
  * 질문 하나에 대한 챗봇 답변을 만든다(지식 검색 → 웹 검색 게이트 → 모델 호출 → 사실·서식 가드 → 미답변 기록).
  * 호출하기 전에 속도 제한·가드는 호출하는 쪽이 끝내야 한다. 모델 호출이 실패하면 upstreamFailed 오류를 던진다.
  */
-async function generateReply(message, history) {
+async function generateReply(message, history, extraSystem = "") {
   // 최근 대화 맥락(최대 4턴)을 검색 보조 문맥으로 사용한다. 이번 질문 자체보다
   // 가중치를 낮게 둬서(knowledge.js 참고), 화제 전환 시 엉뚱한 과거 맥락에
   // 끌려가지 않게 한다.
@@ -368,7 +368,7 @@ async function generateReply(message, history) {
   // 웹 검색 여부·범위·검색어는 모델이 아니라 서버(search_gate.js)가 정한다. 닫혀 있으면 도구 자체를 주지 않는다.
   const searchPlan = planSearch({ message, history, topScore });
   logger.info("웹 검색 게이트", { mode: searchPlan.mode, reason: searchPlan.reason, topic: searchPlan.topic && searchPlan.topic.id, year: searchPlan.year });
-  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan);
+  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan) + (extraSystem ? `\n\n${extraSystem}` : "");
 
   // --- 지금은 OpenAI(GPT) API를 임시로 사용합니다. ---
   // 나중에 Anthropic 등 다른 provider로 되돌리려면 이 블록만 교체하면 됩니다.
@@ -457,14 +457,16 @@ exports.chatWithAI = onRequest(
       return;
     }
 
-    const guard = await guardUserMessage(message, history);
+    // 선택과목 분석 결과를 보며 이어서 묻는 경우: picks는 서버가 다시 검증·계산하고, 어긋나면 평소처럼 답한다.
+    const planBlock = buildChatContext((req.body || {}).planContext);
+    const guard = await guardUserMessage(message, history, planBlock ? "사용자는 방금 사이트에서 자신의 선택과목 조합을 AI로 분석받았고, 그 결과(과목·전공 적합도·보완점)에 대해 이어서 질문하고 있습니다. 이 결과와 관련된 질문은 onTopic=true입니다." : "");
     if (!guard.ok) {
       await replyForGuardFailure(res, guard);
       return;
     }
 
     try {
-      res.status(200).json(await generateReply(message, history));
+      res.status(200).json(await generateReply(message, history, planBlock || ""));
     } catch (err) {
       if (err.upstreamFailed) {
         res.status(502).json({ error: "AI 응답 생성에 실패했습니다." });
@@ -574,6 +576,18 @@ exports.analyzePlan = onRequest(
     }
     if (!out.result.complete) {
       res.status(400).json({ error: `선택과목을 모두 골라야 분석할 수 있어요. (지금 ${out.result.pickedCount}/${out.result.totalPicks}과목)` });
+      return;
+    }
+    const dev = deviceHash((req.body || {}).deviceId);
+    if (!dev) {
+      res.status(400).json({ error: "기기 정보를 확인하지 못했어요. 페이지를 새로고침한 뒤 다시 시도해 주세요." });
+      return;
+    }
+    const quota = await consumeDeviceQuota(db, "analyze_dev", dev);
+    if (!quota.ok) {
+      res.status(429).json({ error: quota.which === "hour"
+        ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
+        : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
       return;
     }
     if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay))) {
@@ -996,7 +1010,7 @@ const CHAT_GUARD_PROMPT = `당신은 창원중앙고등학교 AI 입학상담 �
 반드시 아래 JSON 형식으로만 답하세요. 다른 텍스트는 절대 포함하지 마세요.
 {"inappropriate": true 또는 false, "selfHarmConcern": true 또는 false, "onTopic": true 또는 false}`;
 
-async function guardUserMessage(message, history = []) {
+async function guardUserMessage(message, history = [], hint = "") {
   if (containsBannedWord(message)) return { ok: false, reason: "inappropriate" };
 
   try {
@@ -1033,9 +1047,11 @@ async function guardUserMessage(message, history = []) {
     const lastAssistantTurn = [...history]
       .reverse()
       .find((h) => h.role === "assistant" && typeof h.content === "string");
-    const guardUserContent = lastAssistantTurn
+    const guardBody = lastAssistantTurn
       ? `[직전 챗봇 답변]\n${safeSlice(lastAssistantTurn.content, MAX_MESSAGE_LENGTH)}\n\n[사용자의 새 메시지]\n${message}`
       : message;
+    // hint: 서버가 검증한 상황 설명(예: 선택과목 분석 결과를 보며 이어서 묻는 중). 그 결과에 대한 질문은 주제 안으로 본다.
+    const guardUserContent = hint ? `[상황] ${hint}\n\n${guardBody}` : guardBody;
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",

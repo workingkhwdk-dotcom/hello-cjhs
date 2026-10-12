@@ -1,5 +1,6 @@
 // 내 커리큘럼 AI 분석(plan_analysis.js) 테스트 — 네트워크 호출 없음. 실행: node test/run_plan_analysis_tests.js
-const { ANALYSIS_SCHEMA, buildAnalysisInput, sanitizeAnalysis, catalogText } = require("../plan_analysis.js");
+const { ANALYSIS_SCHEMA, buildAnalysisInput, sanitizeAnalysis, catalogText, buildChatContext } = require("../plan_analysis.js");
+const { LIMITS, deviceHash, consumeDeviceQuota } = require("../rate_limit.js");
 const { evaluatePlan } = require("../plan.js");
 const DATA = require("../curriculum_data.json");
 
@@ -47,6 +48,38 @@ check("majors 없음 → null", sanitizeAnalysis({ headline: "x" }) === null);
 check("headline 없음 → null", sanitizeAnalysis({ headline: "", majors: [{ track: "a", score: 1, reason: "", caution: "" }] }) === null);
 check("긴 문장 잘림", sanitizeAnalysis({ ...good, balance: "가".repeat(5000) }).balance.length <= 700);
 
+// 5) 챗봇 이어서 상담: planContext 검증
+const ctx = buildChatContext({ picks, analysis: good });
+check("맥락 블록 생성(선택 결과·분석 포함)", !!ctx && ctx.includes("[내 선택 결과]") && ctx.includes("[AI 분석 결과]") && ctx.includes("컴퓨터"));
+check("분석 없이도 선택 결과만으로 생성", !!buildChatContext({ picks }) && buildChatContext({ picks }).includes("분석 결과는 전달되지 않았어요"));
+check("미완성 선택은 맥락 없음(null)", buildChatContext({ picks: { A: [DATA.ELECTIVE[0].courses[0][2]] } }) === null);
+check("잘못된 picks/형식은 null", buildChatContext({ picks: { Z: ["x"] } }) === null && buildChatContext("x") === null && buildChatContext(null) === null);
+check("태그 문자가 맥락에 새지 않음", !/[<>]/.test(buildChatContext({ picks, analysis: { ...good, headline: "<script>x</script>" } }).split("총평:")[1]));
+
+// 6) 기기별 한도: 시간당 10회, 하루 30회 (가짜 DB)
+const fakeDb = () => { const m = new Map(); return { collection: () => ({ doc: (id) => ({ id }) }), runTransaction: async (fn) => fn({ get: async (r) => ({ exists: m.has(r.id), data: () => m.get(r.id) }), set: (r, d) => m.set(r.id, { ...(m.get(r.id) || {}), ...d }) }) }; };
+check("기기 ID 검증", deviceHash("a".repeat(16)) && !deviceHash("short") && !deviceHash(123) && !deviceHash("가".repeat(20)) && !deviceHash("a".repeat(65)));
+(async () => {
+  const db = fakeDb(), h = deviceHash("device-aaaaaaaaaaaaaaaa"), other = deviceHash("device-bbbbbbbbbbbbbbbb");
+  const t0 = Date.UTC(2026, 9, 12, 3, 0, 0); // 한국 12:00
+  let okCount = 0, r;
+  for (let i = 0; i < LIMITS.analyzeDevicePerHour; i++) if ((await consumeDeviceQuota(db, "t", h, t0 + i)).ok) okCount++;
+  check("한 기기는 시간당 10회까지 통과", okCount === 10);
+  r = await consumeDeviceQuota(db, "t", h, t0 + 100);
+  check("11번째는 시간당 초과로 거절", !r.ok && r.which === "hour");
+  check("같은 IP의 다른 기기는 영향 없음", (await consumeDeviceQuota(db, "t", other, t0 + 100)).ok);
+  // 다음 시간들: 하루 30회 상한
+  let passed = 10, hr = 1;
+  for (; hr < 6; hr++) for (let i = 0; i < 10; i++) { const x = await consumeDeviceQuota(db, "t", h, t0 + hr * 3600000 + i); if (x.ok) passed++; }
+  check("하루 통과는 30회", passed === LIMITS.analyzeDevicePerDay);
+  r = await consumeDeviceQuota(db, "t", h, t0 + 6 * 3600000);
+  check("31번째는 하루 초과로 거절", !r.ok && r.which === "day");
+  check("다음 날은 다시 가능", (await consumeDeviceQuota(db, "t", h, t0 + 24 * 3600000)).ok);
+  check("한도 값: IP 300/시간, 전체 1000/일", LIMITS.analyzePerHour.max === 300 && LIMITS.analyzeGlobalPerDay === 1000);
+  done();
+})();
+function done() {
 console.log(`\n총 ${pass + fails.length}건 중 ${pass}건 통과, ${fails.length}건 실패`);
 fails.forEach((f) => console.log("- " + f));
 process.exit(fails.length ? 1 : 0);
+}

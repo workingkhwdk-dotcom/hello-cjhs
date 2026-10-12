@@ -27,6 +27,16 @@ const save = picks => { try { localStorage.setItem(KEY, JSON.stringify(picks)); 
 const picksKey = picks => JSON.stringify(ELECTIVE.map(g => [g.id, [...picks[g.id]].sort()]));
 const loadAi = picks => { try { const o = JSON.parse(localStorage.getItem(AI_KEY) || "null"); return o && o.k === picksKey(picks) ? o.a : null; } catch (e) { return null; } };
 const saveAi = (picks, a) => { try { localStorage.setItem(AI_KEY, JSON.stringify({ k: picksKey(picks), a })); } catch (e) { /* 저장 못 해도 화면은 동작 */ } };
+// 기기 ID: AI 분석 횟수를 기기(브라우저)별로 제한하려고 서버에 보낸다. 개인정보가 아닌 무작위 문자열이고, 저장소를 못 쓰면 이번 방문 동안만 쓴다.
+let memDeviceId = "";
+const deviceId = () => {
+  try {
+    let id = localStorage.getItem("cjhs_device_id_v1");
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(id || "")) { id = newId(); localStorage.setItem("cjhs_device_id_v1", id); }
+    return id;
+  } catch (e) { return memDeviceId || (memDeviceId = newId()); }
+};
+const newId = () => (self.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
 const clearAi = () => { try { localStorage.removeItem(AI_KEY); } catch (e) { /* 무시 */ } };
 
 // onChange({ count, total })는 화면을 다시 그릴 때마다 불린다(과목선택 탭 맨 위의 "내 선택" 줄이 같은 값을 보여 준다).
@@ -122,7 +132,10 @@ export function renderPlanner(root, { onChange } = {}) {
         <p>${esc(m.reason)}</p>${m.caution ? `<p class="pl-mcaut">${esc(m.caution)}</p>` : ""}</li>`).join("")}</ol>
       ${a.tips.length ? `<h6>이렇게 바꿔 보면 어때요</h6>${list(a.tips)}` : ""}
       <p class="cur26-note">${esc(a.caveat)} 점수는 ‘이 과목 조합이 그 전공 준비에 얼마나 맞는지’를 본 AI의 참고용 판단이에요. 합격 가능성이 아니고, 실제 개설·반 편성은 학교 안내를 따라 주세요.</p>
-      <button type="button" class="btn btn-ghost pl-ai-redo" data-ai="go">다시 분석하기</button>
+      <div class="pl-ai-actions">
+        <button type="button" class="btn btn-point pl-ai-chat" data-ai="chat">이 분석으로 중앙이와 이어서 상담하기</button>
+        <button type="button" class="btn btn-ghost pl-ai-redo" data-ai="go">다시 분석하기</button>
+      </div>
     </div>`;
   }
 
@@ -145,7 +158,7 @@ export function renderPlanner(root, { onChange } = {}) {
     let html;
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
     try {
-      const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks }), signal: ctl.signal });
+      const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks, deviceId: deviceId() }), signal: ctl.signal });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.analysis) { saveAi(sentPicks, data.analysis); html = analysisHtml(data.analysis); }
       else html = `<p class="pl-ai-wait">${esc(data.error || "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요.")}</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
@@ -185,6 +198,11 @@ export function renderPlanner(root, { onChange } = {}) {
     const b = e.target.closest("button");
     if (!b || !root.contains(b)) return;
     if (b.dataset.retry) { loadResult(); return; }
+    if (b.dataset.ai === "chat") {
+      const a = loadAi(picks);
+      if (a && window.CjhsPlanChat) { window.CjhsPlanChat.set({ picks, analysis: a }); window.CjhsPlanChat.open(); }
+      return;
+    }
     if (b.dataset.ai) { runAnalysis(); return; }
     if (b.dataset.n) {
       const sel = picks[b.dataset.g], g = ELECTIVE.find(x => x.id === b.dataset.g);

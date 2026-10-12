@@ -6,7 +6,8 @@ window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); defe
 window.addEventListener("appinstalled", () => { deferred = null; });
 
 export function isStandalone() {
-  return !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  const mm = (m) => !!(window.matchMedia && window.matchMedia(`(display-mode: ${m})`).matches);
+  return mm("standalone") || mm("fullscreen") || mm("minimal-ui") || window.navigator.standalone === true || document.referrer.startsWith("android-app://");
 }
 
 const IOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

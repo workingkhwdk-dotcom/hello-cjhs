@@ -1,3 +1,18 @@
+# 2026-10-12 (2) 메인 화면 속도 · 분석 한도(기기별) · 분석 결과로 챗봇 이어가기
+
+- **하단 아이콘**: 사용법 / 홈 화면에 추가 두 개뿐. 홈 화면 앱(standalone·fullscreen·minimal-ui, 안드로이드 TWA)으로 열면 "홈 화면에 추가"는 숨김.
+- **메인 화면 속도**
+  - 홈 큰 이미지 `AIbot.webp`/`sincheong.webp` 1254px → 1000px(116KB→33KB, 155KB→48KB), 이미지 `width/height` 지정, 상단 배너 `fetchpriority=high`·preload.
+  - 신규 `js/img-preload.js`(head에서 실행): 지난 방문 때 기억한 학교장 사진·갤러리 대표 사진 주소를 `<link rel=preload>`로 미리 받음(주소는 Firestore를 읽어야 알 수 있어서 지금까지는 맨 마지막에 요청됐음). 기억은 render의 `fetchContent`가 함. 첫 방문은 효과 없고 두 번째 방문부터 적용.
+  - Firebase SDK·`js/*.js` 모듈 `modulepreload`, gstatic·firebasestorage `preconnect`로 순차 다운로드를 병렬화.
+  - 한계: 이미 올려 둔 학교장·갤러리 사진 원본은 그대로이므로 관리자에서 다시 올려야 작아짐.
+- **분석 한도를 기기별로**(`rate_limit.js`, `analyzePlan`): 기기(브라우저가 만든 무작위 ID, localStorage) 시간당 10회·하루 30회, IP는 시간당 300회 안전망, 전체 하루 1000회. 같은 와이파이의 다른 기기는 서로 영향 없음. 기기 ID는 서버에서 해시해 Firestore `usage_daily`에 횟수만 저장.
+- **분석 결과로 챗봇과 이어서 상담**: 분석 결과 아래 "이 분석으로 중앙이와 이어서 상담하기" → 챗봇(모바일은 챗봇 탭, PC는 chatbot.html)에 "내 커리큘럼 분석을 보면서 대화 중" 줄 + 추천 질문 4개. 이후 질문마다 `planContext`(선택·분석)를 함께 보내고, 서버(`buildChatContext`)가 선택은 `evaluatePlan`으로 다시 검증·계산, 분석은 정리해서 시스템 프롬프트에 붙임(위조·형식 오류면 무시). 12시간 뒤 또는 "해제"하면 사라짐. 신규 `js/plan-chat.js`. 테스트: `npm run test:plan`.
+
+배포: `firebase deploy --only functions:analyzePlan,functions:chatWithAI,hosting`
+
+---
+
 # 2026-10-12 모바일 하단 아이콘 · 선택 초기화 · 이미지 속도 · AI 커리큘럼 분석 · 챗봇 말투
 
 ## 1) 하단 링크를 아이콘으로, 선택 초기화는 과목선택 탭으로
