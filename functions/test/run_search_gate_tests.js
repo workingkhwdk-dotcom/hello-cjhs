@@ -169,11 +169,11 @@ const FRESH_Q = "올해 수능 일정 언제예요";
   await t("통합: 잘린 답변(status:incomplete)의 열린 표·굵게가 화면 코드로 새지 않는다", async () => {
     setResponsesOutput(null);
     const { setIncomplete } = require("./test_harness.js");
-    setIncomplete(true, "**2학년 2학기** 추천이에요.\n\n| 선택군 | 과목 |\n| --- | --- |\n| B군 | 생명과학Ⅰ |\n| D군 | 화");
+    setIncomplete(true, "**2학년 2학기** 추천이에요.\n\n| 선택군 | 과목 |\n| --- | --- |\n| B군 | 생물의 유전 |\n| D군 | 화");
     const r = await chat("2학년 2학기 뭐 골라요");
     setIncomplete(false);
     const reply = r.payload.reply;
-    assert(!reply.includes("| D군") && reply.includes("| B군 | 생명과학Ⅰ |"), reply);
+    assert(!reply.includes("| D군") && reply.includes("| B군 | 생물의 유전 |"), reply);
     assert(reply.includes("여기까지만 보여드려요"), reply);
   });
 

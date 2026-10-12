@@ -81,10 +81,12 @@ const { parseResponse, finalizeReply } = require("./web_search");
 const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
-const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily } = require("./rate_limit");
+const { checkCurriculumReply, feedbackFor, repairCurriculumReply } = require("./curriculum_guard");
+const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota } = require("./rate_limit");
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
+const { ANALYSIS_MODEL, ANALYSIS_REASONING, ANALYSIS_SCHEMA, INSTRUCTIONS: ANALYSIS_INSTRUCTIONS, buildAnalysisInput, sanitizeAnalysis, buildChatContext } = require("./plan_analysis");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -103,6 +105,7 @@ const CHAT_MAX_INSTANCES = 100;
 const API_MAX_INSTANCES = 10;
 const chatLimiters = [createLimiter(LIMITS.chatPerMin), createLimiter(LIMITS.chatPerDay)];
 const planLimiters = [createLimiter(LIMITS.planPerMin)];
+const analyzeLimiters = [createLimiter(LIMITS.analyzePerHour)];
 const visitIncLimiter = createLimiter(LIMITS.visitPerDay);
 const visitReadLimiters = [createLimiter(LIMITS.visitReadPerMin)];
 const writeLimiters = [createLimiter(LIMITS.writePer10Min), createLimiter(LIMITS.writePerDay)];
@@ -229,7 +232,16 @@ const FORMAT_RULES = `[답변 서식 안내]
 - 실제로 존재하지 않는 이미지 URL을 만들어내지 마세요. 이모지는 가끔 따뜻하게 한두 개 정도만 곁들이고, 남발하지 마세요.
 
 [말투]
-딱딱한 안내 로봇이 아니라, 학교 사정을 잘 아는 친근한 선생님이 옆에서 설명해주는 느낌으로 답하세요. 반말은 쓰지 말되, 부드럽고 따뜻한 존댓말("~해요", "~이에요")을 기본으로 하고, 지나치게 격식 차린 "~입니다"체만 계속 쓰지는 마세요.
+목표: 사람 냄새 나는 말투. 학교 사정을 훤히 아는 센스 있는 선생님(또는 믿음 가는 선배)이 옆에서 편하게 알려 주는 느낌입니다. 유머는 양념, 신뢰는 본론입니다.
+- 존댓말을 쓰되 문어체·공문체는 피하세요. "~해요/~이에요/~거든요/~더라고요"를 기본으로 하고, 말하듯 짧게 끊으세요. 한 문장이 길어지면 쪼개세요. "~입니다/~합니다"만 이어지는 답변은 금지입니다.
+- 첫 문장은 질문에 대한 답부터 곧바로 시작하세요. "좋은 질문이에요", "~에 대해 궁금하시군요", "안녕하세요! 중앙이입니다"로 시작하지 마세요. 사용자가 인사했을 때만 가볍게 받아 주세요.
+- 가벼운 유머를 가끔(답변 하나에 한 번 정도) 곁들이세요. 상황을 살짝 비트는 한마디, 고등학생이라면 다 아는 공감 포인트(월요일 아침 등교, 급식 줄, 시험 기간 졸음 같은 것) 정도가 좋습니다. 유머는 답을 돕는 정도로만 하고, 사실 정보 자체를 농담으로 바꾸거나 과장하지 마세요.
+- 유머를 쓰지 않는 경우: 규정·징계·벌점·출결 불이익, 학교폭력·따돌림, 건강·마음이 힘든 이야기, 걱정이 큰 학부모의 질문, 입시 불안, 금액·날짜·인원 같은 숫자 안내. 이럴 때는 차분하고 따뜻하게, 정확하게 말하세요.
+- 신뢰감은 이렇게 줍니다: 확실한 것은 단정하게("야자는 희망자만 해요"), 확인되지 않은 것은 솔직하게("이건 제가 확인된 자료가 없어서 단정은 못 하겠어요"). 얼버무리거나 과하게 몸을 낮추지 마세요. 사과는 정말 틀렸을 때 한 번만 짧게 하세요.
+- AI스러운 표현은 쓰지 마세요: "도움이 되었기를 바랍니다", "추가로 궁금하신 점이 있으시면", "~에 대해 알려드리겠습니다", "다음과 같습니다", "종합하면", "다양한 측면에서", "중요한 것은 ~입니다", "~할 수 있습니다/~하는 것이 좋습니다"의 반복, 모든 문장을 같은 길이·같은 리듬으로 맞추는 것, 목록마다 똑같은 머리말 반복. 같은 내용을 두 번 말하는 요약 문단도 붙이지 마세요.
+- 사람처럼 쓰세요: 상대의 말투와 상황(중3 학생인지, 걱정 많은 학부모인지)에 맞춰 톤을 조금씩 바꾸고, 필요하면 "솔직히 말하면", "제가 보기엔", "이건 흔히 헷갈려요"처럼 판단과 의견을 가볍게 말하세요. 다만 학교 사실에 대한 의견을 지어내지는 마세요. 의견은 확인된 사실에 근거해야 합니다.
+- 반말, 은어·유행어 남발, 비속어, 상대를 놀리는 농담은 금지입니다. 이모지는 가끔 한두 개만 쓰고, 안 써도 됩니다.
+- 위 말투는 서식·사실 규칙을 바꾸지 않습니다. 표·목록이 필요한 답은 그대로 구조화하고, 표 바깥의 문장만 말하듯 쓰세요.
 
 [답변을 마무리하는 방식]
 답변 끝에 "더 궁금한 점 있으신가요?", "이런 것도 물어보세요", "~해보는 건 어떨까요?" 같은 후속 질문이나 다음 행동 제안을 습관적으로 덧붙이지 마세요. 질문에 대한 답을 주는 것으로 답변을 끝내세요. 사용자가 준 정보만으로는 정확한 답을 드릴 수 없어서 반드시 되물어야 하는 경우(예: 어떤 과목을 고민하는지 알아야 구체적으로 답할 수 있는 경우)에만, 대화를 계속 이어가려는 의도 없이 그 확인 질문 하나만 짧게 하세요.`;
@@ -334,8 +346,8 @@ async function replyForGuardFailure(res, guard) {
   }
   const reply =
     guard.reason === "inappropriate"
-      ? "죄송하지만 그런 표현에는 답변드리기 어려워요. 학교나 입학에 대해 편하게 다시 물어봐 주시겠어요? 😊"
-      : "음, 그 질문은 제가 도와드릴 수 있는 범위 밖이에요. 저는 창원중앙고 입학, 고등학교 생활, 대입 관련 질문에 답해드리는 챗봇이라, 그쪽으로 다시 한 번 물어봐 주시면 더 잘 도와드릴 수 있어요!";
+      ? "그런 표현에는 제가 답을 드리기가 어려워요. 학교나 입학 얘기라면 편하게 다시 물어봐 주세요 😊"
+      : "그건 제 전문 분야가 아니라서 아는 척하기가 어렵네요. 저는 창원중앙고 입학, 고등학교 생활, 대입 얘기라면 자신 있어요. 그쪽으로 물어봐 주세요!";
   res.status(200).json({ reply, guard: guard.reason });
 }
 
@@ -343,7 +355,7 @@ async function replyForGuardFailure(res, guard) {
  * 질문 하나에 대한 챗봇 답변을 만든다(지식 검색 → 웹 검색 게이트 → 모델 호출 → 사실·서식 가드 → 미답변 기록).
  * 호출하기 전에 속도 제한·가드는 호출하는 쪽이 끝내야 한다. 모델 호출이 실패하면 upstreamFailed 오류를 던진다.
  */
-async function generateReply(message, history) {
+async function generateReply(message, history, extraSystem = "") {
   // 최근 대화 맥락(최대 4턴)을 검색 보조 문맥으로 사용한다. 이번 질문 자체보다
   // 가중치를 낮게 둬서(knowledge.js 참고), 화제 전환 시 엉뚱한 과거 맥락에
   // 끌려가지 않게 한다.
@@ -357,12 +369,14 @@ async function generateReply(message, history) {
   // 웹 검색 여부·범위·검색어는 모델이 아니라 서버(search_gate.js)가 정한다. 닫혀 있으면 도구 자체를 주지 않는다.
   const searchPlan = planSearch({ message, history, topScore });
   logger.info("웹 검색 게이트", { mode: searchPlan.mode, reason: searchPlan.reason, topic: searchPlan.topic && searchPlan.topic.id, year: searchPlan.year });
-  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan);
+  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan) + (extraSystem ? `\n\n${extraSystem}` : "");
 
   // --- 지금은 OpenAI(GPT) API를 임시로 사용합니다. ---
   // 나중에 Anthropic 등 다른 provider로 되돌리려면 이 블록만 교체하면 됩니다.
   // 웹 검색의 도메인 제한(allowed_domains)은 Responses API의 web_search 도구에서만 되기
   // 때문에 이 호출만 /v1/responses를 쓴다(가드·모더레이션 호출은 그대로 chat/completions).
+  // extraInput: 검수 재작성 때 덧붙이는 대화(초안 + 검수 안내). 재작성에는 웹 검색 도구를 주지 않는다.
+  const askModel = async (extraInput = []) => {
   const openaiRes = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -386,9 +400,10 @@ async function generateReply(message, history) {
           content: typeof h.content === "string" ? safeSlice(h.role === "assistant" ? enforceSchoolFacts(h.content).text : h.content, MAX_MESSAGE_LENGTH) : "",
         })),
         { role: "user", content: message },
+        ...extraInput,
       ],
       // 검색 도구는 게이트가 열었을 때만, 주제에 맞는 공식 도메인으로 좁혀서, 호출 횟수 상한과 함께 준다.
-      ...buildToolConfig(searchPlan),
+      ...(extraInput.length ? {} : buildToolConfig(searchPlan)),
     }),
   });
 
@@ -397,9 +412,32 @@ async function generateReply(message, history) {
     logger.error("AI API error", errText);
     throw Object.assign(new Error("AI API error"), { upstreamFailed: true });
   }
+  return parseResponse(await openaiRes.json());
+  };
 
-  const parsed = parseResponse(await openaiRes.json());
+  const parsed = await askModel();
   let reply = (parsed.text && finalizeReply(parsed)) || "죄송해요, 답변을 생성하지 못했어요.";
+  // 편성표 검수(curriculum_guard.js): 과목·선택군·학기·정원이 확정 편성표와 다르면 한 번 다시 쓰게 하고, 그래도 다르면 문제 행을 빼고 안내한다.
+  if (parsed.text) {
+    const cg1 = checkCurriculumReply(reply);
+    if (cg1.violations.length) {
+      logger.warn("편성표 불일치 답변 — 재작성", { violations: cg1.violations.map((v) => `${v.kind}: ${v.detail}`) });
+      try {
+        const retry = await askModel([{ role: "assistant", content: safeSlice(reply, MAX_MESSAGE_LENGTH * 4) }, { role: "user", content: feedbackFor(cg1.violations) }]);
+        const retryReply = retry.text ? finalizeReply(retry) : "";
+        const cg2 = retryReply ? checkCurriculumReply(retryReply) : { violations: cg1.violations };
+        if (retryReply && !cg2.violations.length) { reply = retryReply; }
+        else {
+          logger.warn("편성표 불일치 — 재작성 후에도 남아 행 제거", { violations: cg2.violations.map((v) => `${v.kind}: ${v.detail}`) });
+          const base = retryReply && cg2.violations.length <= cg1.violations.length ? retryReply : reply;
+          reply = repairCurriculumReply(base, retryReply && base === retryReply ? cg2.violations : cg1.violations);
+        }
+      } catch (err) {
+        logger.warn("편성표 재작성 실패 — 문제 행 제거", err);
+        reply = repairCurriculumReply(reply, cg1.violations);
+      }
+    }
+  }
   // 확정된 학교 사실(남학교 등)과 어긋나는 문장은 서버가 지우고 정정한다(fact_guard.js).
   const fg = enforceSchoolFacts(reply);
   if (fg.violations.length) logger.warn("학교 사실 위반 답변 정정", { violations: fg.violations });
@@ -446,14 +484,16 @@ exports.chatWithAI = onRequest(
       return;
     }
 
-    const guard = await guardUserMessage(message, history);
+    // 선택과목 분석 결과를 보며 이어서 묻는 경우: picks는 서버가 다시 검증·계산하고, 어긋나면 평소처럼 답한다.
+    const planBlock = buildChatContext((req.body || {}).planContext);
+    const guard = await guardUserMessage(message, history, planBlock ? "사용자는 방금 사이트에서 자신의 선택과목 조합을 AI로 분석받았고, 그 결과(과목·전공 적합도·보완점)에 대해 이어서 질문하고 있습니다. 이 결과와 관련된 질문은 onTopic=true입니다." : "");
     if (!guard.ok) {
       await replyForGuardFailure(res, guard);
       return;
     }
 
     try {
-      res.status(200).json(await generateReply(message, history));
+      res.status(200).json(await generateReply(message, history, planBlock || ""));
     } catch (err) {
       if (err.upstreamFailed) {
         res.status(502).json({ error: "AI 응답 생성에 실패했습니다." });
@@ -538,6 +578,81 @@ exports.evaluatePlan = onRequest(
       return;
     }
     res.status(200).json({ result: out.result });
+  }
+);
+
+/**
+ * 내 커리큘럼 AI 분석 — "3년 과목 짜보기"를 끝까지(19과목) 고른 뒤 사이트가 호출한다.
+ * POST { picks } -> { analysis: { headline, balance, strengths, gaps, majors:[{track,score,reason,caution}], tips, caveat }, result }
+ * 정원·학점 검증과 계산은 evaluatePlan(plan.js)이 하고, 모델은 그 숫자를 해석만 한다(plan_analysis.js).
+ * 응답이 JSON 형식을 어기면 한 번 더 시도하고, 그래도 안 되면 502.
+ */
+exports.analyzePlan = onRequest(
+  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 150, memory: "512MiB" },
+  async (req, res) => {
+    if (await appCheckBlocked(req, res)) return;
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "POST 요청만 허용됩니다." });
+      return;
+    }
+    if (blocked(req, res, analyzeLimiters, "분석 요청이 많아요. 잠시 후 다시 시도해 주세요.")) return;
+    const out = evaluatePlan((req.body || {}).picks);
+    if (!out.ok) {
+      res.status(400).json({ error: out.errors[0], errors: out.errors });
+      return;
+    }
+    if (!out.result.complete) {
+      res.status(400).json({ error: `선택과목을 모두 골라야 분석할 수 있어요. (지금 ${out.result.pickedCount}/${out.result.totalPicks}과목)` });
+      return;
+    }
+    const dev = deviceHash((req.body || {}).deviceId);
+    if (!dev) {
+      res.status(400).json({ error: "기기 정보를 확인하지 못했어요. 페이지를 새로고침한 뒤 다시 시도해 주세요." });
+      return;
+    }
+    const quota = await consumeDeviceQuota(db, "analyze_dev", dev);
+    if (!quota.ok) {
+      res.status(429).json({ error: quota.which === "hour"
+        ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
+        : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
+      return;
+    }
+    if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay))) {
+      res.status(429).json({ error: "오늘은 AI 분석 가능 횟수를 모두 사용했어요. 내일 다시 이용해 주세요." });
+      return;
+    }
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const aiRes = await fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_API_KEY.value()}` },
+          body: JSON.stringify({
+            model: ANALYSIS_MODEL,
+            reasoning: { effort: ANALYSIS_REASONING },
+            max_output_tokens: 6000, // 추론 토큰이 이 한도에 포함되므로 넉넉히
+            store: false,
+            instructions: ANALYSIS_INSTRUCTIONS,
+            input: buildAnalysisInput(out.result),
+            text: { format: { type: "json_schema", name: "curriculum_analysis", strict: true, schema: ANALYSIS_SCHEMA } },
+          }),
+        });
+        if (!aiRes.ok) {
+          logger.error("analyzePlan AI API error", await aiRes.text());
+          break;
+        }
+        const parsed = parseResponse(await aiRes.json());
+        const analysis = parsed.text && !parsed.incomplete ? sanitizeAnalysis(parsed.text) : null;
+        if (analysis) {
+          res.status(200).json({ analysis, result: out.result });
+          return;
+        }
+        logger.warn("analyzePlan 응답 형식 오류 — 재시도", { attempt, incomplete: parsed.incomplete });
+      }
+      res.status(502).json({ error: "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요." });
+    } catch (err) {
+      logger.error(err);
+      res.status(500).json({ error: "서버 오류가 발생했습니다." });
+    }
   }
 );
 
@@ -922,7 +1037,7 @@ const CHAT_GUARD_PROMPT = `당신은 창원중앙고등학교 AI 입학상담 �
 반드시 아래 JSON 형식으로만 답하세요. 다른 텍스트는 절대 포함하지 마세요.
 {"inappropriate": true 또는 false, "selfHarmConcern": true 또는 false, "onTopic": true 또는 false}`;
 
-async function guardUserMessage(message, history = []) {
+async function guardUserMessage(message, history = [], hint = "") {
   if (containsBannedWord(message)) return { ok: false, reason: "inappropriate" };
 
   try {
@@ -959,9 +1074,11 @@ async function guardUserMessage(message, history = []) {
     const lastAssistantTurn = [...history]
       .reverse()
       .find((h) => h.role === "assistant" && typeof h.content === "string");
-    const guardUserContent = lastAssistantTurn
+    const guardBody = lastAssistantTurn
       ? `[직전 챗봇 답변]\n${safeSlice(lastAssistantTurn.content, MAX_MESSAGE_LENGTH)}\n\n[사용자의 새 메시지]\n${message}`
       : message;
+    // hint: 서버가 검증한 상황 설명(예: 선택과목 분석 결과를 보며 이어서 묻는 중). 그 결과에 대한 질문은 주제 안으로 본다.
+    const guardUserContent = hint ? `[상황] ${hint}\n\n${guardBody}` : guardBody;
 
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",

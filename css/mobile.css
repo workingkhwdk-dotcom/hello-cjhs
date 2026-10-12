@@ -139,3 +139,12 @@ html.ig-open{ overflow:hidden; }
 .m-main .cur26-splitbar i b, .m-main .cur26-credit b, .m-main .cur26-pickcr b, .m-main .cur26-readcr b{ font-size:17px; }
 .m-main .cur26-slotsum b{ font-size:18px; }
 .m-main .cur26-splitbar{ height:48px; }
+
+/* (5) 홈 맨 아래: 아이콘 버튼(홈 화면에 추가 · 사용법) — (4)의 글자 링크를 대체 */
+[hidden]{ display:none !important; }
+.m-foot-icons{ display:flex; align-items:flex-start; gap:14px; margin-left:auto; }
+.m-foot-ico{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:64px; padding:0 2px; border:none; background:none; font-family:var(--ui); font-size:10.5px; font-weight:600; color:var(--ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.m-foot-ico svg{ box-sizing:content-box; width:20px; height:20px; padding:10px; border-radius:50%; background:var(--surface); color:var(--accent); border:1px solid var(--sep); box-shadow:0 4px 10px -6px rgba(20,40,79,.5); transition:transform .15s var(--ease), background .15s; }
+.m-foot-ico:active svg{ transform:scale(.92); background:var(--accent-tint); }
+.m-foot-ico span{ line-height:1.2; text-align:center; white-space:nowrap; }
+

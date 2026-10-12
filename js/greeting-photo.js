@@ -8,7 +8,7 @@ const MAX_CROP = 0.6; // 이 비율보다 많이 잘려야 하는 사진은 잘�
 
 export function greetingPhotoHtml(url) {
   const src = String(url).replace(/"/g, "&quot;");
-  return `<img class="gp-bg" src="${src}" alt="" aria-hidden="true"><img class="gp-fg" src="${src}" alt="학교장 사진">`;
+  return `<img class="gp-bg" src="${src}" alt="" aria-hidden="true" decoding="async"><img class="gp-fg" src="${src}" alt="학교장 사진" decoding="async" fetchpriority="high">`;
 }
 
 export function fitGreetingPhoto(slot) {

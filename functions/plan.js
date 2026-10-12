@@ -45,7 +45,7 @@ function evaluatePlan(picks, data = DATA) {
     for (const g of ELECTIVE.filter((x) => x.sem === si)) {
       for (const n of clean[g.id]) {
         const c = g.courses.find((x) => x[2] === n);
-        picked.push({ group: g.id, name: n, type: c[1], grade: c[5], credit: g.credit });
+        picked.push({ group: g.id, name: n, field: c[0], type: c[1], grade: c[5], credit: g.credit });
       }
       const left = g.pick - clean[g.id].length;
       if (left) todo.push({ group: g.id, left });
@@ -54,7 +54,19 @@ function evaluatePlan(picks, data = DATA) {
   });
   const pickedCount = sum(semesters.map((s) => s.picked.length));
   const totalPicks = sum(ELECTIVE.map((g) => g.pick));
-  return { ok: true, result: { semesters, pickedCount, totalPicks, credit: sum(semesters.map((s) => s.credit)), total: sum(TOTALS.subject), complete: pickedCount === totalPicks } };
+  // 교과(국어·수학·…)별 학점: 학교 지정(fixed)과 내가 고른 과목(picked)을 나눠 센다. 화면 표와 AI 분석이 같은 값을 쓴다.
+  const byField = new Map();
+  const addField = (field, key, credit) => {
+    if (!byField.has(field)) byField.set(field, { field, fixed: 0, picked: 0 });
+    byField.get(field)[key] += credit;
+  };
+  FIXED.forEach((rows) => rows.forEach((c) => addField(c[0], "fixed", c[5])));
+  semesters.forEach((sm) => sm.picked.forEach((p) => addField(p.field, "picked", p.credit)));
+  const fields = [...byField.values()].map((f) => ({ ...f, total: f.fixed + f.picked })).sort((a, b) => b.total - a.total);
+  // 내가 고른 과목의 유형(일반·진로·융합)별 학점
+  const types = {};
+  semesters.forEach((sm) => sm.picked.forEach((p) => { types[p.type] = (types[p.type] || 0) + p.credit; }));
+  return { ok: true, result: { semesters, fields, types, pickedCount, totalPicks, credit: sum(semesters.map((s) => s.credit)), total: sum(TOTALS.subject), complete: pickedCount === totalPicks } };
 }
 
 module.exports = { evaluatePlan };

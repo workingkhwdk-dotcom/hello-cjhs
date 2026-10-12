@@ -23,6 +23,13 @@ const LIMITS = {
   chatGlobalPerDay: 10000,
   // 3년 과목 짜보기 결과 계산(evaluatePlan, OpenAI 호출 없음): 한 IP에서 분당 120회
   planPerMin: { windowMs: MIN, max: 120 },
+  // 내 커리큘럼 AI 분석(analyzePlan, 상위 모델 호출이라 비쌈). 행사장 와이파이처럼 한 IP를 여럿이 쓰는 곳을 고려해
+  //   ① 기기별(브라우저가 만든 기기 ID): 시간당 10회, 하루 30회  ② IP는 느슨한 안전망일 뿐(기기 ID를 계속 바꿔 우회하는 것 방지): 시간당 1000회
+  //   ③ 전체(모든 기기 합산) 하루 2000회가 비용 상한.
+  analyzePerHour: { windowMs: 60 * MIN, max: 1000 },
+  analyzeDevicePerHour: 10,
+  analyzeDevicePerDay: 30,
+  analyzeGlobalPerDay: 2000,
   // 메인 화면 방문자 수 올리기(visitCounter): 한 IP에서 하루 300회까지만 숫자를 올린다(학교 와이파이 공유 고려).
   //   넘어도 오류 없이 현재 숫자만 돌려준다. 숫자 조회 자체는 분당 120회.
   visitPerDay: { windowMs: DAY, max: 300 },
@@ -109,4 +116,21 @@ async function consumeDaily(db, name, cap, now = Date.now()) {
   }
 }
 
-module.exports = { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily };
+/** 클라이언트가 보낸 기기 ID(브라우저가 만든 무작위 문자열)를 검증해 저장용 해시로 바꾼다. 형식이 이상하면 null. */
+function deviceHash(id) {
+  if (typeof id !== "string" || !/^[A-Za-z0-9_-]{16,64}$/.test(id)) return null;
+  return require("crypto").createHash("sha256").update(id).digest("hex").slice(0, 24);
+}
+
+/**
+ * 기기별 AI 분석 횟수를 센다(Firestore usage_daily 문서, 한국 시간 기준 시간·날짜 구간).
+ * 시간당·하루 중 하나라도 넘으면 { ok:false, which:"hour"|"day" }. 저장소 오류 때는 consumeDaily처럼 통과시킨다.
+ */
+async function consumeDeviceQuota(db, name, hash, now = Date.now()) {
+  const hourBucket = Math.floor((now + 9 * 3600 * 1000) / 3600000);
+  if (!(await consumeDaily(db, `${name}_h${hourBucket}_${hash}`, LIMITS.analyzeDevicePerHour, now))) return { ok: false, which: "hour" };
+  if (!(await consumeDaily(db, `${name}_d_${hash}`, LIMITS.analyzeDevicePerDay, now))) return { ok: false, which: "day" };
+  return { ok: true };
+}
+
+module.exports = { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota };
