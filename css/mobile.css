@@ -70,3 +70,72 @@ html.ig-open{ overflow:hidden; }
 @keyframes ig-fade{ from{ opacity:0; } to{ opacity:1; } }
 @keyframes ig-up{ from{ transform:translateY(40px); opacity:.4; } to{ transform:none; opacity:1; } }
 @media (prefers-reduced-motion:reduce){ .ig-layer,.ig-sheet{ animation:none; } }
+
+/* (4) 모바일 글자 크기 통일 (2026-10-12)
+   style.css의 760px 이하 규칙은 교육과정·과목선택 탭만 16~24px로 키워 두어, 인사말·갤러리(13~17px)와 크기가 들쭉날쭉했다.
+   모바일 페이지에서는 아래 5단계로 맞춘다. PC 화면(index.html)은 이 파일을 읽지 않으므로 그대로. */
+:root{
+  --fs-title:17px;   /* 탭 제목: 학교장 인사말, 교육과정 편성표, 과목 선택 가이드 … */
+  --fs-head:15px;    /* 카드·펼침 칸 제목, 학기·선택군 이름 */
+  --fs-body:14px;    /* 본문, 과목명, 선택지, 버튼 */
+  --fs-sub:12.5px;   /* 보조 설명, 작은 글, 주석, 태그라인 */
+  --fs-chip:12px;    /* 배지·구분 칩 */
+}
+.m-main h1{ font-size:var(--fs-title); }
+.m-main .lede{ font-size:var(--fs-sub); }
+
+/* 탭 머리글 */
+.m-main .tab-head h3, .m-main .cur26-title h4, .m-main .sg-lead h4{ font-family:'Noto Serif KR', var(--title); font-weight:700; font-size:var(--fs-title); line-height:1.35; letter-spacing:-.01em; color:var(--ink); }
+.m-main .tagline, .m-main .cur26-title span{ font-size:var(--fs-sub); }
+.m-main .cur26-title{ margin-bottom:10px; }
+
+/* 본문 */
+.m-main .greeting-body p, .m-main .cur26, .m-main .cur26-lead, .m-main .sg-lead p,
+.m-main .cur26-term p, .m-main .cur26-key, .m-main .cur26-vsrow, .m-main .cur26-tgoal,
+.m-main .cur26-tgrade, .m-main .cur26-tex, .m-main .cur26-rec p, .m-main .cur26-read p,
+.m-main .cur26 li, .m-main .cur26 td, .m-main .cur26 th, .m-main .cur26-mini,
+.m-main .sg-hint, .m-main .pl-semsum, .m-main .pl-row, .m-main .pl-saved{ font-size:var(--fs-body); line-height:1.7; }
+.m-main .greeting-body p:first-child{ font-size:var(--fs-body); }
+.m-main .greeting-sign{ font-size:26px; }
+.m-main .cur26-lead{ margin-bottom:10px; }
+
+/* 카드·펼침 칸 제목 */
+.m-main .cur26-group summary b, .m-main .cur26-gtxt b, .m-main .cur26-sub .cur26-gtxt b, .m-main .pl-gtxt b,
+.m-main .cur26-semhead h5, .m-main .cur26-slothead h5, .m-main .cur26-tchead b, .m-main .cur26-step > b,
+.m-main .cur26-rechead, .m-main .sg-title, .m-main .feature-card-title, .m-main .gallery-carousel .t{ font-size:var(--fs-head); line-height:1.4; }
+.m-main .cur26-gtxt{ font-size:var(--fs-body); line-height:1.45; }
+.m-main .cur26-gid{ width:40px; height:40px; font-size:var(--fs-head); }
+.m-main .cur26-gid.sm{ width:auto; height:auto; font-size:var(--fs-chip); }
+.m-main .cur26-group summary, .m-main .cur26 .cur26-group > summary{ padding:12px 12px; }
+.m-main .cur26 .cur26-group > summary .cur26-toggle{ width:34px; height:34px; }
+.m-main .sg-num{ font-size:24px; }
+.m-main .sg-sub{ font-size:var(--fs-sub); }
+
+/* 과목명·선택지·버튼 */
+.m-main .cur26-name, .m-main .pl-name, .m-main .cur26-pickinfo b, .m-main .cur26-gsubj h6, .m-main .pl-subj h6,
+.m-main .cur26-orig, .m-main .cur26-toggle, .m-main .cur26-seg button, .m-main .sg-btn, .m-main .cur26-slotsum{ font-size:var(--fs-body); }
+.m-main .cur26-seg button{ min-height:40px; }
+.m-main .pl-opt{ min-height:46px; padding:10px 12px; }
+.m-main .sg-btn{ padding:12px 14px; }
+
+/* 보조 설명 */
+.m-main .cur26-group summary small, .m-main .cur26-gtxt small, .m-main .pl-gtxt small, .m-main .cur26-note,
+.m-main .cur26-keys, .m-main .cur26-keys small, .m-main .cur26-legend, .m-main .cur26-semhead span,
+.m-main .cur26-pickinfo small, .m-main .cur26-slotnote, .m-main .cur26-twarn, .m-main .cur26-vsrow small,
+.m-main .cur26-tgrade small, .m-main .cur26-tex small, .m-main .cur26-recsample small, .m-main .cur26-rankcap,
+.m-main .cur26-sumcard span, .m-main .cur26-splitbar i, .m-main .cur26-brace, .m-main .cur26-bar em, .m-main .cur26-tot,
+.m-main .cur26-colname, .m-main .cur26-mini thead th, .m-main .cur26-mini tbody th, .m-main .cur26-credit small,
+.m-main .cur26-pickcr, .m-main .cur26-readkey, .m-main .cur26-vsrow > .lb, .m-main .pl-opt small,
+.m-main .feature-card-desc, .m-main .gallery-carousel .d, .m-main .gallery-carousel .desc, .m-main p.desc,
+.m-main .quick-chip, .m-main .cur26-step .n{ font-size:var(--fs-sub); }
+
+/* 배지·칩 */
+.m-main .cur26-tag, .m-main .cur26-type, .m-main .cur26-subj, .m-main .cur26-badge, .m-main .cur26-gtxt .cur26-badge,
+.m-main .cur26-gfour, .m-main .cur26-sample, .m-main .cur26-nm, .m-main .cur26-nobadge, .m-main .cur26-mix i,
+.m-main .cur26-vsrow [data-l]::before, .m-main .sg-kind, .m-main .pl-count{ font-size:var(--fs-chip); }
+
+/* 큰 숫자(학점 합계 등)는 강조용이라 본문보다 크게, 다만 한 단계씩 낮춤 */
+.m-main .cur26-sumcard b{ font-size:24px; }
+.m-main .cur26-splitbar i b, .m-main .cur26-credit b, .m-main .cur26-pickcr b, .m-main .cur26-readcr b{ font-size:17px; }
+.m-main .cur26-slotsum b{ font-size:18px; }
+.m-main .cur26-splitbar{ height:48px; }
