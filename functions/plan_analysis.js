@@ -6,6 +6,7 @@
  * 이 파일은 네트워크 호출을 하지 않는다(호출은 index.js). 그래서 테스트가 쉽다.
  */
 const DATA = require("./curriculum_data.json");
+const { checkCurriculumReply } = require("./curriculum_guard");
 
 // 분석에 쓰는 모델. 판단의 정확도가 중요한 기능이라 챗봇 답변과 같은 상위 모델 + 높은 추론 강도를 쓴다.
 const ANALYSIS_MODEL = "gpt-5.4";
@@ -110,7 +111,7 @@ function sanitizeAnalysis(raw, data = DATA) {
     strengths: list(o.strengths, 4),
     gaps: list(o.gaps, 3),
     majors,
-    tips: list(o.tips, 3).filter((t) => tipMentionsKnown(t, data)),
+    tips: list(o.tips, 3).filter((t) => tipMentionsKnown(t, data) && !checkCurriculumReply(t, data).violations.length),
     caveat: clip(o.caveat) || "대학마다 요구하는 과목이 달라서, 지원하려는 대학의 안내를 꼭 확인해 주세요.",
   };
 }

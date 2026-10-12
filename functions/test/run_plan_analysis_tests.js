@@ -75,7 +75,7 @@ check("기기 ID 검증", deviceHash("a".repeat(16)) && !deviceHash("short") && 
   r = await consumeDeviceQuota(db, "t", h, t0 + 6 * 3600000);
   check("31번째는 하루 초과로 거절", !r.ok && r.which === "day");
   check("다음 날은 다시 가능", (await consumeDeviceQuota(db, "t", h, t0 + 24 * 3600000)).ok);
-  check("한도 값: IP 300/시간, 전체 1000/일", LIMITS.analyzePerHour.max === 300 && LIMITS.analyzeGlobalPerDay === 1000);
+  check("한도 값: IP 1000/시간, 전체 2000/일", LIMITS.analyzePerHour.max === 1000 && LIMITS.analyzeGlobalPerDay === 2000);
   done();
 })();
 function done() {

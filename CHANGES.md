@@ -1,3 +1,16 @@
+# 2026-10-12 (3) 분석 한도 상향 · 챗봇 편성표 검수 강화
+
+- **분석 한도**: IP 시간당 1000회, 전체 하루 2000회(기기별 시간당 10·하루 30은 그대로). `functions/rate_limit.js`.
+- **편성표 정확도 점검**
+  - 신규 `tools/verify-curriculum-pdf.py`(`npm run test:pdf`): `files/curriculum-2026.pdf`와 `functions/curriculum_data.json`을 과목 단위(순서·이름·유형·기본/운영학점·성적처리·학기별/총 학점)로 대조. 현재 **67개 선택과목·32개 지정과목 모두 일치**(의도적으로 틀리게 바꿔 잡히는 것도 확인).
+  - 챗봇 지식(CUR01~14)·편성표 요약 프롬프트도 데이터와 일치(과목 누락 0, 선택군 정원 불일치 0, `gen-curriculum-core`로 재생성해도 변경 없음).
+- **편성표 검수 하네스**(신규 `functions/curriculum_guard.js`, `generateReply`에 연결): 답변을 보내기 전에 ① 표의 과목이 그 선택군에 있는가 ② 없는 과목이 아닌가 ③ 학기 소제목과 선택군이 맞는가 ④ "N개 중 M과목"·"과목당 K학점" 숫자가 맞는가 ⑤ 학기·선택군이 함께 나온 문장이 맞는가를 코드로 검사. 어긋나면 위반 내용을 알려 주고 모델에게 **한 번 다시 쓰게** 하고(웹 검색 없이), 그래도 어긋나면 **문제 행만 빼고 안내 문구**를 붙임. 오탐을 피하려고 문장 속 과목 이름("경제학과" 등)은 검사하지 않음. AI 분석의 "바꿔 볼 제안"도 같은 검사를 통과한 것만 보여 줌.
+- 테스트: `npm run test:curguard`(단위 24 + 연결 8), 전체 `npm test` 포함. 기존 테스트 하나가 편성표에 없는 과목(생명과학Ⅰ)을 예시로 써서 실제 과목으로 고침.
+
+배포: `firebase deploy --only functions:analyzePlan,functions:chatWithAI,functions:curriculumAdvice`
+
+---
+
 # 2026-10-12 (2) 메인 화면 속도 · 분석 한도(기기별) · 분석 결과로 챗봇 이어가기
 
 - **하단 아이콘**: 사용법 / 홈 화면에 추가 두 개뿐. 홈 화면 앱(standalone·fullscreen·minimal-ui, 안드로이드 TWA)으로 열면 "홈 화면에 추가"는 숨김.

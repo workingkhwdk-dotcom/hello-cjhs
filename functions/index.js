@@ -81,6 +81,7 @@ const { parseResponse, finalizeReply } = require("./web_search");
 const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
+const { checkCurriculumReply, feedbackFor, repairCurriculumReply } = require("./curriculum_guard");
 const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota } = require("./rate_limit");
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
@@ -374,6 +375,8 @@ async function generateReply(message, history, extraSystem = "") {
   // 나중에 Anthropic 등 다른 provider로 되돌리려면 이 블록만 교체하면 됩니다.
   // 웹 검색의 도메인 제한(allowed_domains)은 Responses API의 web_search 도구에서만 되기
   // 때문에 이 호출만 /v1/responses를 쓴다(가드·모더레이션 호출은 그대로 chat/completions).
+  // extraInput: 검수 재작성 때 덧붙이는 대화(초안 + 검수 안내). 재작성에는 웹 검색 도구를 주지 않는다.
+  const askModel = async (extraInput = []) => {
   const openaiRes = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -397,9 +400,10 @@ async function generateReply(message, history, extraSystem = "") {
           content: typeof h.content === "string" ? safeSlice(h.role === "assistant" ? enforceSchoolFacts(h.content).text : h.content, MAX_MESSAGE_LENGTH) : "",
         })),
         { role: "user", content: message },
+        ...extraInput,
       ],
       // 검색 도구는 게이트가 열었을 때만, 주제에 맞는 공식 도메인으로 좁혀서, 호출 횟수 상한과 함께 준다.
-      ...buildToolConfig(searchPlan),
+      ...(extraInput.length ? {} : buildToolConfig(searchPlan)),
     }),
   });
 
@@ -408,9 +412,32 @@ async function generateReply(message, history, extraSystem = "") {
     logger.error("AI API error", errText);
     throw Object.assign(new Error("AI API error"), { upstreamFailed: true });
   }
+  return parseResponse(await openaiRes.json());
+  };
 
-  const parsed = parseResponse(await openaiRes.json());
+  const parsed = await askModel();
   let reply = (parsed.text && finalizeReply(parsed)) || "죄송해요, 답변을 생성하지 못했어요.";
+  // 편성표 검수(curriculum_guard.js): 과목·선택군·학기·정원이 확정 편성표와 다르면 한 번 다시 쓰게 하고, 그래도 다르면 문제 행을 빼고 안내한다.
+  if (parsed.text) {
+    const cg1 = checkCurriculumReply(reply);
+    if (cg1.violations.length) {
+      logger.warn("편성표 불일치 답변 — 재작성", { violations: cg1.violations.map((v) => `${v.kind}: ${v.detail}`) });
+      try {
+        const retry = await askModel([{ role: "assistant", content: safeSlice(reply, MAX_MESSAGE_LENGTH * 4) }, { role: "user", content: feedbackFor(cg1.violations) }]);
+        const retryReply = retry.text ? finalizeReply(retry) : "";
+        const cg2 = retryReply ? checkCurriculumReply(retryReply) : { violations: cg1.violations };
+        if (retryReply && !cg2.violations.length) { reply = retryReply; }
+        else {
+          logger.warn("편성표 불일치 — 재작성 후에도 남아 행 제거", { violations: cg2.violations.map((v) => `${v.kind}: ${v.detail}`) });
+          const base = retryReply && cg2.violations.length <= cg1.violations.length ? retryReply : reply;
+          reply = repairCurriculumReply(base, retryReply && base === retryReply ? cg2.violations : cg1.violations);
+        }
+      } catch (err) {
+        logger.warn("편성표 재작성 실패 — 문제 행 제거", err);
+        reply = repairCurriculumReply(reply, cg1.violations);
+      }
+    }
+  }
   // 확정된 학교 사실(남학교 등)과 어긋나는 문장은 서버가 지우고 정정한다(fact_guard.js).
   const fg = enforceSchoolFacts(reply);
   if (fg.violations.length) logger.warn("학교 사실 위반 답변 정정", { violations: fg.violations });
