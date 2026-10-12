@@ -58,7 +58,8 @@ export function renderPlanner(root) {
   function semPanel(si, idx) {
     const taken = takenIn();
     const next = idx < SEM_TABS.length ? `<button type="button" class="btn btn-point pl-next" data-k="next" data-tab="${idx + 1}">${idx + 1 < SEM_TABS.length ? `다음: ${SEM[SEM_TABS[idx + 1]]} →` : "내 교육과정 보기 →"}</button>` : "";
-    return `<p class="pl-semsum"><b>${SEM[si]}</b> 선택 학점 <b>${pickedCredits(si)}</b> / ${TOTALS.elective[si]}</p>
+    const reset = pickedCount() ? `<button type="button" class="pl-reset-top" data-k="reset" data-reset="1" aria-label="내 선택 초기화"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>내 선택 초기화</button>` : "";
+    return `<div class="pl-semtop"><p class="pl-semsum"><b>${SEM[si]}</b> 선택 학점 <b>${pickedCredits(si)}</b> / ${TOTALS.elective[si]}</p>${reset}</div>
       ${groupsOf(si).map(g => groupHtml(g, taken)).join("")}${next}`;
   }
 
@@ -95,8 +96,7 @@ export function renderPlanner(root) {
   }
 
   function resultPanel() {
-    return `<div class="pl-result"></div>
-      <button type="button" class="btn btn-ghost pl-reset" data-k="reset" data-reset="1">처음부터 다시 고르기</button>`;
+    return `<div class="pl-result"></div>`;
   }
 
   function draw(focusKey) {

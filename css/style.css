@@ -1308,3 +1308,10 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
   .cur26-rank b{ font-size:12.5px; }
   .cur26-rank small{ font-size:11px; }
 }
+
+/* 과목 선택 화면 상단: 학점 요약 + 내 선택 초기화(작은 아이콘 버튼) */
+.pl-semtop{ display:flex; align-items:flex-start; gap:8px; margin-bottom:12px; }
+.pl-semtop .pl-semsum{ flex:1; min-width:0; margin:0; }
+.pl-reset-top{ flex:none; display:inline-flex; align-items:center; gap:5px; align-self:stretch; padding:0 11px; border:1.5px solid var(--sep); border-radius:12px; background:#fff; color:var(--ink-2); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.pl-reset-top svg{ width:16px; height:16px; }
+.pl-reset-top:hover{ color:var(--accent); border-color:var(--accent-2); }

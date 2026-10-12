@@ -45,3 +45,28 @@ body{ padding-bottom:calc(62px + env(safe-area-inset-bottom)); }
   .mt-spot{ transition:none; }
   .mt-spot.pulse::after{ animation:none; }
 }
+
+/* 홈 하단: 홈 화면 추가 · 사용법 — 작은 아이콘 버튼 */
+.m-help-icons{ display:flex; gap:6px; margin-left:auto; }
+.m-ico-btn{ display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 11px 0 8px; border:1px solid var(--sep); border-radius:999px; background:var(--surface); color:var(--accent-2); font-family:var(--ui); font-size:11.5px; font-weight:700; letter-spacing:-.02em; cursor:pointer; box-shadow:0 1px 2px rgba(15,23,42,.05); }
+.m-ico-btn svg{ width:16px; height:16px; flex:none; }
+.m-ico-btn:active{ background:var(--accent-tint); }
+
+/* 홈 화면 추가 안내 바텀시트(js/add-to-home.js) */
+.a2hs-layer{ position:fixed; inset:0; z-index:1000; background:rgba(10,20,40,.55); display:flex; align-items:flex-end; justify-content:center; animation:mfade .18s ease; }
+.a2hs-sheet{ width:100%; max-width:520px; background:#fff; border-radius:22px 22px 0 0; padding:8px 18px calc(18px + env(safe-area-inset-bottom)); font-family:var(--ui); box-shadow:0 -18px 40px -12px rgba(0,0,0,.4); }
+.a2hs-grab{ width:38px; height:4px; border-radius:2px; background:var(--fill-strong); margin:4px auto 12px; }
+.a2hs-sheet h2{ margin:0; font-size:17px; color:var(--accent); }
+.a2hs-sub{ margin:2px 0 12px; font-size:12.5px; color:var(--ink-2); }
+.a2hs-seg{ display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:3px; background:#f1f3f6; border-radius:11px; margin-bottom:12px; }
+.a2hs-seg button{ border:none; background:none; padding:7px 0; border-radius:9px; font:inherit; font-size:13px; font-weight:700; color:var(--ink-2); cursor:pointer; }
+.a2hs-seg button.on{ background:#fff; color:var(--accent); box-shadow:0 1px 3px rgba(15,23,42,.12); }
+.a2hs-steps{ list-style:none; margin:0 0 12px; padding:0; display:flex; flex-direction:column; gap:8px; }
+.a2hs-steps li{ display:flex; align-items:center; gap:12px; font-size:14px; line-height:1.45; color:var(--ink); word-break:keep-all; }
+.a2hs-ico{ position:relative; flex:none; width:40px; height:40px; border-radius:12px; background:var(--grad); color:#fff; display:flex; align-items:center; justify-content:center; }
+.a2hs-ico svg{ width:20px; height:20px; }
+.a2hs-ico em{ position:absolute; right:-4px; top:-4px; width:17px; height:17px; border-radius:50%; background:var(--point); color:var(--accent); font-style:normal; font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.a2hs-go,.a2hs-close{ display:block; width:100%; border:none; border-radius:12px; padding:11px; font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+.a2hs-go{ background:var(--grad); color:#fff; margin-bottom:8px; }
+.a2hs-go[hidden]{ display:none; }
+.a2hs-close{ background:var(--fill); color:var(--ink-2); }
