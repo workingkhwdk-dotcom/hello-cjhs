@@ -1,4 +1,4 @@
-// 모바일 첫 방문 안내 — 주요 기능 위에 펄스(번지는 원) 표시와 말풍선을 차례로 띄운다.
+// 모바일 첫 방문 안내 2단계(사용 가이드) — 1단계 홈 화면 추가 안내(js/install-guide.js)가 닫힌 뒤 열린다. 주요 기능 위에 펄스(번지는 원) 표시와 말풍선을 차례로 띄운다.
 // 처음 한 번만 자동으로 열리고(localStorage), 홈 하단 "사용법 다시 보기"로 언제든 다시 볼 수 있다.
 // 대상 요소가 화면에 없으면(숨김 등) 그 단계는 건너뛴다.
 const KEY = "cjhs_m_tour_done_v1";
@@ -7,6 +7,7 @@ const STEPS = [
   { sel: '.m-tabbar .m-tab[data-sec="apply"]', title: "입학 상담 신청", text: "방문·전화 상담을 여기서 바로 신청할 수 있어요." },
   { sel: '.m-tabbar .m-tab[data-sec="chat"]', title: "챗봇 중앙이", text: "입학·교육과정·학교생활, 궁금한 점을 AI 챗봇에게 언제든 물어보세요." },
   { sel: ".m-tabs-sticky .content-tabs", title: "학교 둘러보기", text: "인사말·교육과정·과목선택·갤러리·특색활동을 탭으로 넘겨 보세요." },
+  { sel: '.m-tabs-sticky .content-tabs button[data-tab="career"]', title: "3년 선택과목 미리 짜 보기", text: "교육과정 탭에서 우리 학교 3년 편성표를 보고, 과목선택 탭의 '우리 학교 3년 과목 짜보기'에서 2·3학년 선택과목을 직접 골라 나만의 3개년 교육과정을 모의로 구성해 볼 수 있어요. 고른 과목은 이 휴대폰에 저장되고, '선택 초기화'로 언제든 지울 수 있어요." },
   { sel: '.m-tabbar .m-tab[data-sec="qna"]', title: "Q&A 게시판", text: "직접 질문을 남기면 선생님이 답변해 드려요." },
 ];
 
