@@ -1,8 +1,16 @@
-// PC 첫 방문 안내 — "휴대폰으로도 볼 수 있어요" 창(모바일 주소 QR + 링크 복사).
-// 처음 한 번만 자동으로 열리고(localStorage), 하단 "휴대폰으로 보기" 버튼으로 언제든 다시 열 수 있다.
-const KEY = "cjhs_pc_mobile_notice_v1";
+// PC 접속 안내 — "휴대폰으로도 볼 수 있어요" 창(모바일 주소 QR + 링크 복사).
+// PC로 들어올 때마다(브라우저 세션당 한 번) 자동으로 열린다. "다시 보지 않음"에 체크하고 닫으면 쿠키를 남겨,
+// 그 쿠키가 남아 있는 동안(1년, 또는 방문자가 쿠키를 지우기 전까지)은 자동으로 열리지 않는다.
+// 하단 "휴대폰으로 보기" 버튼으로는 언제든 다시 열 수 있다.
+const COOKIE = "cjhs_pc_mobile_notice_hide";
+const SESSION_KEY = "cjhs_pc_mobile_notice_seen";
+const ONE_YEAR = 60 * 60 * 24 * 365;
 
-function store(fn) { try { return fn(localStorage); } catch (e) { return null; } }
+const hidden = () => document.cookie.split("; ").some((c) => c === `${COOKIE}=1`);
+function setHidden(on) {
+  document.cookie = on ? `${COOKIE}=1; max-age=${ONE_YEAR}; path=/; SameSite=Lax` : `${COOKIE}=; max-age=0; path=/; SameSite=Lax`;
+}
+function session(fn) { try { return fn(sessionStorage); } catch (e) { return null; } }
 const mobileUrl = () => new URL("mobile.html", location.href).href;
 
 async function qrSvg(text) {
@@ -39,12 +47,16 @@ export async function showPcMobileNotice() {
           <div class="pmn-link"><input type="text" readonly value="${url}" aria-label="모바일 페이지 주소"><button type="button" class="pmn-copy">주소 복사</button></div>
         </div>
       </div>
-      <div class="pmn-actions"><button type="button" class="pmn-ok">확인</button></div>
+      <div class="pmn-actions">
+        <label class="pmn-hide"><input type="checkbox"${hidden() ? " checked" : ""}> 다시 보지 않음</label>
+        <button type="button" class="pmn-ok">확인</button>
+      </div>
     </div>`;
   document.body.appendChild(layer);
 
   function close() {
-    store((ls) => ls.setItem(KEY, "1"));
+    setHidden(layer.querySelector(".pmn-hide input").checked);
+    session((ss) => ss.setItem(SESSION_KEY, "1"));
     document.removeEventListener("keydown", onKey);
     layer.remove();
   }
@@ -68,8 +80,8 @@ export async function showPcMobileNotice() {
   else box.remove();
 }
 
-/** PC 첫 방문이면 안내 창을 띄운다. */
+/** "다시 보지 않음" 쿠키가 없고, 이번 브라우저 세션에서 아직 안 봤으면 안내 창을 띄운다. */
 export function maybeShowPcMobileNotice() {
-  if (store((ls) => ls.getItem(KEY))) return;
+  if (hidden() || session((ss) => ss.getItem(SESSION_KEY))) return;
   setTimeout(showPcMobileNotice, 900);
 }
