@@ -22,6 +22,13 @@ function load() {
   return picks;
 }
 const save = picks => { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch (e) { /* 저장 못 해도 화면은 동작 */ } };
+const RESET_EVENT = "cjhs:plan-reset";
+
+/** 이 기기에 저장된 3년 과목 선택을 지운다(모바일 홈 "내 선택 초기화" 등). 열려 있는 짜보기 화면도 처음 상태로 돌아간다. */
+export function clearPlan() {
+  try { localStorage.removeItem(KEY); } catch (e) { /* 저장소 사용 불가 */ }
+  window.dispatchEvent(new Event(RESET_EVENT));
+}
 
 export function renderPlanner(root) {
   if (!root) return;
@@ -103,6 +110,7 @@ export function renderPlanner(root) {
     const seg = [...SEM_TABS.map((si, i) => `${short(si)}${semDone(si) ? " ✓" : ""}`), "내 교육과정"]
       .map((t, i) => `<button type="button" class="${i === tab ? "on" : ""}" data-k="t${i}" data-tab="${i}">${t}</button>`).join("");
     root.innerHTML = `<p class="cur26-lead">1학년은 모두 같은 과목을 들어요. <b>2학년 1학기부터 3학년 2학기까지 4학기</b> 동안 선택군마다 정해진 수만큼 과목을 골라 3년 교육과정을 미리 만들어 보세요. 미리 생각해 보는 연습용이에요. 실제 개설·신청 방법은 학교 안내를 따라 주세요.</p>
+      ${pickedCount() ? `<div class="pl-saved"><span>고른 과목 <b>${pickedCount()}</b>/${TOTAL_PICKS}개 · 이 기기에 저장됨</span><button type="button" class="pl-saved-reset" data-k="reset-top" data-reset="1">선택 초기화</button></div>` : ""}
       <div class="cur26-seg" role="tablist">${seg}</div>
       ${tab < SEM_TABS.length ? semPanel(SEM_TABS[tab], tab) : resultPanel()}`;
     const el = focusKey && root.querySelector(`[data-k="${CSS.escape(focusKey)}"]`);
@@ -131,6 +139,13 @@ export function renderPlanner(root) {
       tab = 0;
     } else return;
     draw(b.dataset.k);
+  });
+
+  window.addEventListener(RESET_EVENT, () => {
+    if (!root.isConnected) return;
+    picks = load();
+    tab = 0;
+    draw();
   });
 
   draw();

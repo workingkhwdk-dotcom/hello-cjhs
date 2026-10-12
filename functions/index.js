@@ -81,8 +81,9 @@ const { parseResponse, finalizeReply } = require("./web_search");
 const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
-const { LIMITS, createLimiter, blocked, consumeDaily } = require("./rate_limit");
+const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily } = require("./rate_limit");
 const { createAppCheckGate } = require("./app_check");
+const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
 
 admin.initializeApp();
@@ -102,6 +103,8 @@ const CHAT_MAX_INSTANCES = 100;
 const API_MAX_INSTANCES = 10;
 const chatLimiters = [createLimiter(LIMITS.chatPerMin), createLimiter(LIMITS.chatPerDay)];
 const planLimiters = [createLimiter(LIMITS.planPerMin)];
+const visitIncLimiter = createLimiter(LIMITS.visitPerDay);
+const visitReadLimiters = [createLimiter(LIMITS.visitReadPerMin)];
 const writeLimiters = [createLimiter(LIMITS.writePer10Min), createLimiter(LIMITS.writePerDay)];
 const authLimiters = [createLimiter(LIMITS.authPer10Min)];
 const TOO_MANY_MSG = "요청이 너무 많아요. 잠시 후 다시 시도해 주세요.";
@@ -535,6 +538,32 @@ exports.evaluatePlan = onRequest(
       return;
     }
     res.status(200).json({ result: out.result });
+  }
+);
+
+/**
+ * 메인 화면 방문자 수 (index.html·mobile.html 하단의 TODAY / TOTAL)
+ * POST { newVisit: boolean } -> { today, total }
+ * newVisit:true 면 오늘·전체를 1씩 올린 뒤 돌려준다(같은 IP는 하루 visitPerDay 회까지만 올림).
+ */
+exports.visitCounter = onRequest(
+  { cors: true, region: "asia-northeast3", maxInstances: API_MAX_INSTANCES },
+  async (req, res) => {
+    if (await appCheckBlocked(req, res)) return;
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "POST 요청만 허용됩니다." });
+      return;
+    }
+    if (blocked(req, res, visitReadLimiters, TOO_MANY_MSG)) return;
+    const wantsInc = (req.body || {}).newVisit === true;
+    const newVisit = wantsInc && visitIncLimiter.check(clientIp(req)).ok;
+    try {
+      const counts = await recordVisit(db, admin.firestore.FieldValue, { newVisit, date: kstDate() });
+      res.status(200).json(counts);
+    } catch (err) {
+      logger.error("visitCounter 실패", err);
+      res.status(500).json({ error: "방문자 수를 불러오지 못했어요." });
+    }
   }
 );
 

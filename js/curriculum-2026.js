@@ -319,7 +319,7 @@ const terms = items => `<div class="cur26-terms">${items.join("")}</div>`;
 
 // 접힘 카테고리(큰 묶음) / 그 안의 작은 접힘. name 속성 덕분에 지원 브라우저에서는 큰 묶음이 한 번에 하나만 펼쳐진다.
 const cat = (n, title, sub, body, group = "cur26-cat") => `<details class="cur26-group cur26-cat" name="${group}">
-  <summary><span class="cur26-gid">${n}</span><span class="cur26-gtxt"><b>${title}</b><small>${sub}</small></span>${toggle("펼쳐 보기", "접기")}</summary>
+  <summary><span class="cur26-gid">${n}</span><span class="cur26-gtxt"><b>${title}</b><small>${sub.replace(/ · /g, "\u00a0· ")}</small></span>${toggle("펼쳐 보기", "접기")}</summary>
   <div class="cur26-catbody">${body}</div></details>`;
 const part = (title, body) => `<details class="cur26-group cur26-sub">
   <summary><span class="cur26-gtxt"><b>${title}</b></span>${toggle("보기", "접기")}</summary>

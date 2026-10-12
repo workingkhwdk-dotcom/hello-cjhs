@@ -35,6 +35,8 @@ html,body{ margin:0; }
 body{
   background:var(--bg); color:var(--ink); font-family:var(--ui); font-size:15px; line-height:1.6;
   position:relative; overflow-x:hidden;
+  /* 한글 단어 중간에서 줄이 바뀌지 않게(예: "신\n청"). 한 줄보다 긴 영문·주소만 예외로 끊는다 */
+  word-break:keep-all; overflow-wrap:break-word;
 }
 a{ color:inherit; }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
@@ -533,7 +535,7 @@ input[type="checkbox"].chk:focus-visible{ outline:2px solid var(--accent-2); out
 .msg.typing span:nth-child(2){ animation-delay:.15s; } .msg.typing span:nth-child(3){ animation-delay:.3s; }
 @keyframes blink{ 0%,80%,100%{ opacity:.25; } 40%{ opacity:1; } }
 .chat-input-row{ display:flex; gap:8px; border-top:1px solid var(--sep); padding-top:14px; margin-top:6px; }
-.chat-input-row input{ flex:1; border:1.5px solid var(--sep); border-radius:12px; padding:11px 14px; font-size:14px; font-family:var(--ui); }
+.chat-input-row input{ flex:1; min-width:0; border:1.5px solid var(--sep); border-radius:12px; padding:11px 14px; font-size:14px; font-family:var(--ui); }
 .chat-input-row input:focus{ outline:none; border-color:var(--accent-2); }
 .chat-input-row button{ width:46px; height:46px; border-radius:12px; flex-shrink:0; }
 .quick-chip-row{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px; }
@@ -1157,6 +1159,10 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .pl-name{ font-size:15.5px; font-weight:800; }
 .pl-next{ margin-top:16px; width:100%; }
 .pl-reset{ margin-top:16px; }
+.pl-saved{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; padding:9px 12px; margin:0 0 12px; border-radius:12px; background:var(--accent-tint); font-size:13.5px; color:var(--ink-2); }
+.pl-saved b{ color:var(--accent); }
+.pl-saved-reset{ flex:none; border:1.5px solid var(--accent); border-radius:999px; background:#fff; color:var(--accent); padding:5px 12px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.pl-saved-reset:hover{ background:var(--accent); color:#fff; }
 .pl-row{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:8px 0; border-top:1px solid var(--sep); }
 .pl-row:first-child{ border-top:0; }
 .pl-row > .pl-name{ flex:1 1 auto; min-width:0; }
@@ -1186,7 +1192,7 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
   .pl-next{ width:auto; }
 }
 @media (max-width:760px){
-  .cur26-cat{ scroll-margin-top:96px; } /* 모바일 고정 탭 바(약 81px)에 칸 제목이 가리지 않게 */
+  .cur26-cat{ scroll-margin-top:12px; } /* 모바일 홈 탭 바가 더 이상 화면 위에 고정되지 않으므로 작은 여백만 둔다 */
   .cur26-catbody{ padding:12px 12px 14px; }
   .cur26-sub .cur26-gtxt b{ font-size:16.5px; }
   .pl-opts{ grid-template-columns:1fr; }
@@ -1221,7 +1227,7 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 @media (max-width:768px){
   .cur26 .cur26-catbody details.cur26-group{ margin-left:0; border-left-width:6px; } /* 하위 토글도 큰 칸과 같은 폭 */
   .cur26 .cur26-catbody details.cur26-group > summary::before{ margin:2px 0 0 0; }
-  .cur26 .cur26-catbody details.cur26-group .cur26-gtxt, .cur26 .cur26-catbody details.cur26-group .cur26-name{ min-width:0; overflow-wrap:anywhere; word-break:normal; }
+  .cur26 .cur26-catbody details.cur26-group .cur26-gtxt, .cur26 .cur26-catbody details.cur26-group .cur26-name{ min-width:0; overflow-wrap:anywhere; word-break:keep-all; }
   .cur26 .cur26-catbody details.cur26-group .cur26-gbody, .cur26 .cur26-catbody details.cur26-group .cur26-catbody{ padding-left:10px; padding-right:10px; }
   .cur26 .cur26-catbody details.cur26-group > summary{ padding:12px 10px; }
   .cur26 .cur26-catbody details.cur26-group .cur26-toggle{ margin-left:auto; }
@@ -1274,3 +1280,62 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 
 /* PC 인사말 탭: 상단 "학교장 인사말 / 환영합니다…" 머리줄 숨김 (2026-10-07). 관리자 페이지에서 쓰는 문구 데이터와 HTML은 그대로 두고 화면에서만 감춘다. */
 .intro-panel .tab-panel[data-panel="greeting"] > .tab-head{ display:none; }
+
+/* =========================================================
+   방문자 수(TODAY / TOTAL) — PC 메인(index.html) 오른쪽 아래, 모바일 홈 맨 아래(css/mobile.css)
+   눈에 띄지 않도록 작고 옅은 글씨. 숫자를 못 받으면 hidden 그대로 둔다(js/visitor-counter.js).
+   ========================================================= */
+.visit-counter{ display:flex; align-items:center; gap:6px; font-family:var(--ui); font-size:11px; letter-spacing:.04em; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+.visit-counter[hidden]{ display:none; }
+.visit-counter b{ font-weight:700; color:var(--ink-2); margin-left:2px; }
+.visit-counter i{ font-style:normal; opacity:.6; }
+.visit-counter-pc{ justify-content:flex-end; padding-right:4px; }
+.pc-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; }
+.pc-mobile-btn{ display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--accent); border-radius:999px; background:#fff; color:var(--accent); padding:7px 14px; font-family:var(--ui); font-size:13px; font-weight:800; cursor:pointer; }
+.pc-mobile-btn svg{ width:16px; height:16px; }
+.pc-mobile-btn:hover{ background:var(--accent); color:#fff; }
+
+/* PC 첫 방문: 휴대폰으로도 볼 수 있어요(js/pc-mobile-notice.js) */
+.pmn-layer{ position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,40,.55); }
+.pmn-box{ position:relative; width:100%; max-width:600px; background:#fff; color:var(--ink); border-radius:22px; padding:28px 30px 22px; font-family:var(--ui); box-shadow:0 30px 60px -20px rgba(0,0,0,.5); }
+.pmn-x{ position:absolute; top:10px; right:12px; width:36px; height:36px; border:none; border-radius:50%; background:none; font-size:24px; line-height:1; color:var(--ink-3); cursor:pointer; }
+.pmn-x:hover{ background:var(--fill); }
+.pmn-eyebrow{ font-size:12.5px; font-weight:800; color:var(--accent-2); }
+.pmn-box h2{ margin:4px 0 18px; font-size:21px; line-height:1.35; color:var(--accent); word-break:keep-all; }
+.pmn-body{ display:flex; gap:22px; align-items:flex-start; }
+.pmn-qr{ flex:none; width:168px; height:168px; padding:6px; border-radius:16px; border:1px solid var(--sep); background:#fff; }
+.pmn-qr svg{ display:block; width:100%; height:100%; }
+.pmn-text{ flex:1; min-width:0; }
+.pmn-text ol{ margin:0 0 14px; padding-left:20px; font-size:14.5px; line-height:1.65; word-break:keep-all; }
+.pmn-text li{ margin-bottom:6px; }
+.pmn-text b{ color:var(--accent); }
+.pmn-link{ display:flex; gap:6px; }
+.pmn-link input{ flex:1; min-width:0; border:1px solid var(--sep); border-radius:10px; padding:8px 10px; font:inherit; font-size:13px; color:var(--ink-2); background:#f6f8fb; }
+.pmn-copy{ flex:none; border:none; border-radius:10px; padding:8px 12px; background:var(--accent-tint); color:var(--accent); font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.pmn-actions{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:18px; }
+.pmn-hide{ display:inline-flex; align-items:center; gap:7px; font-size:14px; color:var(--ink-2); cursor:pointer; user-select:none; }
+.pmn-hide input{ width:18px; height:18px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.pmn-ok{ border:none; border-radius:999px; padding:10px 28px; background:var(--grad); color:#fff; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+@media (max-width:560px){ .pmn-body{ flex-direction:column; align-items:center; } }
+
+/* ===== 좁은 휴대폰(≤400px) 교육과정 가독성 보정 (2026-10-10) =====
+   - 선택군(A~I군) 머리글: "ㄴ" 표시·번호칸·간격을 줄여 글 칸을 넓히고, 배지가 펼침 버튼 위로 넘치지 않게 줄바꿈 허용
+   - 학점 막대(학교 지정 / 학생 선택 / 창체): 칸이 좁으면 글자와 숫자를 위아래로 놓아 잘리지 않게 */
+@media (max-width:400px){
+  .cur26 .cur26-catbody{ padding-left:8px; padding-right:8px; }
+  .cur26 .cur26-catbody details.cur26-group > summary::before{ display:none; }
+  .cur26 .cur26-catbody details.cur26-group > summary{ gap:8px; padding:12px 8px; }
+  .cur26 .cur26-catbody details.cur26-group .cur26-gid{ width:36px; height:36px; font-size:13px; }
+  .cur26 .cur26-group > summary .cur26-toggle{ width:34px; height:34px; }
+  .cur26 .cur26-gtxt .cur26-badge{ white-space:normal; }
+}
+@media (max-width:360px){
+  .cur26-splitbar i{ flex-direction:column; gap:0; font-size:11.5px; line-height:1.15; }
+  .cur26-splitbar i b{ font-size:17px; }
+}
+/* 석차등급 비율 막대: 휴대폰에서는 1·5등급 칸(10%)이 "1등급/~10%"를 잘라 먹으므로 다섯 칸을 같은 폭으로(비율은 아래 % 글자로 전달) */
+@media (max-width:760px){
+  .cur26-rank i{ flex:1 1 0 !important; }
+  .cur26-rank b{ font-size:12.5px; }
+  .cur26-rank small{ font-size:11px; }
+}

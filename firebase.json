@@ -4,9 +4,13 @@
     "ignore": [
       "firebase.json",
       "**/.*",
+      "**/.*/**",
       "**/node_modules/**",
       "functions/**",
       "README.md",
+      "**/*.md",
+      "docs/**",
+      "**/* [0-9].*",
       "firestore.rules",
       "storage.rules",
       "tools/**"
