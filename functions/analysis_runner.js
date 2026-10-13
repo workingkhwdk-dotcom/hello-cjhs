@@ -10,10 +10,10 @@
  */
 const { ANALYSIS_MODEL, ANALYSIS_SCHEMA, INSTRUCTIONS, buildAnalysisInput, sanitizeAnalysis } = require("./plan_analysis");
 
-const TOTAL_BUDGET_MS = 100000; // 서버 함수 제한(150초)·화면 제한(130초)보다 짧게 — 어떤 경우에도 이 안에 응답한다
+const TOTAL_BUDGET_MS = 240000; // 서버 함수 제한(300초)·화면 제한(270초)보다 짧게 — 어떤 경우에도 이 안에 응답한다
 const MIN_ATTEMPT_MS = 12000; // 이보다 적게 남았으면 새 시도를 시작하지 않고 바로 간이 분석으로 넘어간다
 const ATTEMPTS = [
-  { effort: "high", maxMs: 62000, maxTokens: 6000 },
+  { effort: "high", maxMs: 150000, maxTokens: 6000 },
   { effort: "low", maxMs: Infinity, maxTokens: 4000 }, // 남은 예산 전부
 ];
 

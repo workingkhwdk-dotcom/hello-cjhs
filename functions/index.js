@@ -590,7 +590,7 @@ exports.evaluatePlan = onRequest(
  * 응답이 JSON 형식을 어기면 한 번 더 시도하고, 그래도 안 되면 502.
  */
 exports.analyzePlan = onRequest(
-  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 150, memory: "512MiB" },
+  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 300, memory: "512MiB" },
   async (req, res) => {
     if (await appCheckBlocked(req, res)) return;
     if (req.method !== "POST") {
@@ -624,7 +624,7 @@ exports.analyzePlan = onRequest(
       return;
     }
     try {
-      // 전체 100초 예산 안에서 high → low 순으로 시도하고, 그래도 안 되면 학점 기반 간이 분석을 준다(analysis_runner.js). 그래서 여기서는 "실패 응답"이 나오지 않는다.
+      // 전체 240초 예산 안에서 high → low 순으로 시도하고, 그래도 안 되면 학점 기반 간이 분석을 준다(analysis_runner.js). 그래서 여기서는 "실패 응답"이 나오지 않는다.
       const done = await runAnalysis({ apiKey: OPENAI_API_KEY.value(), result: out.result, parseResponse, log: logger });
       res.status(200).json({ analysis: done.analysis, result: out.result, fallback: done.fallback });
     } catch (err) {

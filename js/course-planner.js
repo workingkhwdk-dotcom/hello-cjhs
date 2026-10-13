@@ -205,7 +205,7 @@ export function renderPlanner(root, { onChange } = {}) {
     out.innerHTML = thinkingHtml();
     const stopThinking = startThinking(out);
     let html;
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 130000) // 서버는 100초 안에 반드시 응답한다(analysis_runner.js) — 화면이 먼저 끊지 않게 그보다 길게;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 270000) // 서버는 240초 안에 반드시 응답한다(analysis_runner.js) — 화면이 먼저 끊지 않게 그보다 길게;
     try {
       const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks, deviceId: deviceId() }), signal: ctl.signal });
       const data = await res.json().catch(() => ({}));

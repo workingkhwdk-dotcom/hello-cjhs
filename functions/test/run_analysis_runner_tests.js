@@ -24,7 +24,7 @@ const run = (fetchFn, budgetMs) => { clock = 0; return runAnalysis({ fetchFn, ap
 
   // 2) 첫 시도 시간 초과 → 두 번째(낮은 강도)로 성공
   const efforts = []; let n = 0;
-  r = await run(async (url, opt) => { efforts.push(JSON.parse(opt.body).reasoning.effort); if (n++ === 0) { clock += 62000; throw Object.assign(new Error("t"), { name: "TimeoutError" }); } return { ok: true, json: async () => ({ text: good }) }; });
+  r = await run(async (url, opt) => { efforts.push(JSON.parse(opt.body).reasoning.effort); if (n++ === 0) { clock += 150000; throw Object.assign(new Error("t"), { name: "TimeoutError" }); } return { ok: true, json: async () => ({ text: good }) }; });
   check("시간 초과 후 강도를 낮춰 재시도", efforts.join() === "high,low" && !r.fallback && r.attempts === 2);
 
   // 3) 불완전(incomplete)·형식 오류·HTTP 오류·예외 → 모두 fallback, 예외 없음
@@ -40,16 +40,16 @@ const run = (fetchFn, budgetMs) => { clock = 0; return runAnalysis({ fetchFn, ap
 
   // 4) 전체 예산: 각 시도가 한도 끝까지 걸려도 예산을 넘지 않는다
   const timeouts = []; let calls = 0;
-  // 진짜 fetch는 주어진 시간(첫 시도 62초, 둘째는 남은 예산)에서 끊긴다 — 시계를 그만큼만 움직인다.
-  r = await run(async (url, opt) => { timeouts.push(opt.signal); clock = calls++ === 0 ? 62000 : TOTAL_BUDGET_MS; throw Object.assign(new Error("t"), { name: "TimeoutError" }); });
-  check("느린 호출이 반복돼도 총 시간이 예산(100초)을 넘지 않는다", r.ms <= TOTAL_BUDGET_MS && r.fallback === true);
+  // 진짜 fetch는 주어진 시간(첫 시도 150초, 둘째는 남은 예산)에서 끊긴다 — 시계를 그만큼만 움직인다.
+  r = await run(async (url, opt) => { timeouts.push(opt.signal); clock = calls++ === 0 ? 150000 : TOTAL_BUDGET_MS; throw Object.assign(new Error("t"), { name: "TimeoutError" }); });
+  check("느린 호출이 반복돼도 총 시간이 예산(240초)을 넘지 않는다", r.ms <= TOTAL_BUDGET_MS && r.fallback === true);
   check("각 시도에 AbortSignal 시간 제한을 건다", timeouts.every((s) => s && typeof s.aborted === "boolean"));
-  check("예산이 거의 남지 않으면 새 시도를 시작하지 않는다", (await run(async () => { clock += 95000; throw new Error("x"); })).attempts === 1);
+  check("예산이 거의 남지 않으면 새 시도를 시작하지 않는다", (await run(async () => { clock += TOTAL_BUDGET_MS - 5000; throw new Error("x"); })).attempts === 1);
 
   // 5) 시도별 시간
-  check("attemptTimeout: 상한과 남은 예산 중 작은 값", attemptTimeout(ATTEMPTS[0], 100000) === ATTEMPTS[0].maxMs && attemptTimeout(ATTEMPTS[1], 30000) === 30000 && attemptTimeout(ATTEMPTS[0], -5) === 0);
+  check("attemptTimeout: 상한과 남은 예산 중 작은 값", attemptTimeout(ATTEMPTS[0], TOTAL_BUDGET_MS) === ATTEMPTS[0].maxMs && attemptTimeout(ATTEMPTS[1], 30000) === 30000 && attemptTimeout(ATTEMPTS[0], -5) === 0);
   check("두 번째 시도가 첫 번째보다 낮은 추론 강도", ATTEMPTS[0].effort === "high" && ATTEMPTS[1].effort === "low");
-  check("서버 예산 < 함수 제한(150s) < … 화면 제한(130s)보다도 짧다", TOTAL_BUDGET_MS < 130000 && MIN_ATTEMPT_MS < TOTAL_BUDGET_MS);
+  check("서버 예산 < 함수 제한(300s)·화면 제한(270s)보다 짧다", TOTAL_BUDGET_MS < 270000 && MIN_ATTEMPT_MS < TOTAL_BUDGET_MS);
 
   // 6) 간이 분석은 형식을 지키고 서버 계산 값에만 근거한다
   const fb = fallbackAnalysis(result);

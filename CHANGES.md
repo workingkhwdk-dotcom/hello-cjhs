@@ -1,7 +1,7 @@
 # 2026-10-13 (3) AI 분석 시간 초과 구조적 차단 · 인사글 첫 화면 동시 표시
 
 - **내 커리큘럼 AI 분석이 "너무 오래 걸려 실패"하던 원인**: OpenAI 호출에 개별 제한 시간이 없었고, 형식 오류 시 최대 2번을 차례로 기다렸다. 느린 날에는 서버 제한(150초)과 화면 제한(120초)이 서로 어긋나, 화면이 먼저 끊고 "분석이 너무 오래 걸려서 멈췄어요"를 띄웠다.
-- **구조적 해결**(`functions/analysis_runner.js` 신설, `functions/index.js`): ① 전체 100초 예산 안에서만 시도하고, 각 호출에 남은 예산만큼의 `AbortSignal.timeout`을 건다. ② 1차 `high`(최대 62초) → 시간 초과·형식 오류·HTTP 오류·불완전 응답이면 2차 `low`(남은 예산)로 재시도. ③ 그래도 안 되면 서버가 계산한 학점만으로 만든 **간이 분석**(`fallback:true`, 문구에 간이 분석임을 명시)을 200으로 돌려준다 — `analyzePlan`은 더 이상 502를 내지 않는다. ④ 화면 제한을 130초로 늘려 서버(100초)보다 항상 길게 했다. 간이 분석은 저장하지 않아 "다시 분석하기"로 AI 분석을 받을 수 있다. 테스트: `functions/test/run_analysis_runner_tests.js`(`npm run test:analysis`, 16건). **서버 함수 배포가 필요하다**(`bash tools/deploy.sh`).
+- **구조적 해결**(`functions/analysis_runner.js` 신설, `functions/index.js`): ① 전체 240초 예산 안에서만 시도하고, 각 호출에 남은 예산만큼의 `AbortSignal.timeout`을 건다. ② 1차 `high`(최대 150초) → 시간 초과·형식 오류·HTTP 오류·불완전 응답이면 2차 `low`(남은 예산)로 재시도. ③ 그래도 안 되면 서버가 계산한 학점만으로 만든 **간이 분석**(`fallback:true`, 문구에 간이 분석임을 명시)을 200으로 돌려준다 — `analyzePlan`은 더 이상 502를 내지 않는다. ④ 서버 함수 제한을 300초, 화면 제한을 270초로 늘려 서버 예산(240초)보다 항상 길게 했다. 간이 분석은 저장하지 않아 "다시 분석하기"로 AI 분석을 받을 수 있다. 테스트: `functions/test/run_analysis_runner_tests.js`(`npm run test:analysis`, 16건). **서버 함수 배포가 필요하다**(`bash tools/deploy.sh`).
 - **메인 화면 인사글이 사진보다 늦게 뜨던 문제**(`js/greeting-first-paint.js` 신설, `index.render.js`, `mobile.render.js`): 본문이 Firestore 응답 뒤에야 그려졌다. 이제 첫 화면을 그릴 때 지난번 받아 둔 내용(localStorage) 또는 기본 문구로 바로 채우고, 최신 내용이 오면 같은 칸을 갱신한다.
 
 ---
