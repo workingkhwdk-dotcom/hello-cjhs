@@ -8,7 +8,8 @@ const MAX_CROP = 0.6; // 이 비율보다 많이 잘려야 하는 사진은 잘�
 
 export function greetingPhotoHtml(url) {
   const src = String(url).replace(/"/g, "&quot;");
-  return `<img class="gp-bg" src="${src}" alt="" aria-hidden="true"><img class="gp-fg" src="${src}" alt="학교장 사진">`;
+  // 흐린 배경용 사진은 lazy — 모바일처럼 숨겨 두는 화면에서는 두 번 내려받지 않는다. 본 사진은 먼저 받도록 우선순위를 높인다.
+  return `<img class="gp-bg" src="${src}" alt="" aria-hidden="true" loading="lazy" decoding="async"><img class="gp-fg" src="${src}" alt="학교장 사진" fetchpriority="high" decoding="async">`;
 }
 
 export function fitGreetingPhoto(slot) {
