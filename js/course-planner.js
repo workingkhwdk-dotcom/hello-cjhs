@@ -156,12 +156,52 @@ export function renderPlanner(root, { onChange } = {}) {
         <button type="button" class="btn btn-point pl-ai-go" data-ai="go">AI 분석 받기</button>`}</div></div>`;
   }
 
+  // 분석을 기다리는 동안 "중앙이가 생각하는 과정"을 단계별로 보여 준다. 서버가 진행 상황을 알려 주는 것은 아니고 시간에 따라 넘어가는 안내다:
+  // 마지막 단계는 결과가 올 때까지 계속 진행 중으로 두고, 막대도 끝까지 차지 않아서 오래 걸려도 멈춘 것처럼 보이지 않는다.
+  const THINK_STEPS = [
+    { at: 0, label: "고른 과목을 하나씩 확인해요" },
+    { at: 5, label: "교과별 학점 균형을 계산해요" },
+    { at: 13, label: "전공별로 이 조합이 얼마나 맞는지 견줘 봐요" },
+    { at: 25, label: "아쉬운 점과 바꿔 볼 제안을 정리해요" },
+    { at: 38, label: "결과를 읽기 좋게 다듬어요" },
+  ];
+  function thinkingHtml() {
+    return `<div class="pl-think">
+      <span class="pl-sr">AI가 분석하는 중이에요. 잠시만 기다려 주세요.</span>
+      <div aria-hidden="true">
+        <p class="pl-think-lead">중앙이가 고른 과목을 꼼꼼히 살펴보고 있어요.<br>보통 <b>30초~1분</b> 걸려요. 창을 닫지 말고 잠시만 기다려 주세요.</p>
+        <ol class="pl-think-steps">${THINK_STEPS.map(s => `<li><i class="pl-think-dot"></i><span>${s.label}</span></li>`).join("")}</ol>
+        <div class="pl-think-bar"><i></i></div>
+        <p class="pl-think-time"></p>
+      </div>
+    </div>`;
+  }
+  function startThinking(out) {
+    const box = out.querySelector(".pl-think");
+    if (!box) return () => {};
+    const lis = [...box.querySelectorAll(".pl-think-steps li")], bar = box.querySelector(".pl-think-bar i"), time = box.querySelector(".pl-think-time");
+    const t0 = Date.now();
+    const tick = () => {
+      if (!box.isConnected) { clearInterval(iv); return; } // 탭을 옮기거나 다시 그려서 사라지면 스스로 멈춘다
+      const sec = (Date.now() - t0) / 1000;
+      let cur = 0;
+      THINK_STEPS.forEach((s, i) => { if (sec >= s.at) cur = i; });
+      lis.forEach((li, i) => { li.className = i < cur ? "done" : i === cur ? "now" : ""; });
+      bar.style.width = `${(94 * (1 - Math.exp(-sec / 32))).toFixed(1)}%`;
+      time.textContent = sec < 60 ? `${Math.floor(sec)}초째 살펴보는 중` : `${Math.floor(sec)}초째 · 평소보다 오래 걸리지만 멈춘 게 아니에요. 계속 처리하고 있어요.`;
+    };
+    const iv = setInterval(tick, 500);
+    tick();
+    return () => clearInterval(iv);
+  }
+
   let aiSeq = 0;
   async function runAnalysis() {
     const out = root.querySelector(".pl-ai-out");
     if (!out) return;
     const my = ++aiSeq, sentPicks = JSON.parse(JSON.stringify(picks));
-    out.innerHTML = `<div class="pl-ai-loading"><span class="pl-spin" aria-hidden="true"></span><p>중앙이가 고른 과목을 꼼꼼히 살펴보고 있어요.<br>정확하게 보느라 20~40초쯤 걸려요.</p></div>`;
+    out.innerHTML = thinkingHtml();
+    const stopThinking = startThinking(out);
     let html;
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
     try {
@@ -172,7 +212,7 @@ export function renderPlanner(root, { onChange } = {}) {
     } catch (err) {
       console.error(err);
       html = `<p class="pl-ai-wait">${err && err.name === "AbortError" ? "분석이 너무 오래 걸려서 멈췄어요." : "AI 서버에 연결하지 못했어요."} 잠시 후 다시 시도해 주세요.</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
-    } finally { clearTimeout(timer); }
+    } finally { clearTimeout(timer); stopThinking(); }
     if (my === aiSeq && out.isConnected) out.innerHTML = html; // 그 사이 선택을 바꿨거나 탭을 옮겼다면 버린다
   }
 

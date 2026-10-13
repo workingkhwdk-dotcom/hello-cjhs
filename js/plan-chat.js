@@ -66,7 +66,11 @@
     hello.appendChild(row);
     ui.hello = hello;
   }
-  function mount(ui) { view = ui; render(); }
+  function mount(ui) {
+    // 대화 초기화 등으로 다시 붙일 때, 이전에 붙였던 안내 줄·첫 메시지가 남아 겹치지 않게 먼저 걷어 낸다.
+    if (view) { if (view.bar) view.bar.remove(); if (view.hello) view.hello.remove(); }
+    view = ui; render();
+  }
 
   window.CjhsPlanChat = { get: get, set: set, clear: clear, open: open, mount: mount };
 })();
