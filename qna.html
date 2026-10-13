@@ -23,14 +23,21 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="창원중앙고 상담">
 
+<!-- 첫 화면을 빠르게: 화면은 qna.render.js 가 먼저 그리고, 아래 파일들은 미리 병렬로 받아 둔다(qna.app.js 의 import 목록과 같게 유지 — 어긋나도 동작에는 지장 없음). -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="modulepreload" href="qna.app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap"></noscript>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div id="app"></div>
 <script type="module" src="js/app-check.js"></script>
 <script type="module" src="qna.render.js"></script>
+<script src="js/update-check.js" defer></script>
 </body>
 </html>

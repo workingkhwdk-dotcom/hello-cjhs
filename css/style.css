@@ -538,6 +538,10 @@ input[type="checkbox"].chk:focus-visible{ outline:2px solid var(--accent-2); out
 .chat-input-row input{ flex:1; min-width:0; border:1.5px solid var(--sep); border-radius:12px; padding:11px 14px; font-size:14px; font-family:var(--ui); }
 .chat-input-row input:focus{ outline:none; border-color:var(--accent-2); }
 .chat-input-row button{ width:46px; height:46px; border-radius:12px; flex-shrink:0; }
+.chat-tools{ display:flex; justify-content:flex-end; padding:0 2px 6px; }
+.chat-reset{ display:inline-flex; align-items:center; gap:5px; border:1px solid var(--sep); background:var(--surface,#fff); color:var(--ink-2); border-radius:999px; padding:5px 11px; font-size:12px; font-weight:700; font-family:var(--ui); cursor:pointer; }
+.chat-reset:hover:not(:disabled){ border-color:var(--accent-2); color:var(--accent-2); }
+.chat-reset:disabled{ opacity:.45; cursor:default; }
 .quick-chip-row{ display:flex; gap:6px; flex-wrap:wrap; margin:0 0 14px; }
 .quick-chip{
   font-size:12px; font-weight:700; padding:7px 12px; border-radius:20px; background:var(--fill);
