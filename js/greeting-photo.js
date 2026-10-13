@@ -13,14 +13,16 @@ export function greetingPhotoHtml(url) {
 }
 
 export function fitGreetingPhoto(slot) {
-  const fg = slot && slot.querySelector(".gp-fg");
-  if (!fg) return;
+  if (!slot || slot.__gpFit) return; // 사진이 나중에 바뀌어도(기본 사진 → 등록한 사진) 한 번만 연결한다
+  slot.__gpFit = true;
   const apply = () => {
-    if (!fg.naturalWidth || !slot.clientHeight) return;
+    const fg = slot.querySelector(".gp-fg");
+    if (!fg || !fg.naturalWidth || !slot.clientHeight) return;
     const img = fg.naturalWidth / fg.naturalHeight, box = slot.clientWidth / slot.clientHeight;
     const crop = 1 - Math.min(img, box) / Math.max(img, box); // cover로 채울 때 잘려 나가는 비율
     slot.classList.toggle("gp-contain", crop > MAX_CROP);
   };
-  fg.complete ? apply() : fg.addEventListener("load", apply);
+  slot.addEventListener("load", apply, true); // img의 load는 버블링되지 않아 캡처로 받는다
   if (window.ResizeObserver) new ResizeObserver(apply).observe(slot);
+  apply();
 }
