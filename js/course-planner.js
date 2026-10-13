@@ -125,7 +125,9 @@ export function renderPlanner(root, { onChange } = {}) {
     if (my === seq && box.isConnected) box.innerHTML = html; // 그 사이 탭을 옮겼다면 버린다
   }
 
+  let lastAi = null; // 지금 화면에 보여 준 분석(저장소를 못 읽어도 챗봇 이어가기에 쓴다)
   function analysisHtml(a) {
+    lastAi = a;
     const list = items => `<ul class="pl-ai-list">${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
     return `<div class="pl-ai-card">
       <p class="pl-ai-headline">${esc(a.headline)}</p>
@@ -246,8 +248,16 @@ export function renderPlanner(root, { onChange } = {}) {
     if (!b || !root.contains(b)) return;
     if (b.dataset.retry) { loadResult(); return; }
     if (b.dataset.ai === "chat") {
-      const a = loadAi(picks);
-      if (a && window.CjhsPlanChat) { window.CjhsPlanChat.set({ picks, analysis: a }); window.CjhsPlanChat.open(); }
+      // 어떤 경우에도 "눌렀는데 아무 일도 없는" 상태가 되지 않게 한다: 저장된 분석을 못 찾으면 지금 화면의 분석으로, 그것도 없으면 선택 과목만으로 이어간다(서버가 둘 다 받는다).
+      const chat = window.CjhsPlanChat;
+      const actions = b.closest(".pl-ai-actions");
+      if (actions) actions.parentNode.querySelectorAll(".pl-ai-note").forEach(n => n.remove());
+      if (!chat) {
+        if (actions) actions.insertAdjacentHTML("afterend", `<p class="pl-ai-wait pl-ai-note" role="alert">챗봇 연결 기능을 불러오지 못했어요. 페이지를 새로고침한 뒤 다시 눌러 주세요.</p>`);
+        return;
+      }
+      try { chat.set({ picks, analysis: loadAi(picks) || lastAi || null }); } catch (err) { console.error(err); }
+      chat.open();
       return;
     }
     if (b.dataset.ai) { runAnalysis(); return; }
