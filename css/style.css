@@ -60,7 +60,13 @@ a{ color:inherit; }
 
 /* ---------- 상단 배너 (전 페이지 공통) ---------- */
 header.site-header{ width:100%; line-height:0; }
-header.site-header .inner{ max-width:1600px; margin:0 auto; padding:28px 32px 0; }
+header.site-header .inner{ max-width:1600px; margin:0 auto; padding:28px 32px 0; position:relative; }
+/* 외국어 안내(intl.html) 바로가기 — PC는 배너 오른쪽 위, 모바일은 상단 배너 오른쪽 */
+.lang-pill{ display:inline-flex; align-items:center; gap:6px; line-height:1; text-decoration:none; font-family:var(--ui); font-size:13px; font-weight:800; color:var(--accent); background:rgba(255,255,255,0.94); border:1.5px solid rgba(20,40,79,0.18); border-radius:999px; padding:7px 12px; box-shadow:0 6px 16px -8px rgba(20,40,79,0.5); }
+.lang-pill svg{ width:15px; height:15px; flex:none; }
+.lang-pill span + span::before{ content:"·"; margin-right:6px; color:var(--ink-3); }
+.lang-pill:hover{ background:#fff; border-color:var(--accent); }
+header.site-header .lang-pill{ position:absolute; top:40px; right:44px; }
 .top-banner-img{ width:100%; height:auto; display:block; border-radius:var(--radius); border:1px solid rgba(15,23,42,0.10); box-shadow:0 1px 0 rgba(15,23,42,0.05), 0 28px 48px -22px rgba(20,40,79,0.55); }
 .top-banner-link{ display:block; line-height:0; }
 
