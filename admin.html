@@ -1035,32 +1035,29 @@
     }catch(err){ console.error('site_content 로딩 실패', id, err); return null; }
   }
 
-  // 폰으로 찍은 원본(수 MB~수십 MB)을 그대로 올리면 방문자 화면에서 사진이 느리게 뜨거나 안 뜬다.
-  // 긴 변 1600px, WebP(안 되면 JPEG)로 줄여 올린다. GIF·SVG나 이미 작은 파일은 그대로 둔다.
+  // 휴대폰 원본 사진(수 MB)을 그대로 올리면 방문자 화면에서 사진이 매우 느리게 뜬다.
+  // 올리기 전에 긴 변 1600px 이내 + WebP로 줄인다(보통 3~8MB → 150~300KB). 줄이지 못하면(GIF·SVG·오류) 원본 그대로 올린다.
+  const IMG_MAX_SIDE = 1600, IMG_QUALITY = 0.82;
   async function shrinkImage(file){
-    const MAX = 1600;
-    if(!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 300 * 1024) return file;
+    if(!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
     try{
-      const bmp = await createImageBitmap(file);
-      const k = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
-      const cv = document.createElement('canvas');
-      cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
-      cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-      for(const type of ['image/webp', 'image/jpeg']){
-        const blob = await new Promise(r => cv.toBlob(r, type, 0.85));
-        if(blob && blob.type === type) return blob.size < file.size ? blob : file;
-      }
-    }catch(err){ console.warn('이미지 축소 실패 — 원본으로 올립니다.', err); }
-    return file;
+      const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      const k = Math.min(1, IMG_MAX_SIDE / Math.max(bmp.width, bmp.height));
+      const w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
+      if(bmp.close) bmp.close();
+      const blob = await new Promise(res => cv.toBlob(res, 'image/webp', IMG_QUALITY));
+      return blob && blob.type === 'image/webp' && blob.size < file.size ? blob : file;
+    }catch(err){ console.warn('사진 축소 실패, 원본으로 올립니다:', err); return file; }
   }
 
   async function uploadContentImage(file, prefix){
     const body = await shrinkImage(file);
-    const ext = body === file ? '' : (body.type === 'image/webp' ? '.webp' : '.jpg');
-    const path = `site-images/${prefix}-${Date.now()}-${file.name}${ext}`;
+    const base = file.name.replace(/\.[^.]+$/, '');
+    const path = `site-images/${prefix}-${Date.now()}-${body === file ? file.name : base + '.webp'}`;
     const storageRef = ref(storage, path);
-    // 경로에 시각이 들어 있어 내용이 바뀌지 않으므로 오래 캐시해도 안전하다.
-    await uploadBytes(storageRef, body, { contentType: body.type || file.type, cacheControl: 'public,max-age=31536000' });
+    await uploadBytes(storageRef, body, { contentType: body.type || file.type, cacheControl: 'public, max-age=31536000' });
     return await getDownloadURL(storageRef);
   }
 

@@ -165,8 +165,8 @@ global.fetch = async (url, opts) => {
 
 const { chatWithAI, curriculumAdvice } = require("../index.js");
 
-function mockReqRes(message, history = [], headers = {}) {
-  const req = { method: "POST", body: { message, history }, headers };
+function mockReqRes(message, history = [], headers = {}, extraBody = {}) {
+  const req = { method: "POST", body: { message, history, ...extraBody }, headers };
   let captured = null;
   const res = {
     status(code) {
@@ -181,10 +181,10 @@ function mockReqRes(message, history = [], headers = {}) {
   return { req, res, get: () => captured };
 }
 
-async function callChat(message, history = [], headers = {}) {
+async function callChat(message, history = [], headers = {}, extraBody = {}) {
   lastMainPromptCapture = null;
   lastResponsesRequest = null;
-  const { req, res, get } = mockReqRes(message, history, headers);
+  const { req, res, get } = mockReqRes(message, history, headers, extraBody);
   await chatWithAI(req, res);
   const result = get();
   return { ...result, promptSeen: lastMainPromptCapture, responsesRequest: lastResponsesRequest };

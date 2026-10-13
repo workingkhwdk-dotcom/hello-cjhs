@@ -8,6 +8,7 @@ const ICON = {
   play: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9.5 5 2.5-5 2.5z" fill="currentColor"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>',
   compass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
   out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>',
 };
 
@@ -51,11 +52,24 @@ export function renderSubjectGuide(el) {
       <h4>나에게 맞는 과목, 미리 살펴보고 고르세요</h4>
       <p>아래 세 칸 중 궁금한 칸을 눌러 열어 보세요.</p>
     </div>
+    <div class="sg-mine" aria-live="polite">
+      <div class="sg-mine-txt"><b>내 선택</b><span class="sg-mine-count"></span>
+        <span class="sg-mine-bar" aria-hidden="true"><i></i></span></div>
+      <button type="button" class="sg-reset" disabled>${ICON.reset}<span>내 선택 초기화</span></button>
+    </div>
     ${box(1, "우리 학교 3년 과목 짜보기", "선택과목을 미리 골라 내 3개년 교육과정 완성하기", `<div id="sg-planner"></div>`)}
     ${box(2, "AI로 학과별 커리큘럼 추천받기", "가고 싶은 학과·전공에 맞는 선택과목 제안", `<div id="sg-ai"></div>`)}
     ${box(3, "선택과목 안내 자료", "영상 · 학교 자료 · 종합 네비게이션 바로가기", `<div class="sg-grid">${ITEMS.map(card).join("")}</div>`)}
   </section>`;
-  renderPlanner(el.querySelector("#sg-planner"));
+  const count = el.querySelector(".sg-mine-count"), bar = el.querySelector(".sg-mine-bar i"), resetBtn = el.querySelector(".sg-reset");
+  const planner = renderPlanner(el.querySelector("#sg-planner"), {
+    onChange: ({ count: n, total }) => {
+      count.textContent = n ? `${n} / ${total}과목 선택` : "아직 고른 과목이 없어요";
+      bar.style.width = `${total ? (n / total) * 100 : 0}%`;
+      resetBtn.disabled = !n;
+    },
+  });
+  resetBtn.addEventListener("click", () => planner && planner.reset());
   renderAiCurriculum(el.querySelector("#sg-ai"));
   wireCats(el);
 }

@@ -1163,6 +1163,10 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .pl-name{ font-size:15.5px; font-weight:800; }
 .pl-next{ margin-top:16px; width:100%; }
 .pl-reset{ margin-top:16px; }
+.pl-saved{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; padding:9px 12px; margin:0 0 12px; border-radius:12px; background:var(--accent-tint); font-size:13.5px; color:var(--ink-2); }
+.pl-saved b{ color:var(--accent); }
+.pl-saved-reset{ flex:none; border:1.5px solid var(--accent); border-radius:999px; background:#fff; color:var(--accent); padding:5px 12px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.pl-saved-reset:hover{ background:var(--accent); color:#fff; }
 .pl-row{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:8px 0; border-top:1px solid var(--sep); }
 .pl-row:first-child{ border-top:0; }
 .pl-row > .pl-name{ flex:1 1 auto; min-width:0; }
@@ -1289,7 +1293,34 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .visit-counter[hidden]{ display:none; }
 .visit-counter b{ font-weight:700; color:var(--ink-2); margin-left:2px; }
 .visit-counter i{ font-style:normal; opacity:.6; }
-.visit-counter-pc{ justify-content:flex-end; margin-top:18px; padding-right:4px; }
+.visit-counter-pc{ justify-content:flex-end; padding-right:4px; }
+.pc-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; }
+.pc-mobile-btn{ display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--accent); border-radius:999px; background:#fff; color:var(--accent); padding:7px 14px; font-family:var(--ui); font-size:13px; font-weight:800; cursor:pointer; }
+.pc-mobile-btn svg{ width:16px; height:16px; }
+.pc-mobile-btn:hover{ background:var(--accent); color:#fff; }
+
+/* PC 첫 방문: 휴대폰으로도 볼 수 있어요(js/pc-mobile-notice.js) */
+.pmn-layer{ position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(10,20,40,.55); }
+.pmn-box{ position:relative; width:100%; max-width:600px; background:#fff; color:var(--ink); border-radius:22px; padding:28px 30px 22px; font-family:var(--ui); box-shadow:0 30px 60px -20px rgba(0,0,0,.5); }
+.pmn-x{ position:absolute; top:10px; right:12px; width:36px; height:36px; border:none; border-radius:50%; background:none; font-size:24px; line-height:1; color:var(--ink-3); cursor:pointer; }
+.pmn-x:hover{ background:var(--fill); }
+.pmn-eyebrow{ font-size:12.5px; font-weight:800; color:var(--accent-2); }
+.pmn-box h2{ margin:4px 0 18px; font-size:21px; line-height:1.35; color:var(--accent); word-break:keep-all; }
+.pmn-body{ display:flex; gap:22px; align-items:flex-start; }
+.pmn-qr{ flex:none; width:168px; height:168px; padding:6px; border-radius:16px; border:1px solid var(--sep); background:#fff; }
+.pmn-qr svg{ display:block; width:100%; height:100%; }
+.pmn-text{ flex:1; min-width:0; }
+.pmn-text ol{ margin:0 0 14px; padding-left:20px; font-size:14.5px; line-height:1.65; word-break:keep-all; }
+.pmn-text li{ margin-bottom:6px; }
+.pmn-text b{ color:var(--accent); }
+.pmn-link{ display:flex; gap:6px; }
+.pmn-link input{ flex:1; min-width:0; border:1px solid var(--sep); border-radius:10px; padding:8px 10px; font:inherit; font-size:13px; color:var(--ink-2); background:#f6f8fb; }
+.pmn-copy{ flex:none; border:none; border-radius:10px; padding:8px 12px; background:var(--accent-tint); color:var(--accent); font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
+.pmn-actions{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:18px; }
+.pmn-hide{ display:inline-flex; align-items:center; gap:7px; font-size:14px; color:var(--ink-2); cursor:pointer; user-select:none; }
+.pmn-hide input{ width:18px; height:18px; margin:0; accent-color:var(--accent); cursor:pointer; }
+.pmn-ok{ border:none; border-radius:999px; padding:10px 28px; background:var(--grad); color:#fff; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+@media (max-width:560px){ .pmn-body{ flex-direction:column; align-items:center; } }
 
 /* ===== 좁은 휴대폰(≤400px) 교육과정 가독성 보정 (2026-10-10) =====
    - 선택군(A~I군) 머리글: "ㄴ" 표시·번호칸·간격을 줄여 글 칸을 넓히고, 배지가 펼침 버튼 위로 넘치지 않게 줄바꿈 허용
@@ -1312,3 +1343,62 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
   .cur26-rank b{ font-size:12.5px; }
   .cur26-rank small{ font-size:11px; }
 }
+
+/* ===== 과목 선택 가이드: 맨 위 "내 선택 N/19 · 내 선택 초기화" 줄 ===== */
+.sg-mine{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 16px; padding:12px 14px; background:var(--surface); border:1.5px solid var(--accent-tint); border-radius:16px; box-shadow:var(--shadow-card); }
+.sg-mine-txt{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:2px 8px; font-size:14px; color:var(--ink-2); }
+.sg-mine-txt b{ color:var(--accent); font-size:14.5px; }
+.sg-mine-count{ font-weight:700; color:var(--accent-2); }
+.sg-mine-bar{ flex:1 0 100%; height:6px; border-radius:99px; background:var(--fill); overflow:hidden; }
+.sg-mine-bar i{ display:block; height:100%; width:0; border-radius:inherit; background:var(--grad-point); transition:width .35s var(--ease); }
+.sg-reset{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:999px; border:1.5px solid rgba(225,29,72,.45); background:#FFF1F4; color:var(--danger); font:inherit; font-size:14px; font-weight:800; cursor:pointer; transition:transform .15s var(--ease), background .15s; }
+.sg-reset svg{ width:18px; height:18px; flex:0 0 auto; }
+.sg-reset:hover:not(:disabled){ background:#FFE0E7; }
+.sg-reset:active:not(:disabled){ transform:scale(.97); }
+.sg-reset:disabled{ opacity:.4; cursor:default; }
+@media (max-width:400px){ .sg-reset span{ font-size:13px; } .sg-reset{ padding:9px 11px; } }
+
+/* ===== 내 교육과정: 교과별 학점 막대 ===== */
+.pl-fields{ margin:0 0 14px; padding:14px; background:var(--surface); border:1px solid var(--sep); border-radius:16px; }
+.pl-fields h5{ margin:0 0 4px; font-size:15px; color:var(--accent); }
+.pl-flegend{ margin:0 0 10px; font-size:12.5px; color:var(--ink-2); display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.pl-flegend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-left:8px; } .pl-flegend i:first-child{ margin-left:0; }
+.pl-flegend .f, .pl-fbar .f{ background:var(--accent); } .pl-flegend .e, .pl-fbar .e{ background:#6C93D6; }
+.pl-frow{ display:grid; grid-template-columns:5.6em 1fr 3.6em; align-items:center; gap:8px; padding:3px 0; font-size:13.5px; }
+.pl-fname{ color:var(--ink); word-break:keep-all; }
+.pl-fbar{ display:flex; height:14px; border-radius:7px; overflow:hidden; background:var(--fill); }
+.pl-fbar i{ display:block; height:100%; }
+.pl-frow b{ text-align:right; color:var(--accent); } .pl-frow small{ font-weight:500; color:var(--ink-2); margin-left:1px; font-size:11px; }
+
+/* ===== 내 커리큘럼 AI 분석 ===== */
+.pl-ai{ margin:18px 0 6px; padding:16px 14px; border-radius:18px; background:linear-gradient(180deg,#F5F8FF 0%,#FFFFFF 100%); border:1.5px solid var(--accent-tint); }
+.pl-ai-title{ margin:0 0 8px; font-size:16px; color:var(--accent); }
+.pl-ai-title::before{ content:"AI"; display:inline-block; margin-right:8px; padding:2px 7px; border-radius:7px; background:var(--point); color:var(--accent); font-size:11px; font-weight:900; letter-spacing:.04em; vertical-align:2px; }
+.pl-ai-wait{ margin:0 0 12px; font-size:14.5px; line-height:1.65; color:var(--ink-2); word-break:keep-all; } .pl-ai-wait b{ color:var(--accent); }
+.pl-ai-loading{ display:flex; align-items:center; gap:14px; padding:6px 0; } .pl-ai-loading p{ margin:0; font-size:14.5px; line-height:1.65; color:var(--ink-2); }
+.pl-spin{ flex:0 0 auto; width:28px; height:28px; border-radius:50%; border:3px solid var(--accent-tint); border-top-color:var(--accent-2); animation:pl-spin .9s linear infinite; }
+@keyframes pl-spin{ to{ transform:rotate(360deg); } }
+.pl-ai-headline{ margin:0 0 8px; font-family:var(--title); font-size:19px; line-height:1.45; color:var(--accent); word-break:keep-all; }
+.pl-ai-text{ margin:0 0 10px; font-size:14.5px; line-height:1.7; color:var(--ink); word-break:keep-all; }
+.pl-ai-card h6{ margin:16px 0 6px; font-size:14px; color:var(--accent-2); }
+.pl-ai-list{ margin:0; padding-left:18px; font-size:14.5px; line-height:1.7; word-break:keep-all; } .pl-ai-list li{ margin:2px 0; }
+.pl-majors{ list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.pl-majors li{ padding:12px; border-radius:14px; background:var(--surface); border:1px solid var(--sep); }
+.pl-majors li.top{ border-color:var(--point); box-shadow:0 0 0 2px var(--point-tint); }
+.pl-mhead{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.pl-mname{ font-weight:800; color:var(--accent); font-size:15px; word-break:keep-all; }
+.pl-mname em{ display:inline-block; margin-right:6px; padding:1px 7px; border-radius:99px; background:var(--point); color:var(--accent); font-style:normal; font-size:11px; font-weight:900; }
+.pl-mhead b{ color:var(--accent); font-size:17px; } .pl-mhead small{ font-size:11px; font-weight:500; color:var(--ink-2); }
+.pl-mbar{ display:block; height:8px; margin:6px 0 8px; border-radius:99px; background:var(--fill); overflow:hidden; } .pl-mbar i{ display:block; height:100%; border-radius:inherit; background:var(--grad-point); }
+.pl-majors p{ margin:0; font-size:14px; line-height:1.65; word-break:keep-all; } .pl-majors .pl-mcaut{ margin-top:4px; color:var(--ink-2); font-size:13.5px; }
+.pl-ai-redo{ margin-top:12px; }
+@media (prefers-reduced-motion:reduce){ .pl-spin{ animation-duration:2.4s; } .sg-mine-bar i{ transition:none; } }
+
+/* ===== 분석 결과 → 챗봇 이어서 상담 ===== */
+.pl-ai-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.pl-ai-actions .btn{ margin:0; }
+.pl-ai-actions .pl-ai-chat{ flex:1 1 100%; justify-content:center; width:auto; }
+.plan-ctx{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 8px; padding:9px 12px; border-radius:12px; background:var(--point-tint); border:1px solid rgba(255,199,44,.55); font-size:13px; color:var(--accent); }
+.plan-ctx-txt{ display:flex; flex-direction:column; gap:1px; min-width:0; word-break:keep-all; } .plan-ctx-txt small{ color:var(--ink-2); font-size:12px; }
+.plan-ctx-off{ flex:0 0 auto; border:none; background:#fff; color:var(--accent); font:inherit; font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer; }
+.plan-ctx-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }

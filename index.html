@@ -16,21 +16,27 @@
 <title>미래를 디자인하는 선택, 창원중앙고 고교학점제</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=69c17ce5">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png?v=af9a5493">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=bafe8c09">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4dd5ad47">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#14284F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="창원중앙고 상담">
 
-<!-- 첫 화면을 빠르게: 화면은 index.render.js 가 먼저 그리고, 아래 파일들은 미리 병렬로 받아 둔다(index.app.js 의 import 목록과 같게 유지 — 어긋나도 동작에는 지장 없음). -->
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="modulepreload" href="index.app.js">
-<link rel="modulepreload" href="js/visitor-counter.js">
-<link rel="modulepreload" href="js/curriculum-2026.js">
-<link rel="modulepreload" href="js/subject-guide.js">
+<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+<script src="js/img-preload.js"></script>
+<script src="js/plan-chat.js"></script>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
+<link rel="preload" as="image" href="image/top-banner.webp?v=d95b14af" fetchpriority="high">
+<link rel="modulepreload" href="js/curriculum-2026.js">
+<link rel="modulepreload" href="js/subject-guide.js">
+<link rel="modulepreload" href="js/course-planner.js">
+<link rel="modulepreload" href="js/ai-curriculum.js">
+<link rel="modulepreload" href="js/reply-view.js">
+<link rel="modulepreload" href="js/visitor-counter.js">
 <link rel="modulepreload" href="js/greeting-photo.js">
 <link rel="modulepreload" href="js/content-defaults.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
