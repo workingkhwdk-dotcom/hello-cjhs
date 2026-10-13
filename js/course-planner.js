@@ -205,11 +205,11 @@ export function renderPlanner(root, { onChange } = {}) {
     out.innerHTML = thinkingHtml();
     const stopThinking = startThinking(out);
     let html;
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 130000) // 서버는 100초 안에 반드시 응답한다(analysis_runner.js) — 화면이 먼저 끊지 않게 그보다 길게;
     try {
       const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks, deviceId: deviceId() }), signal: ctl.signal });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.analysis) { saveAi(sentPicks, data.analysis); html = analysisHtml(data.analysis); }
+      if (res.ok && data.analysis) { if (!data.fallback) saveAi(sentPicks, data.analysis); /* 간이 분석은 저장하지 않아 다음에 AI 분석을 다시 받을 수 있다 */ html = analysisHtml(data.analysis); }
       else html = `<p class="pl-ai-wait">${esc(data.error || "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요.")}</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
     } catch (err) {
       console.error(err);
