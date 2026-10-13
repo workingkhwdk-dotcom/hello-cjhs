@@ -78,6 +78,7 @@ const { retrieveKnowledge, formatKnowledgeForPrompt, topKnowledgeScore } = requi
 const { CURRICULUM_CORE } = require("./curriculum_core");
 const { logUnanswered } = require("./unanswered");
 const { parseResponse, finalizeReply } = require("./web_search");
+const { runAnalysis } = require("./analysis_runner");
 const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
@@ -86,7 +87,7 @@ const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceH
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
-const { ANALYSIS_MODEL, ANALYSIS_REASONING, ANALYSIS_SCHEMA, INSTRUCTIONS: ANALYSIS_INSTRUCTIONS, buildAnalysisInput, sanitizeAnalysis, buildChatContext } = require("./plan_analysis");
+const { buildChatContext } = require("./plan_analysis");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -589,7 +590,7 @@ exports.evaluatePlan = onRequest(
  * 응답이 JSON 형식을 어기면 한 번 더 시도하고, 그래도 안 되면 502.
  */
 exports.analyzePlan = onRequest(
-  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 150, memory: "512MiB" },
+  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 300, memory: "512MiB" },
   async (req, res) => {
     if (await appCheckBlocked(req, res)) return;
     if (req.method !== "POST") {
@@ -623,33 +624,9 @@ exports.analyzePlan = onRequest(
       return;
     }
     try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const aiRes = await fetch("https://api.openai.com/v1/responses", {
-          method: "POST",
-          headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_API_KEY.value()}` },
-          body: JSON.stringify({
-            model: ANALYSIS_MODEL,
-            reasoning: { effort: ANALYSIS_REASONING },
-            max_output_tokens: 6000, // 추론 토큰이 이 한도에 포함되므로 넉넉히
-            store: false,
-            instructions: ANALYSIS_INSTRUCTIONS,
-            input: buildAnalysisInput(out.result),
-            text: { format: { type: "json_schema", name: "curriculum_analysis", strict: true, schema: ANALYSIS_SCHEMA } },
-          }),
-        });
-        if (!aiRes.ok) {
-          logger.error("analyzePlan AI API error", await aiRes.text());
-          break;
-        }
-        const parsed = parseResponse(await aiRes.json());
-        const analysis = parsed.text && !parsed.incomplete ? sanitizeAnalysis(parsed.text) : null;
-        if (analysis) {
-          res.status(200).json({ analysis, result: out.result });
-          return;
-        }
-        logger.warn("analyzePlan 응답 형식 오류 — 재시도", { attempt, incomplete: parsed.incomplete });
-      }
-      res.status(502).json({ error: "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요." });
+      // 전체 240초 예산 안에서 high → low 순으로 시도하고, 그래도 안 되면 학점 기반 간이 분석을 준다(analysis_runner.js). 그래서 여기서는 "실패 응답"이 나오지 않는다.
+      const done = await runAnalysis({ apiKey: OPENAI_API_KEY.value(), result: out.result, parseResponse, log: logger });
+      res.status(200).json({ analysis: done.analysis, result: out.result, fallback: done.fallback });
     } catch (err) {
       logger.error(err);
       res.status(500).json({ error: "서버 오류가 발생했습니다." });
