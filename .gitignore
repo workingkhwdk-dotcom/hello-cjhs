@@ -4,3 +4,6 @@ node_modules/
 .firebase/
 functions/.env
 *.log
+
+# 배포 직전 tools/bump-version.js 가 만드는 빌드 번호 파일
+version.json

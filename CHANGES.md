@@ -1,3 +1,12 @@
+# 2026-10-13 속도·안정성·캐시 개선
+
+- **인사말 사진**: `image/greeting.webp`(학교 사진, 1280px WebP)를 기본으로 내장해 즉시 표시. 관리자가 올린 사진이 있으면 다 받은 뒤 교체하고, 불러오기에 실패하면 내장 사진 유지(파란 실루엣 기본 이미지는 더 이상 쓰지 않음). 사진 정보 요청은 3회 재시도 + 마지막 성공 값을 localStorage에 보관해 폴백. 인사말·갤러리는 각자 준비되는 대로 표시. 관리자 업로드 시 사진을 긴 변 1600px WebP로 자동 축소(`admin.html`).
+- **첫 화면 구조**: `mobile/index/qna/apply.render.js`를 "화면 그리기"(`*.render.js`)와 "Firebase 연결·이벤트·데이터"(`*.app.js`)로 분리. 화면을 먼저 그린 뒤 `import()`로 앱 로직을 불러와, Firebase SDK 다운로드를 기다리지 않고 첫 화면이 뜬다. 각 HTML에 `modulepreload`/`preconnect`를 넣어 필요한 파일을 병렬로 미리 받고, 구글 폰트 CSS는 화면을 막지 않게(`media="print"` 지연 적용) 바꿈. `functions/test/run_client_safety_checks.js`는 `mobile.app.js`를 검사하도록 변경.
+- **챗봇 '대화 초기화' 버튼**: 모바일 챗봇 탭과 `chatbot.html`. 대화 기록과 화면을 처음 상태로 되돌린다(전송 중에는 비활성, 대화가 있으면 확인 창). 부적절 표현 삼진 잠금은 초기화로 풀리지 않는다.
+- **캐시(구조적 해결)**: ① `firebase.json` — html/css/js/json/webmanifest, `files/**`는 `no-cache`(매번 재확인), 이미지는 `?v=해시` 주소 + 1주일 캐시. ② `tools/bump-version.js`(배포 직전 자동 실행) — 공백 파일명(`%20`)까지 이미지 주소에 버전을 붙이고, 배포 파일 전체 내용으로 `version.json`(빌드 번호, git 제외)을 생성. ③ `js/update-check.js`(모든 페이지) — 열어 둔 화면이 version.json을 확인해, 새 버전이면 한가할 때 조용히 새로고침하고 입력 중이면 "새로고침" 안내만 띄움.
+
+---
+
 # 2026-10-12 (3) 분석 한도 상향 · 챗봇 편성표 검수 강화
 
 - **분석 한도**: IP 시간당 1000회, 전체 하루 2000회(기기별 시간당 10·하루 30은 그대로). `functions/rate_limit.js`.

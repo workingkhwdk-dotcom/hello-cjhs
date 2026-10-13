@@ -1,5 +1,5 @@
 /**
- * 프론트엔드(mobile.render.js, chatbot.render.js) 챗봇 UI의 안전 관련 로직을
+ * 프론트엔드(mobile.app.js, chatbot.render.js) 챗봇 UI의 안전 관련 로직을
  * 소스 텍스트 수준에서 검증하는 하네스.
  * ------------------------------------------------------------
  * mobile.render.js/chatbot.render.js는 DOM·Firebase·fetch에 강하게 결합된
@@ -37,7 +37,7 @@ function check(name, condition, detail) {
   }
 }
 
-const TARGET_FILES = ["mobile.render.js", "chatbot.render.js"];
+const TARGET_FILES = ["mobile.app.js", "chatbot.render.js"]; // 모바일 챗봇 로직은 화면 그리기(mobile.render.js)와 분리된 mobile.app.js 에 있다
 
 for (const file of TARGET_FILES) {
   const filePath = path.join(__dirname, "..", "..", file);

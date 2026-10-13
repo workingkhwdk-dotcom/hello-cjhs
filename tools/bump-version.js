@@ -20,7 +20,7 @@ const STAMP = Date.now().toString(36);
 const CODE_EXT = new Set([".html", ".js", ".css"]);
 const SKIP_DIRS = new Set(["node_modules", "functions", "tools", ".firebase", "image", "icons", "files"]);
 // 이미지 주소 + (이미 붙어 있는) ?v=… . "image/png" 같은 MIME 문자열은 확장자(.png)가 없어 걸리지 않는다.
-const REF = /\b((?:image|icons)\/[\w\-./]+\.(?:jpe?g|png|webp|svg|gif))(\?v=[\w]+)?/g;
+const REF = /\b((?:image|icons)\/[\w\-./%]+\.(?:jpe?g|png|webp|svg|gif))(\?v=[\w]+)?/g; // %20 같은 주소 인코딩(공백 있는 파일명)도 포함
 
 function listCodeFiles(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -34,7 +34,7 @@ const hashCache = new Map();
 function versionFor(rel) {
   if (FORCE_ALL) return STAMP;
   if (!hashCache.has(rel)) {
-    const abs = path.join(ROOT, rel);
+    const abs = path.join(ROOT, decodeURIComponent(rel));
     hashCache.set(rel, fs.existsSync(abs) ? crypto.createHash("md5").update(fs.readFileSync(abs)).digest("hex").slice(0, 8) : null);
   }
   return hashCache.get(rel);
@@ -54,3 +54,24 @@ for (const file of listCodeFiles(ROOT)) {
 }
 console.log(`[bump-version] 이미지 주소 ${refs}곳 확인, 파일 ${changedFiles}개 갱신${FORCE_ALL ? " (전체 강제 초기화)" : ""}`);
 if (missing.size) console.warn("[bump-version] 파일을 찾지 못한 주소(그대로 둠):", [...missing].join(", "));
+
+// ---- 사이트 전체 "빌드 번호" → version.json ------------------------------------------
+// 배포되는 모든 파일(코드·이미지·PDF 등)의 내용으로 만든 해시. 내용이 하나라도 바뀌면 번호가 바뀐다.
+// 이미 열어 둔 화면(js/update-check.js)이 이 파일을 주기적으로 확인해, 번호가 달라지면 새로고침을 안내/실행한다.
+// 배포 때마다 새로 만들어지는 파일이라 git에는 올리지 않는다(.gitignore).
+const DEPLOY_SKIP_DIRS = new Set(["node_modules", "functions", "tools", "docs", ".git", ".firebase"]);
+const DEPLOY_SKIP_FILES = new Set(["firebase.json", "firestore.rules", "storage.rules", "version.json"]);
+function listDeployFiles(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.name.startsWith(".")) continue;
+    const abs = path.join(dir, e.name);
+    if (e.isDirectory()) { if (!DEPLOY_SKIP_DIRS.has(e.name)) listDeployFiles(abs, out); }
+    else if (!DEPLOY_SKIP_FILES.has(e.name) && !e.name.endsWith(".md") && !/ \d+\.\w+$/.test(e.name)) out.push(abs); // 호스팅 ignore 규칙과 동일
+  }
+  return out;
+}
+const all = crypto.createHash("md5");
+for (const f of listDeployFiles(ROOT)) all.update(path.relative(ROOT, f)).update(fs.readFileSync(f));
+const build = all.digest("hex").slice(0, 12);
+fs.writeFileSync(path.join(ROOT, "version.json"), JSON.stringify({ build, builtAt: new Date().toISOString() }) + "\n");
+console.log(`[bump-version] version.json 빌드 번호: ${build}`);
