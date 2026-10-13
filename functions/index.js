@@ -459,7 +459,8 @@ async function generateReply(message, history, extraSystem = "") {
 }
 
 exports.chatWithAI = onRequest(
-  { secrets: [OPENAI_API_KEY, SMTP_USER, SMTP_PASS], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES },
+  // timeoutSeconds: 기본 60초는 부족할 수 있다 — 가드 → (웹 검색) 답변 생성 → 편성표 검수 재작성이 이어지면 AI를 2~3번 부른다. 60초를 넘기면 학생 화면에는 "연결할 수 없어요"로만 보인다.
+  { secrets: [OPENAI_API_KEY, SMTP_USER, SMTP_PASS], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 120 },
   async (req, res) => {
     if (await appCheckBlocked(req, res)) return;
     if (req.method !== "POST") {
@@ -519,7 +520,7 @@ function buildCurriculumQuestion(major) {
 
 /** POST { major: string } -> { reply: string } */
 exports.curriculumAdvice = onRequest(
-  { secrets: [OPENAI_API_KEY, SMTP_USER, SMTP_PASS], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES },
+  { secrets: [OPENAI_API_KEY, SMTP_USER, SMTP_PASS], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 120 }, // chatWithAI와 같은 파이프라인이라 같은 시간이 필요하다
   async (req, res) => {
     if (await appCheckBlocked(req, res)) return;
     if (req.method !== "POST") {

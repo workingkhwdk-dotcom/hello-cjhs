@@ -15,12 +15,12 @@
   function set(ctx) {
     mem = { picks: ctx.picks, analysis: ctx.analysis || null, at: Date.now() };
     try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) { /* 메모리에는 남음 */ }
-    if (view) render();
+    if (view) safeRender();
   }
   function clear() {
     mem = null;
     try { localStorage.removeItem(KEY); } catch (e) { /* 무시 */ }
-    if (view) render();
+    if (view) safeRender();
   }
   // 모바일(한 페이지 안의 챗봇 탭)이면 그 탭을 열고, PC면 챗봇 페이지로 간다.
   function open() {
@@ -37,6 +37,9 @@
     list.push("이 조합으로 학생부는 어떻게 채워 가면 좋을까요?");
     return list.slice(0, 4);
   }
+
+  // 안내 줄을 그리다 오류가 나도 챗봇으로 넘어가는 동작은 멈추지 않게 한다.
+  function safeRender() { try { render(); } catch (e) { console.error("plan-chat 안내 표시 실패", e); } }
 
   // 챗봇 화면에 붙인다. ui: { chatLog, addMessage(role, text), sendMessage(text) } — 두 챗봇 화면(chatbot.render.js, mobile.render.js)이 같은 이름을 쓴다.
   function render() {
@@ -66,7 +69,11 @@
     hello.appendChild(row);
     ui.hello = hello;
   }
-  function mount(ui) { view = ui; render(); }
+  function mount(ui) {
+    // 대화 초기화 등으로 다시 붙일 때, 이전에 붙였던 안내 줄·첫 메시지가 남아 겹치지 않게 먼저 걷어 낸다.
+    if (view) { if (view.bar) view.bar.remove(); if (view.hello) view.hello.remove(); }
+    view = ui; safeRender();
+  }
 
   window.CjhsPlanChat = { get: get, set: set, clear: clear, open: open, mount: mount };
 })();
