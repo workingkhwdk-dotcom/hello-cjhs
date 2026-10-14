@@ -142,8 +142,8 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
       title: 'Changwon Jungang High School — Admission Guide',
       eyebrow: 'Class of 2027 · For international families',
       h1: 'Welcome to Changwon Jungang High School',
-      lede: 'A summary, in your language, of our Korean admission site: how students are placed, what school life looks like, and how to ask us your questions.',
-      callout: '<b>The main site and its forms are in Korean.</b> Our AI chatbot <b>“Jungang-i”</b> understands English — just write your question in English and it will answer in English.',
+      lede: 'A summary, in your language, of our Korean admission site: how students are assigned to schools, what school life looks like, and how to ask us your questions.',
+      callout: '<b>The main site and its forms are in Korean.</b> Our AI chatbot <b>“Jungang-i”</b> ' + K('중앙이') + ' understands English — just write your question in English and it will answer in English.',
       toc: ['About', 'Placement', 'Credit system', 'School life', 'Counseling', 'Korean form guide', 'Help in your language'],
       about: { title: 'About the school', items: [
         'A public, general (day) high school <b>for boys</b> under the Gyeongsangnam-do Office of Education. (Changwon Jungang <i>Girls’</i> High School is a different school.)',
@@ -152,7 +152,7 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         '24 classes (8 per grade), about 548 students and 56 teachers. (Official school-disclosure figures; they change slightly every year.)',
         'Runs the High School Credit System and AI-based education.'
       ] },
-      placement: { title: 'How students are placed', items: [
+      placement: { title: 'How students are assigned to schools', items: [
         'Changwon is a <b>high-school “equalization” area</b> ' + K('평준화 지역') + '. Students do not enroll directly at a school of their choice; they are assigned through the placement procedure of the Gyeongsangnam-do Office of Education.',
         'Living close to the school does <b>not</b> by itself give priority.',
         'For the 2027 school year, applications for general high schools in equalization areas are reported to run <b>December 10–14, 2026</b>, with results on <b>January 8, 2027</b>. The Office of Education’s official notice always takes precedence — please ask your child’s middle-school homeroom teacher about the exact procedure.',
@@ -165,25 +165,25 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         'On the Korean site, the ' + K('교육과정') + ' (Curriculum) and ' + K('과목 선택 가이드') + ' (Course selection guide) tabs show the full 3-year curriculum and let students try planning their courses.'
       ] },
       life: { title: 'School life at a glance', head: ['Topic', 'Details'], rows: [
-        ['School hours', 'In the classroom by 08:30; the regular day ends at 16:30.'],
-        ['Evening self-study ' + K('야자'), '<b>Optional</b>, Monday–Thursday 18:30–21:00. Sign up each month (you can change every month). The school recommends it as quiet time to review the day’s lessons.'],
+        ['School hours', 'Students must be seated in class by 8:30; regular classes end at 16:30.'],
+        ['Evening self-study ' + K('야자'), '<b>Optional</b>, Monday–Thursday 18:30–21:00. Sign up each month (you can change every month). The school recommends it as quiet time to review what was learned that day.'],
         ['Dinner', 'Paid, only for students who apply (applied for separately from evening study).'],
-        ['Mobile phones', 'Collected before class and returned at the end-of-day homeroom.'],
+        ['Mobile phones', 'Collected before class and returned at the end-of-day homeroom meeting.'],
         ['Uniform', 'School uniform or school PE uniform. Indoor shoes are required.'],
         ['Dormitory / school bus', 'There is no dormitory and no school bus.'],
         ['Laptop / tablet', 'No need to buy one — the Gyeongsangnam-do Office of Education provides a learning device (“i-Book”).'],
         ['Books', 'No need to buy workbooks in advance; each subject teacher will advise after entrance.'],
-        ['Absence for family trips', 'Can count as attendance as “experiential learning” ' + K('체험학습') + ' if you apply in advance (about 3–7 days before) and submit a report afterwards (within about 3–7 days).'],
+        ['Absence for family trips', 'Can be counted as attendance (“experiential learning” ' + K('체험학습') + ') if you apply in advance (about 3–7 days before) and submit a report afterwards (within about 3–7 days).'],
         ['Who to contact after entrance', 'Homeroom teacher for school life in general; curriculum department for course choices; career counselor for career plans; the subject teacher for classes and grading.']
       ] },
       counsel: {
         title: 'Admission counseling — choose one of three ways',
-        intro: 'Counseling is for families of next year’s new students (current 3rd-year middle-school students).',
-        online: { tag: 'Any time', h: 'Online', p: 'Ask the AI chatbot in English, or post a question on the Q&A board. You can mark a Q&A post as secret so only you can read it (with your password).', chat: 'Ask the AI chatbot', qna: 'Q&A board' },
+        intro: 'For families of students entering in March 2027 (currently in their final year of middle school, ninth grade).',
+        online: { tag: 'Any time', h: 'Online', p: 'Ask the AI chatbot in English, or post a question on the Q&A board. Tick ' + K('비밀글') + ' (private post) and only you can read it, with your password.', chat: 'Ask the AI chatbot', qna: 'Q&A board' },
         phone: { tag: 'Form', h: 'Phone', p: 'Submit the counseling form and choose ' + K('전화 상담') + '. The school will arrange a time with you and call you. Calls are in Korean — see “Help in your language” below.' },
         visit: { tag: 'Form', h: 'Visit (group briefing)', p: 'Not one-on-one: a briefing session at the school together with other families. Choose ' + K('방문/대면 상담') + ' on the form.', dates: 'Upcoming sessions:', none: 'No visit sessions are scheduled right now. Please use online or phone counseling.' },
         form: 'Open the counseling form (Korean)',
-        examples: ['Is evening self-study required?', 'How are students placed in this school?', 'What courses can my child choose?']
+        examples: ['Is evening self-study required?', 'How are students assigned to this school?', 'What courses can my child choose?']
       },
       form: {
         title: 'How to fill in the Korean form', intro: 'The form shows the Korean text on the left. Here is what each item means.',
@@ -205,7 +205,7 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         cancel: 'To cancel: open the form, choose ' + K('취소하기') + ', and enter the phone number and 4-digit PIN you used.'
       },
       help: { title: 'Help in your language', items: [
-        '<b>AI chatbot</b> — write in English and it answers in English, 24 hours a day.',
+        '<b>AI chatbot</b> — write in English and it answers in English, any time.',
         '<b>Danuri Call Center</b> ' + TEL('1577-1366') + ' — a free multilingual helpline (24 hours) for multicultural families and foreign residents in Korea (government-run). It can help with interpretation, including three-way calls with the school.',
         '<b>School phone (Korean)</b> — Academic Affairs Office ' + TEL('055-239-3109') + ' (schedules, curriculum) · Administration Office ' + TEL('055-239-3107') + ' (scholarships, fees).',
         '<b>After entrance</b> — school notices come through the <b>Riroschool</b> ' + K('리로스쿨') + ' app; grades and attendance can be checked on the <b>NEIS parent service</b> ' + K('나이스 학부모서비스') + '.',
@@ -219,9 +219,9 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
       title: '昌原中央高等学校 — 入学案内',
       eyebrow: '2027年度 新入生 · 外国につながるご家庭へ',
       h1: '昌原中央高等学校へようこそ',
-      lede: '韓国語の入学相談サイトの要点を日本語でまとめました。入学（配属）の仕組み、学校生活、相談の申し込み方法をご案内します。',
-      callout: '<b>本サイトと申込フォームは韓国語です。</b> AI相談チャットボット<b>「チュンアンイ」</b>は日本語がわかります。日本語で質問すれば、日本語で答えます。',
-      toc: ['学校紹介', '入学の仕組み', '高校単位制', '学校生活', '入学相談', 'フォームの書き方', '母語での支援'],
+      lede: '韓国語の入学相談サイトの要点を日本語でまとめました。入学校の決まり方、学校生活、相談の申し込み方法をご案内します。',
+      callout: '<b>本サイトと申込フォームは韓国語です。</b> AI相談チャットボット<b>「チュンアンイ」</b>' + K('중앙이') + 'は日本語がわかります。日本語で質問すれば、日本語で答えます。',
+      toc: ['学校紹介', '入学校の決まり方', '高校単位制', '学校生活', '入学相談', 'フォームの書き方', '母語での支援'],
       about: { title: '学校紹介', items: [
         '慶尚南道教育庁所管の公立一般高校（全日制）で、<b>男子校</b>です。（名前の似た「昌原中央女子高校」は別の学校です。）',
         '所在地：慶尚南道 昌原市 城山区 龍湖路16 ' + K('경상남도 창원시 성산구 용호로 16'),
@@ -229,38 +229,38 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         '24学級（各学年8学級）、生徒約548名・教員56名（学校情報公示の数値。年によって少しずつ変わります）。',
         '高校単位制とAI教育を実施しています。'
       ] },
-      placement: { title: '入学（配属）の仕組み', items: [
-        '昌原市は<b>高校「平準化」地域</b> ' + K('평준화 지역') + 'です。生徒が学校を選んで直接入学するのではなく、慶尚南道教育庁の配属手続きによって学校が決まります。',
-        '学校の近くに住んでいるという理由だけで優先されることは<b>ありません</b>。',
+      placement: { title: '入学校の決まり方', items: [
+        '昌原市は<b>高校「平準化」地域</b> ' + K('평준화 지역') + 'です。生徒が自分で学校を選んで入学するのではなく、慶尚南道教育庁の割り当て（配定）手続きによって進学先が決まります。',
+        '学校の近くに住んでいるという理由だけで、優先的に割り当てられることは<b>ありません</b>。',
         '2027年度の平準化地域一般高校の願書受付は<b>2026年12月10日〜14日</b>、発表は<b>2027年1月8日</b>と報道されています。必ず教育庁の公式公告を優先し、具体的な手続きはお子さまの中学校の担任の先生にご確認ください。',
-        '入学前の予備招集（オリエンテーション）' + K('예비소집') + 'を欠席しても、それだけで入学が取り消されることはありません。ただし大切な案内が多いので、できるだけご参加ください。'
+        '入学前の説明会（予備招集）' + K('예비소집') + 'を欠席しても、それだけで入学が取り消されることはありません。ただし大切な案内が多いので、できるだけご参加ください。'
       ] },
-      credit: { title: '高校単位制（コギョ・ハクチョムジェ）', items: [
+      credit: { title: '韓国の高校単位制', items: [
         '高校単位制 ' + K('고교학점제') + 'では、主に2年生から、生徒が自分の興味や進路に合わせて多くの科目を自分で選びます。',
         '同じ科目を選んだ生徒同士で授業を受けるため、科目ごとに教室と一緒に学ぶ友だちが変わります。',
         '科目を選ぶのは<b>生徒本人</b>です。学校が十分な相談と案内を行い、保護者は情報や日程の確認でサポートします。',
         '韓国語サイトの ' + K('교육과정') + '（教育課程）と ' + K('과목 선택 가이드') + '（科目選択ガイド）タブで、3年間の教育課程を確認し、科目選びを試せます。'
       ] },
       life: { title: '学校生活のポイント', head: ['項目', '内容'], rows: [
-        ['登下校時刻', '8:30までに教室に着席。通常の授業は16:30に終わります。'],
-        ['夜間自律学習 ' + K('야자'), '<b>希望者のみ</b>。月〜木曜 18:30〜21:00。毎月申し込み、毎月参加の有無を変更できます。その日の授業を自分で復習する時間として、学校は参加を勧めています。'],
-        ['夕食', '申込者のみ有料で提供（夜間自律学習とは別に申し込み）。'],
+        ['登下校時刻', '8:30までに教室で着席。通常の授業は16:30に終わります。'],
+        ['夜間自習 ' + K('야자'), '<b>希望者のみ</b>。月〜木曜 18:30〜21:00。毎月申し込み制で、月ごとに参加するかどうかを変えられます。その日に学んだ内容を自分で復習する時間として、学校は参加を勧めています。'],
+        ['夕食', '申し込んだ生徒にのみ有料で提供（夜間自習とは別に申し込み）。'],
         ['携帯電話', '授業前に回収し、終礼時に返却します。'],
         ['服装', '制服または学校指定の体操服。上履きが必要です。'],
         ['寮・通学バス', '寮も学校運営の通学バスもありません。'],
         ['ノートPC・タブレット', '購入不要です。慶尚南道教育庁が学習用端末（アイブック）を支給します。'],
         ['参考書・問題集', '事前に買う必要はありません。入学後に各教科の先生が案内します。'],
-        ['家族旅行での欠席', '事前に申請（約3〜7日前）し、帰宅後に報告書（約3〜7日以内）を出せば「体験学習」' + K('체험학습') + 'として出席扱いになります。'],
-        ['入学後の相談先', '学校生活全般は担任、科目選択は教育課程部、進路は進路相談教師、授業・評価は各教科の先生です。']
+        ['家族旅行での欠席', '事前に申請（約3〜7日前）し、旅行後に報告書（約3〜7日以内）を出せば「体験学習」' + K('체험학습') + 'として出席扱いになります。'],
+        ['入学後の相談先', '学校生活全般は担任、科目選択は教育課程部の先生、進路は進路相談の先生、授業・評価は各教科の先生です。']
       ] },
       counsel: {
         title: '入学相談 — 3つの方法から選べます',
-        intro: '来年度の新入生（現在の中学3年生）のご家庭が対象です。',
-        online: { tag: 'いつでも', h: 'オンライン', p: 'AIチャットボットに日本語で質問するか、Q&A掲示板に質問を書き込めます。Q&Aは「非公開」にすると、パスワードを知っている本人だけが読めます。', chat: 'AIチャットボットに聞く', qna: 'Q&A掲示板' },
+        intro: '2027年3月に入学する新入生（現在の中学3年生）のご家庭が対象です。',
+        online: { tag: 'いつでも', h: 'オンライン', p: 'AIチャットボットに日本語で質問するか、Q&A掲示板に質問を書き込めます。' + K('비밀글') + '（非公開）にチェックすると、パスワードを知っているご本人だけが読めます。', chat: 'AIチャットボットに聞く', qna: 'Q&A掲示板' },
         phone: { tag: 'フォーム', h: '電話', p: '相談申込フォームで ' + K('전화 상담') + 'を選んで送信してください。学校が日時を調整し、お電話します。電話は韓国語です。下の「母語での支援」もご覧ください。' },
         visit: { tag: 'フォーム', h: '来校（説明会）', p: '1対1ではなく、複数のご家庭と一緒に学校で行う説明会です。フォームで ' + K('방문/대면 상담') + 'を選んでください。', dates: '今後の日程：', none: '現在、予定されている来校説明会はありません。オンラインまたは電話相談をご利用ください。' },
         form: '相談申込フォームを開く（韓国語）',
-        examples: ['夜間自律学習は必須ですか？', 'どうやってこの学校に配属されますか？', 'どんな科目を選べますか？']
+        examples: ['夜間自習は必須ですか？', 'この学校への入学はどうやって決まりますか？', 'どんな科目を選べますか？']
       },
       form: {
         title: '韓国語フォームの書き方', intro: 'フォームの韓国語の文言（左）と、その意味（右）です。',
@@ -282,9 +282,9 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         cancel: '取り消すには：フォームを開いて ' + K('취소하기') + 'を選び、申込時の電話番号と4桁の暗証番号を入力します。'
       },
       help: { title: '母語での支援', items: [
-        '<b>AIチャットボット</b> — 日本語で質問すれば日本語で答えます。24時間利用できます。',
-        '<b>ダヌリコールセンター</b> ' + TEL('1577-1366') + ' — 韓国政府が運営する、多文化家族・在韓外国人のための無料多言語相談窓口（24時間）。学校との三者通話での通訳など、通訳の支援を受けられます。',
-        '<b>学校の電話（韓国語）</b> — 教務室 ' + TEL('055-239-3109') + '（日程・教育課程）· 行政室 ' + TEL('055-239-3107') + '（奨学金・費用）',
+        '<b>AIチャットボット</b> — 日本語で質問すれば日本語で答えます。いつでも利用できます。',
+        '<b>ダヌリコールセンター</b> ' + TEL('1577-1366') + ' — 韓国政府が運営する、多文化家族・在韓外国人のための無料多言語相談窓口（24時間）。学校との三者通話による通訳など、通訳の支援を受けられます。',
+        '<b>学校の電話（韓国語）</b> — 教務室 ' + TEL('055-239-3109') + '（日程・教育課程）· 事務室（行政室）' + TEL('055-239-3107') + '（奨学金・費用）',
         '<b>入学後</b> — 学校からのお知らせは<b>リロスクール</b> ' + K('리로스쿨') + 'アプリで届きます。成績・出欠は<b>NEIS保護者サービス</b> ' + K('나이스 학부모서비스') + 'で確認できます。',
         '学校公式ホームページ（韓国語）：<a href="' + HOME + '" target="_blank" rel="noopener">cwjungang-h.gne.go.kr</a>'
       ] },
@@ -297,7 +297,7 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
       eyebrow: '2027级新生 · 致多元文化家庭',
       h1: '欢迎来到昌原中央高中',
       lede: '我们用中文整理了韩语入学咨询网站的要点：入学分配方式、学校生活，以及如何向我们咨询。',
-      callout: '<b>主网站和申请表是韩语的。</b> AI 入学咨询机器人<b>“中央伊”</b>看得懂中文——用中文提问，它就会用中文回答。',
+      callout: '<b>主网站和申请表是韩语的。</b> AI 入学咨询机器人<b>“中央伊”</b>' + K('중앙이') + '看得懂中文——用中文提问，它就会用中文回答。',
       toc: ['学校简介', '入学分配', '高中学分制', '学校生活', '入学咨询', '韩语表格填写', '母语帮助'],
       about: { title: '学校简介', items: [
         '隶属庆尚南道教育厅的公立普通高中（日间制），是一所<b>男子高中</b>。（名字相近的“昌原中央女子高中”是另一所学校。）',
@@ -310,17 +310,17 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         '昌原市是<b>高中“平准化”地区</b> ' + K('평준화 지역') + '。学生不能自己选校直接入学，而是由庆尚南道教育厅按分配程序分配学校。',
         '仅凭住得离学校近，<b>不会</b>获得优先分配。',
         '据报道，2027学年平准化地区普通高中的报名时间为<b>2026年12月10日至14日</b>，<b>2027年1月8日</b>公布结果。请以教育厅的正式公告为准，具体手续请向孩子初中的班主任确认。',
-        '缺席入学前的预备集合（新生说明会）' + K('예비소집') + '本身不会导致取消入学资格，但会公布很多重要信息，请尽量参加。'
+        '缺席入学前的新生预备集合（说明会）' + K('예비소집') + '本身不会导致取消入学资格，但会公布很多重要信息，请尽量参加。'
       ] },
       credit: { title: '高中学分制', items: [
-        '在高中学分制 ' + K('고교학점제') + '下，学生（主要从高二开始）根据自己的兴趣和升学就业方向，自己选择许多课程。',
+        '在高中学分制 ' + K('고교학점제') + '下，学生（主要从高二开始）根据自己的兴趣和未来规划，自主选择许多课程。',
         '选了同一门课的学生一起上课，所以每门课的教室和同学都会不同。',
         '选课由<b>学生本人</b>决定。学校会提供充分的咨询和指导，家长主要帮助确认信息和时间安排。',
         '在韩语网站的 ' + K('교육과정') + '（课程）和 ' + K('과목 선택 가이드') + '（选课指南）标签中，可以查看三年课程并尝试规划选课。'
       ] },
       life: { title: '学校生活一览', head: ['项目', '说明'], rows: [
         ['上下学时间', '8:30前到教室就座，常规课程16:30结束。'],
-        ['晚自习 ' + K('야자'), '<b>自愿参加</b>，周一至周四 18:30–21:00。每月报名，每月都可以调整是否参加。学校推荐把它作为自己复习当天所学内容的时间。'],
+        ['晚自习 ' + K('야자'), '<b>自愿参加</b>，周一至周四 18:30–21:00。按月报名，每个月都可以调整是否参加。学校推荐把它作为自己复习当天所学内容的时间。'],
         ['晚餐', '仅向报名的学生收费提供（与晚自习分开报名）。'],
         ['手机', '上课前统一收取，放学前班会时归还。'],
         ['校服', '校服或学校指定的运动服。需要准备室内鞋。'],
@@ -328,12 +328,12 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         ['笔记本电脑 / 平板', '不需要购买，庆尚南道教育厅会发放学习用设备（i-Book）。'],
         ['教辅书', '不需要提前购买，入学后各科老师会告知。'],
         ['家庭旅行请假', '提前（约3–7天前）提交申请，回来后（约3–7天内）提交报告，即可按“体验学习”' + K('체험학습') + '算作出勤。'],
-        ['入学后联系谁', '学校生活找班主任，选课找课程部老师，升学就业找升学咨询老师，上课和评分找该科老师。']
+        ['入学后联系谁', '学校生活找班主任，选课找课程部老师，升学和职业规划找生涯规划咨询老师，上课和评分找该科老师。']
       ] },
       counsel: {
         title: '入学咨询 — 三种方式任选',
-        intro: '面向明年新生（目前初三学生）的家庭。',
-        online: { tag: '随时', h: '线上', p: '用中文向AI机器人提问，或在问答（Q&A）板留言。问答帖子可以设为“私密”，只有知道密码的本人才能查看。', chat: '向AI机器人提问', qna: '问答板' },
+        intro: '面向2027年3月入学的新生（目前初三学生）的家庭。',
+        online: { tag: '随时', h: '线上', p: '用中文向AI机器人提问，或在问答板（Q&A）留言。勾选 ' + K('비밀글') + '（私密帖）后，只有知道密码的本人才能查看。', chat: '向AI机器人提问', qna: '问答板（Q&A）' },
         phone: { tag: '表格', h: '电话', p: '提交咨询申请表并选择 ' + K('전화 상담') + '。学校会和您约定时间后打电话给您。电话沟通使用韩语，请参看下方“母语帮助”。' },
         visit: { tag: '表格', h: '到校（说明会）', p: '不是一对一咨询，而是与其他家庭一起在学校参加的说明会。请在表格中选择 ' + K('방문/대면 상담') + '。', dates: '近期场次：', none: '目前没有安排到校说明会，请使用线上或电话咨询。' },
         form: '打开咨询申请表（韩语）',
@@ -359,8 +359,8 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
         cancel: '取消方法：打开申请表，选择 ' + K('취소하기') + '，输入申请时填写的电话号码和4位密码。'
       },
       help: { title: '母语帮助', items: [
-        '<b>AI机器人</b> — 用中文提问就会用中文回答，24小时可用。',
-        '<b>Danuri 呼叫中心</b> ' + TEL('1577-1366') + ' — 韩国政府运营的免费多语种咨询热线（24小时），面向多元文化家庭和在韩外国人，可提供翻译帮助，包括与学校的三方通话翻译。',
+        '<b>AI机器人</b> — 用中文提问就会用中文回答，随时可用。',
+        '<b>Danuri 呼叫中心</b> ' + TEL('1577-1366') + ' — 韩国政府运营的免费多语种咨询热线（24小时），面向多元文化家庭和在韩外国人，可提供口译帮助，包括与学校的三方通话口译。',
         '<b>学校电话（韩语）</b> — 教务室 ' + TEL('055-239-3109') + '（日程、课程）· 行政室 ' + TEL('055-239-3107') + '（奖学金、费用）',
         '<b>入学后</b> — 学校通知通过<b>Riroschool</b> ' + K('리로스쿨') + ' 应用发送；成绩和出勤可在<b>NEIS家长服务</b> ' + K('나이스 학부모서비스') + '中查询。',
         '学校官方网站（韩语）：<a href="' + HOME + '" target="_blank" rel="noopener">cwjungang-h.gne.go.kr</a>'
@@ -479,6 +479,7 @@ footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
   }
   document.querySelectorAll('.langs button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.lang); }); });
   setLang(pickLang());
+  try { sessionStorage.setItem('cjhs_lang_picker_seen', '1'); } catch (e) {} // js/lang-picker.js의 SESSION_KEY: 여기서 한국어 사이트로 가도 언어 선택 창을 다시 띄우지 않는다
   if (location.hash) { var el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
 
   // 관리자가 바꾼 방문 날짜(공개 읽기 문서)를 읽어 온다. 실패하면 기본값 그대로.
