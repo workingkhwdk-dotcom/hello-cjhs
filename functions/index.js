@@ -79,15 +79,16 @@ const { CURRICULUM_CORE } = require("./curriculum_core");
 const { logUnanswered } = require("./unanswered");
 const { parseResponse, finalizeReply } = require("./web_search");
 const { runAnalysis } = require("./analysis_runner");
-const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
+const { planSearch, planFallbackSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
 const { checkCurriculumReply, feedbackFor, repairCurriculumReply } = require("./curriculum_guard");
-const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota } = require("./rate_limit");
+const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, refundDaily, deviceHash, consumeDeviceQuota, refundDeviceQuota } = require("./rate_limit");
+const { jobKey, readJob, claimJob, finishJob, releaseJob } = require("./analysis_job");
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
-const { buildChatContext } = require("./plan_analysis");
+const { buildChatContext, ANALYSIS_MODEL } = require("./plan_analysis");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -371,9 +372,10 @@ async function generateReply(message, history, extraSystem = "") {
   const knowledge = retrieveKnowledge(message, recentContext, 6);
   const topScore = topKnowledgeScore(message, recentContext);
   // 웹 검색 여부·범위·검색어는 모델이 아니라 서버(search_gate.js)가 정한다. 닫혀 있으면 도구 자체를 주지 않는다.
-  const searchPlan = planSearch({ message, history, topScore });
+  let searchPlan = planSearch({ message, history, topScore });
   logger.info("웹 검색 게이트", { mode: searchPlan.mode, reason: searchPlan.reason, topic: searchPlan.topic && searchPlan.topic.id, year: searchPlan.year });
-  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan) + (extraSystem ? `\n\n${extraSystem}` : "");
+  const promptFor = (plan) => buildSystemPrompt(formatKnowledgeForPrompt(knowledge), plan) + (extraSystem ? `\n\n${extraSystem}` : "");
+  let systemPrompt = promptFor(searchPlan);
 
   // --- 지금은 OpenAI(GPT) API를 임시로 사용합니다. ---
   // 나중에 Anthropic 등 다른 provider로 되돌리려면 이 블록만 교체하면 됩니다.
@@ -419,7 +421,25 @@ async function generateReply(message, history, extraSystem = "") {
   return parseResponse(await openaiRes.json());
   };
 
-  const parsed = await askModel();
+  let parsed = await askModel();
+  // 검색 없이(또는 검색을 열었어도 안 쓰고) "확인되지 않았다"로 답했으면 서버가 검색을 열어 한 번 더 답하게 한다. 실패하면 첫 답변을 그대로 쓴다.
+  if (parsed.text && !parsed.searched) {
+    const fb = planFallbackSearch({ message, history, reply: parsed.text });
+    if (fb) {
+      logger.info("불확실 답변 — 자동 재검색", { reason: fb.reason, topic: fb.topic.id, query: fb.query });
+      const prev = { searchPlan, systemPrompt };
+      searchPlan = fb;
+      systemPrompt = promptFor(fb);
+      try {
+        const second = await askModel();
+        if (second.text && second.searched) parsed = second;
+        else { searchPlan = prev.searchPlan; systemPrompt = prev.systemPrompt; }
+      } catch (err) {
+        logger.warn("자동 재검색 실패 — 첫 답변 사용", err);
+        searchPlan = prev.searchPlan; systemPrompt = prev.systemPrompt;
+      }
+    }
+  }
   let reply = (parsed.text && finalizeReply(parsed)) || "죄송해요, 답변을 생성하지 못했어요.";
   // 편성표 검수(curriculum_guard.js): 과목·선택군·학기·정원이 확정 편성표와 다르면 한 번 다시 쓰게 하고, 그래도 다르면 문제 행을 빼고 안내한다.
   if (parsed.text) {
@@ -588,10 +608,18 @@ exports.evaluatePlan = onRequest(
 
 /**
  * 내 커리큘럼 AI 분석 — "3년 과목 짜보기"를 끝까지(19과목) 고른 뒤 사이트가 호출한다.
- * POST { picks } -> { analysis: { headline, balance, strengths, gaps, majors:[{track,score,reason,caution}], tips, caveat }, result }
+ * POST { picks, deviceId }            -> 분석을 시작하고 끝날 때까지 기다린다.
+ * POST { picks, deviceId, poll:true } -> 결과만 확인한다(짧은 요청).
+ * 응답(JSON, 항상 status 포함):
+ *   200 { status:"done", analysis, result, cached? }  완료(같은 선택의 이전 결과면 cached:true, 한도·AI 호출 없음)
+ *   200 { status:"running", elapsedMs }               다른 요청이 처리 중 — 클라이언트가 poll로 확인
+ *   200 { status:"none" }                             (poll) 이 선택의 작업이 없음 — 클라이언트가 다시 시작
+ *   200 { status:"done", analysis, result, fallback:true }  AI가 답하지 못해 학점 기반 간이 분석을 줌(저장·재사용하지 않고 한도는 되돌려 준다)
+ *   4xx 한도·형식 오류 / 500 { status:"error", code, error }  서버 내부 오류
+ * 연결이 끊겨도 서버는 끝까지 처리해 결과를 Firestore(analysis_jobs)에 남기므로 클라이언트가 나중에 가져갈 수 있다(analysis_job.js 참고).
  * 정원·학점 검증과 계산은 evaluatePlan(plan.js)이 하고, 모델은 그 숫자를 해석만 한다(plan_analysis.js).
- * 응답이 JSON 형식을 어기면 한 번 더 시도하고, 그래도 안 되면 502.
  */
+const analyzePollLimiters = [createLimiter(LIMITS.analyzePollPerMin)];
 exports.analyzePlan = onRequest(
   { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 300, memory: "512MiB" },
   async (req, res) => {
@@ -600,8 +628,10 @@ exports.analyzePlan = onRequest(
       res.status(405).json({ error: "POST 요청만 허용됩니다." });
       return;
     }
-    if (blocked(req, res, analyzeLimiters, "분석 요청이 많아요. 잠시 후 다시 시도해 주세요.")) return;
-    const out = evaluatePlan((req.body || {}).picks);
+    const body = req.body || {};
+    const poll = body.poll === true;
+    if (blocked(req, res, poll ? analyzePollLimiters : analyzeLimiters, poll ? "확인 요청이 많아요. 잠시 후 다시 시도해 주세요." : "분석 요청이 많아요. 잠시 후 다시 시도해 주세요.")) return;
+    const out = evaluatePlan(body.picks);
     if (!out.ok) {
       res.status(400).json({ error: out.errors[0], errors: out.errors });
       return;
@@ -610,29 +640,72 @@ exports.analyzePlan = onRequest(
       res.status(400).json({ error: `선택과목을 모두 골라야 분석할 수 있어요. (지금 ${out.result.pickedCount}/${out.result.totalPicks}과목)` });
       return;
     }
-    const dev = deviceHash((req.body || {}).deviceId);
+    const dev = deviceHash(body.deviceId);
     if (!dev) {
       res.status(400).json({ error: "기기 정보를 확인하지 못했어요. 페이지를 새로고침한 뒤 다시 시도해 주세요." });
       return;
     }
-    const quota = await consumeDeviceQuota(db, "analyze_dev", dev);
-    if (!quota.ok) {
-      res.status(429).json({ error: quota.which === "hour"
-        ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
-        : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
-      return;
-    }
-    if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay))) {
-      res.status(429).json({ error: "오늘은 AI 분석 가능 횟수를 모두 사용했어요. 내일 다시 이용해 주세요." });
-      return;
-    }
+    const key = jobKey(body.picks, ANALYSIS_MODEL);
+    const done = (analysis, extra = {}) => res.status(200).json({ status: "done", analysis, result: out.result, ...extra });
     try {
-      // 전체 240초 예산 안에서 high → low 순으로 시도하고, 그래도 안 되면 학점 기반 간이 분석을 준다(analysis_runner.js). 그래서 여기서는 "실패 응답"이 나오지 않는다.
-      const done = await runAnalysis({ apiKey: OPENAI_API_KEY.value(), result: out.result, parseResponse, log: logger });
-      res.status(200).json({ analysis: done.analysis, result: out.result, fallback: done.fallback });
+      // 1) 이미 끝났거나(처리·한도 없이 바로 전달) 처리 중인 작업이 있으면 그 상태를 알려 준다.
+      const job = await readJob(db, key);
+      if (job.state === "done") { done(job.analysis, { cached: true }); return; }
+      if (poll) {
+        if (job.state === "running") res.status(200).json({ status: "running", elapsedMs: job.elapsedMs });
+        // 직전 간이 분석 기록은 클라이언트가 "시작 요청의 답을 못 받았다"(startSettled)고 알릴 때만 전한다. 새로 시작하는 분석을 이전 결과로 오인하지 않게.
+        else if (job.state === "fallback" && body.startSettled === true) done(job.analysis, { fallback: true });
+        else res.status(200).json({ status: "none" });
+        return;
+      }
+      if (job.state === "running") { res.status(200).json({ status: "running", elapsedMs: job.elapsedMs }); return; }
+
+      // 2) 처리 권한을 한 요청만 얻는다(같은 선택을 두 번 돌리지 않도록).
+      const claim = await claimJob(db, key);
+      if (!claim.claimed) {
+        if (claim.job.state === "done") done(claim.job.analysis, { cached: true });
+        else res.status(200).json({ status: "running", elapsedMs: claim.job.elapsedMs });
+        return;
+      }
+
+      // 3) 한도(새로 AI를 부를 때만 센다). 넘으면 처리 권한을 돌려준다.
+      const quotaAt = Date.now();
+      const quota = await consumeDeviceQuota(db, "analyze_dev", dev, quotaAt);
+      if (!quota.ok) {
+        await releaseJob(db, key);
+        res.status(429).json({ error: quota.which === "hour"
+          ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
+          : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
+        return;
+      }
+      if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay, quotaAt))) {
+        await refundDeviceQuota(db, "analyze_dev", dev, quotaAt);
+        await releaseJob(db, key);
+        res.status(429).json({ error: "오늘은 AI 분석 가능 횟수를 모두 사용했어요. 내일 다시 이용해 주세요." });
+        return;
+      }
+
+      // 4) AI 호출(analysis_runner.js): 전체 240초 예산 안에서 high → low 순으로 시도하고, 그래도 안 되면 학점 기반 간이 분석을 준다.
+      //    클라이언트가 끊겨도 여기까지는 끝까지 가서 결과를 저장한다.
+      const t0 = Date.now();
+      const ran = await runAnalysis({ apiKey: OPENAI_API_KEY.value(), result: out.result, parseResponse, log: logger });
+      // 원인 분석용 로그: 시도 횟수·소요 시간·간이 분석 여부.
+      logger.info("analyzePlan 결과", { key: key.slice(0, 8), fallback: ran.fallback, attempts: ran.attempts, ms: ran.ms });
+      if (ran.fallback) {
+        // 간이 분석은 AI가 답하지 못했다는 뜻이다: 한도를 되돌리고(사용자 횟수가 닳지 않게), 다음 요청이 AI로 다시 분석할 수 있게 "완료"로 저장하지 않는다.
+        // 연결이 끊겼던 클라이언트가 받아 갈 수 있도록 잠깐만 남긴다(readJob의 fallback 상태).
+        await refundDeviceQuota(db, "analyze_dev", dev, quotaAt);
+        await refundDaily(db, "analyze", quotaAt);
+        await finishJob(db, key, ran.analysis, { startedAt: t0, ms: ran.ms, attempts: ran.attempts, fallback: true });
+        done(ran.analysis, { fallback: true });
+        return;
+      }
+      await finishJob(db, key, ran.analysis, { startedAt: t0, ms: ran.ms, attempts: ran.attempts });
+      done(ran.analysis);
     } catch (err) {
       logger.error(err);
-      res.status(500).json({ error: "서버 오류가 발생했습니다." });
+      await releaseJob(db, key); // 처리 중 표시가 남아 폴링이 계속 "처리 중"으로 보이지 않게
+      res.status(500).json({ status: "error", code: "internal", error: "서버 오류가 발생했습니다. 잠시 뒤에 다시 시도해 주세요." });
     }
   }
 );
