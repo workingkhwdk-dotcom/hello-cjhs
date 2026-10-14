@@ -47,6 +47,16 @@ const NEWS_DOMAINS = [
   "news1.kr",
   "v.daum.net", // 언론사 기사 전재
 ];
+// 2026-10-14 추가: 입시·수능 질문은 대학 발표가 언론 보도로 먼저 알려지는 일이 많아 전국 단위 주요 언론도 허용한다(공식 자료가 있으면 그쪽이 우선이라고 프롬프트에 명시).
+const NATIONAL_NEWS_DOMAINS = [
+  "hani.co.kr", // 한겨레
+  "khan.co.kr", // 경향신문
+  "chosun.com", // 조선일보
+  "joongang.co.kr", // 중앙일보
+  "donga.com", // 동아일보
+  "hankookilbo.com", // 한국일보
+  "kbs.co.kr", // KBS
+];
 const SCHOOL_TOPIC = {
   id: "school_local",
   label: "창원중앙고등학교 학교 소식·행사·현황",
@@ -70,14 +80,14 @@ const TOPICS = [
     label: "수능·모의평가",
     query: "수능",
     re: /수능|모의\s*평가|모평|모의\s*고사|평가원|수학\s*능력|원서\s*접수|수능\s*최저|최저\s*학력/,
-    domains: [D.suneung, D.kice, D.moe],
+    domains: [D.suneung, D.kice, D.moe, ...NEWS_DOMAINS, ...NATIONAL_NEWS_DOMAINS],
   },
   {
     id: "admission",
     label: "대학 입시 전형",
     query: "대학 입시 전형",
     re: /대입|입시|수시|정시|학종|학생부\s*(종합|교과)|교과\s*전형|논술|모집\s*요강|모집\s*인원|입학처|전형|경쟁률|합격\s*(선|컷)|(의대|대학|학과).{0,6}정원|정원.{0,6}(증원|확대|감축)|사탐|과탐|내신\s*반영|학과|전공|계약\s*학과|지역\s*(인재|균형)/,
-    domains: [D.adiga, D.kcue, D.moe],
+    domains: [D.adiga, D.kcue, D.moe, ...NEWS_DOMAINS, ...NATIONAL_NEWS_DOMAINS],
   },
   {
     id: "credit",
@@ -343,6 +353,11 @@ function buildSearchBlock(plan) {
       "- 학교 자료([확인된 학교 사실]·[관련 지식 검색 결과])에 이미 확인된 내용은 그대로 쓰고, 검색은 그 자료에 없는 부분(구체 장소·일정·최근 소식)을 채울 때만 쓰세요. 검색해도 우리 학교 자료가 확인되지 않으면 추측하지 말고 확인하지 못했다고 말하세요."
     );
   }
+  if (plan.topic && (plan.topic.id === "csat" || plan.topic.id === "admission")) {
+    lines.push(
+      "- 대학 입학처·어디가·대교협·평가원 같은 공식 자료가 있으면 그 내용을 우선하세요. 언론 기사는 공식 자료를 찾지 못했거나 최근 소식을 보충할 때만 쓰고, \"○○ 보도에 따르면\"처럼 보도 내용임과 기사 날짜를 밝히세요. 기사에만 있는 모집 인원·일정·반영 비율은 확정 사항처럼 말하지 말고 대학 모집요강에서 확인해야 한다고 덧붙이세요."
+    );
+  }
   if (plan.mode === "allowed") {
     lines.push("- 위 [확인된 학교 사실]·[확정된 3개년 교육과정]·[관련 지식 검색 결과]로 충분히 답할 수 있으면 검색하지 마세요. 자료에 없는 외부 공식 정보를 확인해야 할 때만 검색하세요.");
   }
@@ -378,6 +393,7 @@ module.exports = {
   SCHOOL_WEAK_SCORE,
   SCHOOL_TOPIC,
   NEWS_DOMAINS,
+  NATIONAL_NEWS_DOMAINS,
   TOPICS,
   planSearch,
   planFallbackSearch,

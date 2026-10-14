@@ -82,7 +82,8 @@ const { planSearch, planFallbackSearch, buildSearchBlock, buildToolConfig, yearM
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
 const { checkCurriculumReply, feedbackFor, repairCurriculumReply } = require("./curriculum_guard");
-const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota } = require("./rate_limit");
+const { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, refundDaily, deviceHash, consumeDeviceQuota, refundDeviceQuota } = require("./rate_limit");
+const { jobKey, readJob, claimJob, finishJob, failJob, releaseJob, callAnalysisModel } = require("./analysis_job");
 const { createAppCheckGate } = require("./app_check");
 const { recordVisit } = require("./visit_counter");
 const { evaluatePlan } = require("./plan");
@@ -603,20 +604,30 @@ exports.evaluatePlan = onRequest(
 
 /**
  * 내 커리큘럼 AI 분석 — "3년 과목 짜보기"를 끝까지(19과목) 고른 뒤 사이트가 호출한다.
- * POST { picks } -> { analysis: { headline, balance, strengths, gaps, majors:[{track,score,reason,caution}], tips, caveat }, result }
+ * POST { picks, deviceId }            -> 분석을 시작하고 끝날 때까지 기다린다.
+ * POST { picks, deviceId, poll:true } -> 결과만 확인한다(짧은 요청).
+ * 응답(JSON, 항상 status 포함):
+ *   200 { status:"done", analysis, result, cached? }  완료(같은 선택의 이전 결과면 cached:true, 한도·AI 호출 없음)
+ *   200 { status:"running", elapsedMs }               다른 요청이 처리 중 — 클라이언트가 poll로 확인
+ *   200 { status:"none" }                             (poll) 이 선택의 작업이 없음 — 클라이언트가 다시 시작
+ *   200 { status:"error", code, error }               (poll) 직전 시도가 실패함
+ *   4xx 한도·형식 오류 / 502 { status:"error", code, error }  AI 호출이 재시도 끝에 실패
+ * 연결이 끊겨도 서버는 끝까지 처리해 결과를 Firestore(analysis_jobs)에 남기므로 클라이언트가 나중에 가져갈 수 있다(analysis_job.js 참고).
  * 정원·학점 검증과 계산은 evaluatePlan(plan.js)이 하고, 모델은 그 숫자를 해석만 한다(plan_analysis.js).
- * 응답이 JSON 형식을 어기면 한 번 더 시도하고, 그래도 안 되면 502.
  */
+const analyzePollLimiters = [createLimiter(LIMITS.analyzePollPerMin)];
 exports.analyzePlan = onRequest(
-  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 150, memory: "512MiB" },
+  { secrets: [OPENAI_API_KEY], cors: true, region: "asia-northeast3", maxInstances: CHAT_MAX_INSTANCES, timeoutSeconds: 240, memory: "512MiB" },
   async (req, res) => {
     if (await appCheckBlocked(req, res)) return;
     if (req.method !== "POST") {
       res.status(405).json({ error: "POST 요청만 허용됩니다." });
       return;
     }
-    if (blocked(req, res, analyzeLimiters, "분석 요청이 많아요. 잠시 후 다시 시도해 주세요.")) return;
-    const out = evaluatePlan((req.body || {}).picks);
+    const body = req.body || {};
+    const poll = body.poll === true;
+    if (blocked(req, res, poll ? analyzePollLimiters : analyzeLimiters, poll ? "확인 요청이 많아요. 잠시 후 다시 시도해 주세요." : "분석 요청이 많아요. 잠시 후 다시 시도해 주세요.")) return;
+    const out = evaluatePlan(body.picks);
     if (!out.ok) {
       res.status(400).json({ error: out.errors[0], errors: out.errors });
       return;
@@ -625,53 +636,93 @@ exports.analyzePlan = onRequest(
       res.status(400).json({ error: `선택과목을 모두 골라야 분석할 수 있어요. (지금 ${out.result.pickedCount}/${out.result.totalPicks}과목)` });
       return;
     }
-    const dev = deviceHash((req.body || {}).deviceId);
+    const dev = deviceHash(body.deviceId);
     if (!dev) {
       res.status(400).json({ error: "기기 정보를 확인하지 못했어요. 페이지를 새로고침한 뒤 다시 시도해 주세요." });
       return;
     }
-    const quota = await consumeDeviceQuota(db, "analyze_dev", dev);
-    if (!quota.ok) {
-      res.status(429).json({ error: quota.which === "hour"
-        ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
-        : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
-      return;
-    }
-    if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay))) {
-      res.status(429).json({ error: "오늘은 AI 분석 가능 횟수를 모두 사용했어요. 내일 다시 이용해 주세요." });
-      return;
-    }
+    const key = jobKey(body.picks, ANALYSIS_MODEL);
+    const done = (analysis, extra = {}) => res.status(200).json({ status: "done", analysis, result: out.result, ...extra });
     try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const aiRes = await fetch("https://api.openai.com/v1/responses", {
-          method: "POST",
-          headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_API_KEY.value()}` },
-          body: JSON.stringify({
-            model: ANALYSIS_MODEL,
-            reasoning: { effort: ANALYSIS_REASONING },
-            max_output_tokens: 6000, // 추론 토큰이 이 한도에 포함되므로 넉넉히
-            store: false,
-            instructions: ANALYSIS_INSTRUCTIONS,
-            input: buildAnalysisInput(out.result),
-            text: { format: { type: "json_schema", name: "curriculum_analysis", strict: true, schema: ANALYSIS_SCHEMA } },
-          }),
-        });
-        if (!aiRes.ok) {
-          logger.error("analyzePlan AI API error", await aiRes.text());
-          break;
-        }
-        const parsed = parseResponse(await aiRes.json());
-        const analysis = parsed.text && !parsed.incomplete ? sanitizeAnalysis(parsed.text) : null;
-        if (analysis) {
-          res.status(200).json({ analysis, result: out.result });
-          return;
-        }
-        logger.warn("analyzePlan 응답 형식 오류 — 재시도", { attempt, incomplete: parsed.incomplete });
+      // 1) 이미 끝났거나(처리·한도 없이 바로 전달) 처리 중인 작업이 있으면 그 상태를 알려 준다.
+      const job = await readJob(db, key);
+      if (job.state === "done") { done(job.analysis, { cached: true }); return; }
+      if (poll) {
+        if (job.state === "running") res.status(200).json({ status: "running", elapsedMs: job.elapsedMs });
+        // 직전 실패 기록은 클라이언트가 "시작 요청의 답을 못 받았다"(startSettled)고 알릴 때만 전한다. 새로 시작하는 분석을 이전 실패로 오인하지 않게.
+        else if (job.state === "error" && body.startSettled === true) res.status(200).json({ status: "error", code: job.code, error: job.message });
+        else res.status(200).json({ status: "none" });
+        return;
       }
-      res.status(502).json({ error: "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요." });
+      if (job.state === "running") { res.status(200).json({ status: "running", elapsedMs: job.elapsedMs }); return; }
+
+      // 2) 처리 권한을 한 요청만 얻는다(같은 선택을 두 번 돌리지 않도록).
+      const claim = await claimJob(db, key);
+      if (!claim.claimed) {
+        if (claim.job.state === "done") done(claim.job.analysis, { cached: true });
+        else res.status(200).json({ status: "running", elapsedMs: claim.job.elapsedMs });
+        return;
+      }
+
+      // 3) 한도(새로 AI를 부를 때만 센다). 넘으면 처리 권한을 돌려준다.
+      const quotaAt = Date.now();
+      const quota = await consumeDeviceQuota(db, "analyze_dev", dev, quotaAt);
+      if (!quota.ok) {
+        await releaseJob(db, key);
+        res.status(429).json({ error: quota.which === "hour"
+          ? `이 기기에서는 한 시간에 ${LIMITS.analyzeDevicePerHour}번까지 분석할 수 있어요. 잠시 뒤에 다시 시도해 주세요. (같은 선택은 한 번 받은 분석이 저장돼 있어요)`
+          : `이 기기에서는 하루에 ${LIMITS.analyzeDevicePerDay}번까지 분석할 수 있어요. 내일 다시 이용해 주세요.` });
+        return;
+      }
+      if (!(await consumeDaily(db, "analyze", LIMITS.analyzeGlobalPerDay, quotaAt))) {
+        await refundDeviceQuota(db, "analyze_dev", dev, quotaAt);
+        await releaseJob(db, key);
+        res.status(429).json({ error: "오늘은 AI 분석 가능 횟수를 모두 사용했어요. 내일 다시 이용해 주세요." });
+        return;
+      }
+
+      // 4) AI 호출(시도별 타임아웃·일시 오류 재시도). 클라이언트가 끊겨도 여기까지는 끝까지 간다.
+      const t0 = Date.now();
+      const run = await callAnalysisModel({
+        fetchFn: fetch,
+        makeRequest: () => ({
+          url: "https://api.openai.com/v1/responses",
+          init: {
+            method: "POST",
+            headers: { "content-type": "application/json", "authorization": `Bearer ${OPENAI_API_KEY.value()}` },
+            body: JSON.stringify({
+              model: ANALYSIS_MODEL,
+              reasoning: { effort: ANALYSIS_REASONING },
+              max_output_tokens: 6000, // 추론 토큰이 이 한도에 포함되므로 넉넉히
+              store: false,
+              instructions: ANALYSIS_INSTRUCTIONS,
+              input: buildAnalysisInput(out.result),
+              text: { format: { type: "json_schema", name: "curriculum_analysis", strict: true, schema: ANALYSIS_SCHEMA } },
+            }),
+          },
+        }),
+        interpret: (json) => {
+          const parsed = parseResponse(json);
+          return { analysis: parsed.text && !parsed.incomplete ? sanitizeAnalysis(parsed.text) : null, incomplete: parsed.incomplete };
+        },
+      });
+      const ms = Date.now() - t0;
+      // 원인 분석용 로그: 시도마다 상태·소요 시간·분류(ok/timeout/network/http/bad-format/incomplete)가 남는다.
+      logger.info("analyzePlan 결과", { key: key.slice(0, 8), ok: run.ok, code: run.ok ? null : run.code, ms, attempts: run.attempts });
+      if (run.ok) {
+        await finishJob(db, key, run.analysis, { startedAt: t0, ms, attempts: run.attempts.length });
+        done(run.analysis);
+        return;
+      }
+      // 실패는 한도를 차감하지 않는다(우리·AI 쪽 사정으로 사용자의 횟수가 닳지 않게).
+      await refundDeviceQuota(db, "analyze_dev", dev, quotaAt);
+      await refundDaily(db, "analyze", quotaAt);
+      await failJob(db, key, run.code, run.message);
+      logger.error("analyzePlan 실패", { code: run.code, attempts: run.attempts });
+      res.status(502).json({ status: "error", code: run.code, error: run.message });
     } catch (err) {
       logger.error(err);
-      res.status(500).json({ error: "서버 오류가 발생했습니다." });
+      res.status(500).json({ status: "error", code: "internal", error: "서버 오류가 발생했습니다. 잠시 뒤에 다시 시도해 주세요." });
     }
   }
 );
