@@ -1,9 +1,9 @@
 /**
  * analyzePlan(index.js) 전체 흐름 테스트 — 가짜 Firestore·가짜 OpenAI로 실제 핸들러를 end-to-end로 실행한다.
- * 실행: node test/run_analyze_plan_integration.js   (재시도 대기 때문에 10초 안팎 걸린다)
+ * 실행: node test/run_analyze_plan_integration.js   
  *
- * 확인하는 것: 완료 결과 재사용(두 번째는 AI·한도 소모 없음) / 확인 요청(poll) 상태 / 실패 시 한도 환급 /
- *              직전 실패 기록은 startSettled일 때만 전달 / 처리 중이면 중복 시작 안 함 / 한도 초과 시 작업 권한 반환 / 입력 검증.
+ * 확인하는 것: 완료 결과 재사용(두 번째는 AI·한도 소모 없음) / 확인 요청(poll) 상태 / 간이 분석 시 한도 환급·미저장 /
+ *              직전 간이 분석 기록은 startSettled일 때만 전달 / 처리 중이면 중복 시작 안 함 / 한도 초과 시 작업 권한 반환 / 입력 검증.
  */
 const path = require("path");
 const Module = require("module");
@@ -145,44 +145,43 @@ async function t(name, fn) {
     assert.strictEqual(deviceHourCounter(), 0);
   });
 
-  await t("AI 일시 장애(503 계속): 재시도 후 502 error, 한도는 전부 환급된다", async () => {
+  await t("AI 일시 장애(503 계속): 간이 분석(fallback:true)을 주고, 한도는 전부 환급되며, 완료로 저장하지 않는다", async () => {
     aiMode = "503";
     const r = await start();
-    assert.strictEqual(r.code, 502);
-    assert.strictEqual(r.payload.status, "error");
-    assert.strictEqual(r.payload.code, "busy");
-    assert.ok(/다시 시도/.test(r.payload.error));
-    assert.strictEqual(aiCalls, 3, "시도 상한까지 재시도");
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(r.payload.status, "done");
+    assert.strictEqual(r.payload.fallback, true);
+    assert.ok(r.payload.analysis.headline, "간이 분석도 화면에 보여 줄 내용이 있어야 한다");
+    assert.strictEqual(aiCalls, 2, "high → low 두 번 시도(analysis_runner.js)");
     assert.strictEqual(counter("analyze"), 0, "전체 한도 환급");
     assert.strictEqual(deviceHourCounter(), 0, "기기 한도 환급");
-    assert.strictEqual(store.get(`analysis_jobs/${KEY}`).status, "error");
+    assert.strictEqual(store.get(`analysis_jobs/${KEY}`).status, "fallback");
   });
 
-  await t("실패 기록은 startSettled일 때만 poll로 전달되고, 아니면 none(새 분석을 이전 실패로 오인하지 않음)", async () => {
-    aiMode = "503";
-    await start();
-    const unsettled = await poll();
-    assert.deepStrictEqual(unsettled.payload, { status: "none" });
-    const settled = await poll({ startSettled: true });
-    assert.strictEqual(settled.payload.status, "error");
-    assert.strictEqual(settled.payload.code, "busy");
-  });
-
-  await t("실패한 뒤 다시 시도하면 새로 시작해서 성공한다", async () => {
+  await t("간이 분석은 캐시처럼 재사용되지 않는다: 다시 시도하면 AI로 새로 분석해 완료로 저장", async () => {
     aiMode = "503";
     await start();
     aiMode = "ok";
     const r = await start();
     assert.strictEqual(r.payload.status, "done");
+    assert.ok(!r.payload.fallback && !r.payload.cached);
     assert.strictEqual(store.get(`analysis_jobs/${KEY}`).status, "done");
   });
 
-  await t("AI 요청 오류(400): 재시도 없이 config 안내, 한도 환급", async () => {
+  await t("간이 분석 기록은 startSettled일 때만 poll로 전달되고, 아니면 none(새 분석을 이전 결과로 오인하지 않음)", async () => {
+    aiMode = "503";
+    await start();
+    const unsettled = await poll();
+    assert.deepStrictEqual(unsettled.payload, { status: "none" });
+    const settled = await poll({ startSettled: true });
+    assert.strictEqual(settled.payload.status, "done");
+    assert.strictEqual(settled.payload.fallback, true);
+  });
+
+  await t("AI 요청 오류(400)도 같은 경로: 간이 분석 + 한도 환급", async () => {
     aiMode = "400";
     const r = await start();
-    assert.strictEqual(r.code, 502);
-    assert.strictEqual(r.payload.code, "config");
-    assert.strictEqual(aiCalls, 1);
+    assert.strictEqual(r.payload.fallback, true);
     assert.strictEqual(deviceHourCounter(), 0);
   });
 

@@ -9,11 +9,11 @@
 // 브라우저 전용 API는 모두 주입할 수 있어서 functions/test/run_analysis_client_tests.js가 Node에서 검증한다.
 
 export const TIMING = {
-  total: 250000, // 이 시간 안에 결과를 못 받으면 포기(서버 제한 240초 + 여유)
+  total: 290000, // 이 시간 안에 결과를 못 받으면 포기(서버는 240초 안에 반드시 응답하고 함수 제한은 300초)
   pollEvery: 4000, // 확인 간격
   firstPollAfter: 5000, // 시작 직후 첫 확인까지(서버가 작업을 등록할 시간)
   pollTimeout: 15000, // 확인 요청 하나의 상한
-  startTimeout: 245000, // 시작 요청 하나의 상한(끊겨도 확인 요청이 이어받는다)
+  startTimeout: 295000, // 시작 요청 하나의 상한(끊겨도 확인 요청이 이어받는다)
   maxStarts: 3,
 };
 
@@ -56,7 +56,7 @@ async function post(fetchFn, url, body, timeoutMs, outer) {
 function classify(r, isPoll = false) {
   if (r.net) return { final: false };
   const { status, data } = r;
-  if (data && data.status === "done" && data.analysis) return { final: true, result: { ok: true, analysis: data.analysis, result: data.result, cached: !!data.cached } };
+  if (data && data.status === "done" && data.analysis) return { final: true, result: { ok: true, analysis: data.analysis, result: data.result, cached: !!data.cached, fallback: !!data.fallback } };
   if (data && data.status === "error" && data.error) return { final: true, result: { ok: false, code: data.code || "error", message: data.error, retryable: true } };
   if (isPoll && status === 429) return { final: false }; // 확인 요청이 잠깐 몰린 것 — 분석 한도와 다르니 계속 확인한다
   if (status >= 400 && status < 500 && data && data.error) return { final: true, result: { ok: false, code: status === 429 ? "limit" : "invalid", message: data.error, retryable: false } };
@@ -68,7 +68,7 @@ function classify(r, isPoll = false) {
  * @param {string} o.url  @param {object} o.picks  @param {string} o.deviceId
  * @param {(note:string)=>void} [o.onStatus] 화면 안내용: "", "reconnecting", "offline"
  * @param {AbortSignal} [o.signal] 사용자가 선택을 바꿨거나 탭을 옮겼을 때 중단
- * @returns {Promise<{ok:true, analysis:object, result?:object, cached?:boolean} | {ok:false, code:string, message:string, retryable:boolean}>}
+ * @returns {Promise<{ok:true, analysis:object, result?:object, cached?:boolean, fallback?:boolean} | {ok:false, code:string, message:string, retryable:boolean}>}
  */
 export async function requestAnalysis(opts) {
   // 끝나면(성공·실패 무엇이든) 아직 응답을 기다리는 시작 요청의 연결을 정리한다.

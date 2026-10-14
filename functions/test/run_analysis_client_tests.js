@@ -49,7 +49,7 @@ function env({ start, poll, online = () => true, timing } = {}) {
       sleep: async (ms) => { t0 += ms; },
       isOnline: online,
       onStatus: (n) => log.notes.push(n),
-      timing: { total: 250000, pollEvery: 4000, firstPollAfter: 5000, pollTimeout: 15000, startTimeout: 245000, maxStarts: 3, ...(timing || {}) },
+      timing: { total: 290000, pollEvery: 4000, firstPollAfter: 5000, pollTimeout: 15000, startTimeout: 295000, maxStarts: 3, ...(timing || {}) },
     },
   };
 }
@@ -155,19 +155,27 @@ const netErr = () => new TypeError("Load failed");
     assert.ok(!r.ok && r.code === "invalid");
   });
 
-  await t("서버가 재시도 끝에 낸 실패(502 status:error)는 그 안내를 그대로 전달", async () => {
-    const e = env({ start: () => json(502, { status: "error", code: "timeout", error: "너무 오래 걸렸어요" }), poll: () => RUNNING });
+  await t("서버 내부 오류(500 status:error)는 그 안내를 그대로 전달", async () => {
+    const e = env({ start: () => json(500, { status: "error", code: "internal", error: "서버 오류가 발생했습니다." }), poll: () => RUNNING });
     const r = await requestAnalysis(e.opts);
-    assert.ok(!r.ok && r.code === "timeout" && r.message === "너무 오래 걸렸어요" && r.retryable);
+    assert.ok(!r.ok && r.code === "internal" && r.message === "서버 오류가 발생했습니다." && r.retryable);
   });
 
-  await t("시작 요청 응답을 못 받은 뒤 확인했더니 직전 실패 기록이 있으면 그 실패를 전달(startSettled 전송)", async () => {
+  await t("간이 분석(fallback:true)은 성공으로 전달하되 표시를 유지한다(화면이 저장하지 않도록)", async () => {
+    const e = env({ start: () => json(200, { status: "done", analysis: ANALYSIS, result: RESULT, fallback: true }), poll: () => RUNNING });
+    const r = await requestAnalysis(e.opts);
+    assert.ok(r.ok && r.fallback === true);
+    const e2 = env({ start: () => DONE, poll: () => RUNNING });
+    assert.strictEqual((await requestAnalysis(e2.opts)).fallback, false);
+  });
+
+  await t("시작 요청 응답을 못 받은 뒤 확인했더니 직전 간이 분석 기록이 있으면 그걸 전달(startSettled 전송)", async () => {
     const e = env({
       start: () => netErr(),
-      poll: (n, c) => (c.body.startSettled ? json(200, { status: "error", code: "busy", error: "혼잡해요" }) : RUNNING),
+      poll: (n, c) => (c.body.startSettled ? json(200, { status: "done", analysis: ANALYSIS, result: RESULT, fallback: true }) : RUNNING),
     });
     const r = await requestAnalysis(e.opts);
-    assert.ok(!r.ok && r.message === "혼잡해요");
+    assert.ok(r.ok && r.fallback === true);
     assert.ok(e.log.pollBodies.every((b) => b.poll === true && b.picks && b.deviceId));
   });
 
@@ -200,7 +208,8 @@ const netErr = () => new TypeError("Load failed");
   });
 
   await t("기본 타이밍 상수가 서버 제한(240초) 안에서 합리적이다", () => {
-    assert.ok(TIMING.total > 240000 && TIMING.total <= 300000);
+    assert.ok(TIMING.total > 240000 && TIMING.total <= 300000, "서버는 240초 안에 응답하고 함수 제한은 300초");
+    assert.ok(TIMING.startTimeout >= TIMING.total);
     assert.ok(TIMING.pollEvery >= 2000 && TIMING.pollTimeout <= 20000 && TIMING.maxStarts >= 2);
   });
 

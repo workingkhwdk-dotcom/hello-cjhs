@@ -216,7 +216,7 @@ export function renderPlanner(root, { onChange } = {}) {
     try {
       // 끊김·재연결·재시작은 하네스(analysis-client.js)가 처리한다. 여기에 오는 실패는 "확정된" 실패(한도·서버 재시도 후 실패·끝내 연결 안 됨)뿐이다.
       const r = await requestAnalysis({ url: ANALYZE_URL, picks: sentPicks, deviceId: deviceId(), signal: ctl.signal, onStatus: note => { netNote = NET_NOTES[note] || ""; } });
-      if (r.ok) { saveAi(sentPicks, r.analysis); html = analysisHtml(r.analysis); }
+      if (r.ok) { if (!r.fallback) saveAi(sentPicks, r.analysis); /* 간이 분석은 저장하지 않아 다음에 AI 분석을 다시 받을 수 있다 */ html = analysisHtml(r.analysis); }
       else html = `<p class="pl-ai-wait">${esc(r.message)}</p>${retryBtn}`;
     } catch (err) {
       console.error(err);
