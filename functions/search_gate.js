@@ -278,6 +278,37 @@ function planSearch({ message, history = [], topScore = 0, now = new Date() }) {
   return { ...base, mode: "allowed", reason: inherited ? "followup-weak-db" : "weak-db", maxCalls: 2 };
 }
 
+
+// ---- 불확실 답변 자동 재검색 ----
+// 일반 사용자는 "검색해 줘"라고 시키지 않는다. 그래서 학교 자료로 먼저 답하게 한 뒤, 그 답이 "확인되지 않았다/자료에 없다"로 끝났으면
+// 서버가 검색을 열어 한 번 더 답하게 한다(검색 범위는 공식 도메인으로 제한, 최대 2번).
+const UNCERTAIN_REPLY_RE = /확인(이\s*)?(되지|하지)\s*(않|못)|확인(된|한)?\s*(자료|내용|정보)(에는|에|가)\s*(없|부족)|단정(해서)?\s*말(할|씀드릴)\s*수\s*(는\s*)?없|(알|말씀드릴)\s*수\s*없|모르겠|정확히\s*안내(하기)?\s*어려|자료에는\s*없/;
+
+/**
+ * 첫 답변이 불확실했을 때 쓸 재검색 계획을 돌려준다(없으면 null).
+ * 학생 개인 조언·"확정 전" 항목·학교/교육과 무관한 질문은 재검색하지 않는다.
+ */
+function planFallbackSearch({ message, history = [], reply, now = new Date() }) {
+  if (!UNCERTAIN_REPLY_RE.test(String(reply || ""))) return null;
+  const text = String(message || "");
+  const last = lastUserText(history);
+  const short = text.trim().length <= 30;
+  // 짧은 이어 묻기("그럼 어느 도시야?")는 직전 사용자 질문의 맥락을 이어받는다.
+  const ctx = short && last ? `${last} ${text}` : text;
+  if (NOT_CONFIRMED_RE.test(ctx) || (ADVICE_RE.test(text) && !EXPLICIT_RE.test(text))) return null;
+
+  const topic = findTopic(text) || (short ? findTopic(last) : null);
+  const schoolCtx = SCHOOL_EVENT_RE.test(ctx) || INTERNAL_RE.test(ctx) || /학교/.test(ctx);
+  if (!topic && !schoolCtx) return null;
+
+  const use = topic && !(schoolCtx && SCHOOL_EVENT_RE.test(ctx)) ? topic : SCHOOL_TOPIC;
+  const { year, source } = detectYear(ctx, use, now);
+  return {
+    mode: "required", reason: "fallback-uncertain", topic: use, domains: use.domains.slice(),
+    year, yearSource: source, query: buildQuery(ctx, use, year), maxCalls: 2,
+  };
+}
+
 /** 프롬프트에 넣는 [웹 검색 사용 규칙] + 이번 질문 전용 검색 지시서. 제목은 항상 같아 테스트에서 확인할 수 있다. */
 function buildSearchBlock(plan) {
   const head = "[웹 검색 사용 규칙]";
@@ -349,6 +380,8 @@ module.exports = {
   NEWS_DOMAINS,
   TOPICS,
   planSearch,
+  planFallbackSearch,
+  UNCERTAIN_REPLY_RE,
   buildSearchBlock,
   buildQuery,
   kstYear,

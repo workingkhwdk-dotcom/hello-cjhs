@@ -78,7 +78,7 @@ const { retrieveKnowledge, formatKnowledgeForPrompt, topKnowledgeScore } = requi
 const { CURRICULUM_CORE } = require("./curriculum_core");
 const { logUnanswered } = require("./unanswered");
 const { parseResponse, finalizeReply } = require("./web_search");
-const { planSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
+const { planSearch, planFallbackSearch, buildSearchBlock, buildToolConfig, yearMismatchNotice, UNVERIFIED_NOTICE } = require("./search_gate");
 const { safeSlice } = require("./reply_guard");
 const { enforceSchoolFacts } = require("./fact_guard");
 const { checkCurriculumReply, feedbackFor, repairCurriculumReply } = require("./curriculum_guard");
@@ -367,9 +367,10 @@ async function generateReply(message, history, extraSystem = "") {
   const knowledge = retrieveKnowledge(message, recentContext, 6);
   const topScore = topKnowledgeScore(message, recentContext);
   // 웹 검색 여부·범위·검색어는 모델이 아니라 서버(search_gate.js)가 정한다. 닫혀 있으면 도구 자체를 주지 않는다.
-  const searchPlan = planSearch({ message, history, topScore });
+  let searchPlan = planSearch({ message, history, topScore });
   logger.info("웹 검색 게이트", { mode: searchPlan.mode, reason: searchPlan.reason, topic: searchPlan.topic && searchPlan.topic.id, year: searchPlan.year });
-  const systemPrompt = buildSystemPrompt(formatKnowledgeForPrompt(knowledge), searchPlan) + (extraSystem ? `\n\n${extraSystem}` : "");
+  const promptFor = (plan) => buildSystemPrompt(formatKnowledgeForPrompt(knowledge), plan) + (extraSystem ? `\n\n${extraSystem}` : "");
+  let systemPrompt = promptFor(searchPlan);
 
   // --- 지금은 OpenAI(GPT) API를 임시로 사용합니다. ---
   // 나중에 Anthropic 등 다른 provider로 되돌리려면 이 블록만 교체하면 됩니다.
@@ -415,7 +416,25 @@ async function generateReply(message, history, extraSystem = "") {
   return parseResponse(await openaiRes.json());
   };
 
-  const parsed = await askModel();
+  let parsed = await askModel();
+  // 검색 없이(또는 검색을 열었어도 안 쓰고) "확인되지 않았다"로 답했으면 서버가 검색을 열어 한 번 더 답하게 한다. 실패하면 첫 답변을 그대로 쓴다.
+  if (parsed.text && !parsed.searched) {
+    const fb = planFallbackSearch({ message, history, reply: parsed.text });
+    if (fb) {
+      logger.info("불확실 답변 — 자동 재검색", { reason: fb.reason, topic: fb.topic.id, query: fb.query });
+      const prev = { searchPlan, systemPrompt };
+      searchPlan = fb;
+      systemPrompt = promptFor(fb);
+      try {
+        const second = await askModel();
+        if (second.text && second.searched) parsed = second;
+        else { searchPlan = prev.searchPlan; systemPrompt = prev.systemPrompt; }
+      } catch (err) {
+        logger.warn("자동 재검색 실패 — 첫 답변 사용", err);
+        searchPlan = prev.searchPlan; systemPrompt = prev.systemPrompt;
+      }
+    }
+  }
   let reply = (parsed.text && finalizeReply(parsed)) || "죄송해요, 답변을 생성하지 못했어요.";
   // 편성표 검수(curriculum_guard.js): 과목·선택군·학기·정원이 확정 편성표와 다르면 한 번 다시 쓰게 하고, 그래도 다르면 문제 행을 빼고 안내한다.
   if (parsed.text) {
