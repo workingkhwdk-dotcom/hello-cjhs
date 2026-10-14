@@ -147,4 +147,4 @@ html.ig-open{ overflow:hidden; }
 .m-foot-ico svg{ box-sizing:content-box; width:20px; height:20px; padding:10px; border-radius:50%; background:var(--surface); color:var(--accent); border:1px solid var(--sep); box-shadow:0 4px 10px -6px rgba(20,40,79,.5); transition:transform .15s var(--ease), background .15s; }
 .m-foot-ico:active svg{ transform:scale(.92); background:var(--accent-tint); }
 .m-foot-ico span{ line-height:1.2; text-align:center; white-space:nowrap; }
-
+.m-lang-pill{position:relative;z-index:1;margin-left:auto;flex:none;font-size:11.5px;padding:6px 9px;gap:4px;white-space:nowrap}.m-lang-pill svg{width:13px;height:13px}
