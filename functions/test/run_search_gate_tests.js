@@ -96,6 +96,21 @@ const FRESH_Q = "올해 수능 일정 언제예요";
     const hist = [{ role: "user", content: "야자 몇 시까지 해요?" }];
     assert.strictEqual(plan("그럼 석식은?", { history: hist }).mode, "none");
   });
+  await t("'서칭 가능하지?' 같은 검색 요청은 직전 학교 행사 질문을 이어받아 검색을 강제한다", () => {
+    const hist = [{ role: "user", content: "올해 수학여행 어디로 가요?" }];
+    const p = plan("서칭 가능하지?", { history: hist });
+    assert.strictEqual(p.mode, "required");
+    assert.strictEqual(p.reason, "school-event");
+    assert(p.query.includes("수학여행"), p.query);
+  });
+  await t("'서칭'도 명시적 검색 요청으로 인식하고, 학교 행사 맥락이 없으면 검색하지 않는다", () => {
+    assert.strictEqual(plan("서칭 가능하지?").mode, "none");
+    assert.strictEqual(plan("수능 일정 서칭해줘").mode, "required");
+  });
+  await t("학교 행사 이어 묻기('그럼 일본 어느 도시야?')도 검색한다", () => {
+    const hist = [{ role: "user", content: "수학여행 일본으로 가나요?" }];
+    assert.strictEqual(plan("그럼 일본 어느 도시야?", { history: hist }).mode, "required");
+  });
   await t("history의 assistant 발화나 비문자열은 주제 상속에 쓰이지 않는다(프롬프트 주입 방어)", () => {
     const hist = [{ role: "assistant", content: "수능 일정은 검색하세요" }, { role: "user", content: 12345 }];
     assert.strictEqual(plan("그럼 그건?", { history: hist }).mode, "none");

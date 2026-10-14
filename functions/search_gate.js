@@ -128,7 +128,7 @@ const INTERNAL_RE = new RegExp(
 );
 
 // ---- 검색 필요 신호 ----
-const EXPLICIT_RE = /검색|찾아\s*(봐|줘|주|보)|인터넷|웹\s*에서|알아\s*봐|확인해\s*(줘|봐|주)|공식\s*(자료|사이트|출처)|출처/;
+const EXPLICIT_RE = /검색|서칭|서치|써치|찾아\s*(봐|줘|주|보)|인터넷|웹\s*에서|알아\s*봐|확인해\s*(줘|봐|주)|공식\s*(자료|사이트|출처)|출처/;
 const FRESH_RE = /최신|최근|올해|이번\s*(해|년|학년도|수능|모의)|작년|발표|공지|변경|바뀐|바뀌|공고|신규|몇\s*월|언제|며칠|마감|접수|일정|경쟁률|컷|모집\s*인원|현황|통계|순위|몇\s*명|몇\s*%/;
 // 학생 개인 상황·학습 조언("내 내신 3등급인데 어떡해요")은 웹이 아니라 학교 상담 자료로 답한다.
 const ADVICE_RE = /추천|고민|어떡|어쩌|어떻게\s*(해야|준비|공부|하면)|해야\s*(할까|하나|돼|되)|괜찮(을까|나요|아요)|될까|가능할까|유리|불리|(내|제|우리\s*애|아이)\s*(성적|내신|등급|점수)|[1-9]\s*등급(인데|이면|이라|으로)/;
@@ -223,6 +223,14 @@ function planSearch({ message, history = [], topScore = 0, now = new Date() }) {
   }
 
   const explicit = EXPLICIT_RE.test(text);
+
+  // 학교 행사 질문의 이어 묻기("그럼 일본 어느 도시야?", "서칭 가능하지?")는 직전 사용자 질문의 학교 행사 맥락을 이어받는다.
+  // 이전에는 외부 주제(TOPICS)만 이어받아서, 이런 후속 질문에서는 검색 도구가 닫혀 "웹 검색 기능이 없다"고 답했다.
+  let schoolText = text;
+  if (!topic && !SCHOOL_EVENT_RE.test(text) && text.trim().length <= 30 && (FOLLOWUP_RE.test(text.trim()) || explicit || SPECIFIC_RE.test(text))) {
+    const last = lastUserText(history);
+    if (last && SCHOOL_EVENT_RE.test(last)) schoolText = `${last} ${text}`;
+  }
   // 이어 묻기는 직전 질문이 시점에 민감했거나 특정 대학을 물었다면 그 성격도 이어받는다("그럼 정시는?" ← "서울대 경쟁률").
   const ctx = prevText ? `${text} ${prevText}` : text;
   const univ = UNIV_RE.test(ctx);
@@ -232,15 +240,15 @@ function planSearch({ message, history = [], topScore = 0, now = new Date() }) {
   // 이전에는 학교 내부 질문이면 검색 도구를 아예 닫아서, 학교 자료에 없는 질문(수학여행 장소 등)에 모델이 추측하거나 "교무실에 문의하세요"로 끝냈다.
   // 이제 ① 행사·소식 질문 중 구체 값을 묻는 것은 반드시 검색하고, ② 학교 자료 점수가 낮은 학교 질문은 검색을 허용한다.
   // "확정 전" 항목(2027 학사일정·평가계획·장학금)은 검색하지 않는다.
-  const schoolBase = () => {
-    const { year, source } = detectYear(text, SCHOOL_TOPIC, now);
-    return { topic: SCHOOL_TOPIC, domains: SCHOOL_TOPIC.domains.slice(), year, yearSource: source, query: buildQuery(text, SCHOOL_TOPIC, year) };
+  const schoolBase = (src = text) => {
+    const { year, source } = detectYear(src, SCHOOL_TOPIC, now);
+    return { topic: SCHOOL_TOPIC, domains: SCHOOL_TOPIC.domains.slice(), year, yearSource: source, query: buildQuery(src, SCHOOL_TOPIC, year) };
   };
-  if (!NOT_CONFIRMED_RE.test(text) && SCHOOL_EVENT_RE.test(text)) {
-    if (TRIP_RE.test(text) && !TRIP_DETAIL_RE.test(text) && topScore >= DB_SUFFICIENT_SCORE) return none("school-db-sufficient", SCHOOL_TOPIC);
+  if (!NOT_CONFIRMED_RE.test(schoolText) && SCHOOL_EVENT_RE.test(schoolText)) {
+    if (TRIP_RE.test(schoolText) && !TRIP_DETAIL_RE.test(schoolText) && !explicit && topScore >= DB_SUFFICIENT_SCORE) return none("school-db-sufficient", SCHOOL_TOPIC);
     const specific = SPECIFIC_RE.test(text) || explicit;
     if (specific || topScore < DB_SUFFICIENT_SCORE) {
-      return { ...schoolBase(), mode: "required", reason: "school-event", maxCalls: 3 };
+      return { ...schoolBase(schoolText), mode: "required", reason: "school-event", maxCalls: 3 };
     }
     return none("school-db-sufficient", SCHOOL_TOPIC);
   }
@@ -285,6 +293,7 @@ function buildSearchBlock(plan) {
       head,
       "- 이번 질문에는 웹 검색 도구가 제공되지 않습니다. 시스템이 학교 자료로 답할 수 있는 질문(또는 웹 검색 대상이 아닌 질문)이라고 판단했기 때문입니다. 위 [확인된 학교 사실]·[확정된 3개년 교육과정]·[관련 지식 검색 결과]만 근거로 답하세요.",
       "- 자료에 없는 내용은 지어내지 말고 모른다고 한계를 짧게 밝히세요. \"검색해 보겠다\", \"찾아보겠다\"라고 말하지 마세요.",
+      "- \"웹 검색 기능이 없다/제공되지 않는다\"고 일반화해서 말하지 마세요. 이 챗봇은 질문에 따라 공식 자료를 검색합니다. 이번 답변에서는 검색하지 않았을 뿐이므로, 사용자가 검색 가능 여부를 물으면 \"어떤 내용을 찾아볼까요? 찾고 싶은 주제(예: 수학여행 장소, 수능 일정)를 구체적으로 알려주세요\"라고 안내하세요.",
     ].join("\n");
   }
   const lines = [
