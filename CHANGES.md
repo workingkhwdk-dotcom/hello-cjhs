@@ -11,6 +11,9 @@
 - **글꼴 늦게 바뀌는 현상 완화**(`index/mobile/qna/apply/chatbot.html`): 구글 폰트 CSS를 `media="print"` 방식(브라우저가 가장 낮은 우선순위로 받음) → `rel="preload" as="style"`(높은 우선순위, 화면은 막지 않음)로 바꿔, 본문이 기본 글꼴로 보였다가 한참 뒤 바뀌는 시간을 줄였다.
 - `index.html`·`mobile.html`의 `plan-chat.js`·`reply-guard.js`에 `defer`: `<head>`의 미리 받기 목록과 화면 해석을 막지 않는다(실행 순서는 그대로 render 스크립트보다 먼저).
 
+- **보안 확인(reCAPTCHA)·방문자 수를 화면이 다 뜬 뒤로**(`js/app-check.js`, `js/visitor-counter.js`): 페이지를 열자마자 받던 reCAPTCHA(수백 KB 스크립트)를 "우리 서버 함수를 처음 부를 때" 또는 "화면이 다 뜨고 한가해졌을 때" 중 먼저 오는 때에 준비한다. 방문자 수도 화면이 다 뜬 뒤에 센다. 휴대폰에서 첫 화면과 처리 시간을 다투지 않는다. 챗봇·분석 요청에는 예전처럼 토큰이 붙는다.
+- 구글 폰트 요청에서 실제로 쓰이지 않는 Gaegu(인사말 서명의 대체 글꼴로만 지정) 제거.
+
 배포: `bash tools/deploy.sh hosting`
 
 ---
