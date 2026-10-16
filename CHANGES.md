@@ -1,3 +1,14 @@
+# 2026-10-16 (2) 중복 파일 정리 · 등록 사진 WebP 최적화
+
+- **중복 파일 정리**: 동기화 중 생긴 복사본 16개(`index 2.html`, `qna 2.html`, `qna 3.html`, `js/subject-guide 2.js`, `functions/index 2.js` 등)를 지웠다. 모두 원본보다 옛 버전이거나 원본과 같은 내용이었다. `.gitignore`에 `* [0-9].*`를 넣어 다시 생겨도 저장소에 올라가지 않게 했다(`firebase.json`·`bump-version.js`의 복사본 제외 규칙은 안전망으로 그대로 둠).
+- **예전에 올린 사진을 한 번에 WebP로**(신규 `functions/image_optimize.js`, 함수 `optimizeSiteImages`, `admin.html` "학교 소개 관리" 맨 위 버튼): site_content의 모든 `photoUrl`(학교장 사진·갤러리 대표/이어지는 사진)을 찾아, 긴 변 1600px·WebP(품질 82)로 바꿔 `…-opt.webp`로 올리고 문서의 주소를 바꾼다. 이미 400KB 이하 WebP이거나 변환해도 작아지지 않으면 건너뛴다. 원본 파일은 지우지 않는다. 로그인한 관리자(admins 컬렉션)만 부를 수 있고(ID 토큰 확인), App Check 게이트도 거친다. 저장 안 한 편집 내용이 있으면 먼저 저장하라고 안내하고, 끝나면 편집 화면을 새 주소로 다시 불러온다. 변환은 서버에서 `sharp`로 한다(브라우저에서는 Storage CORS 설정이 없어 원본을 읽을 수 없음). 테스트: `npm run test:imgopt`(21건).
+- **업로드 자동 변환 보완**(`admin.html` `shrinkImage`): ① Safari는 WebP로 저장하지 못해 지금까지 **원본이 그대로** 올라갔다 → 줄인 JPG로 올리고, 위 버튼으로 WebP로 바꿀 수 있다. ② HEIC 등 JPG/PNG/WebP가 아닌 사진도 브라우저가 열 수 있으면 변환해 올린다(대부분 브라우저가 HEIC를 못 띄움).
+- `admin.html`에 `js/app-check.js` 추가(서버 함수 요청에 App Check 토큰).
+
+배포: `bash tools/deploy.sh` (서버 함수 + 사이트. 새 함수 `optimizeSiteImages`와 `sharp` 패키지가 추가됨). 배포 뒤 관리자 화면 → 학교 소개 관리 → **등록된 사진 WebP로 최적화**를 한 번 누른다.
+
+---
+
 # 2026-10-16 메인 화면 인사말: 글·사진이 함께, 빨리 뜨게
 
 - **증상**: 사진이 먼저 뜨고, 한참 뒤 본문 글만 보였다가(사진이 사라짐), 다시 시간이 지나서야 글과 사진이 같이 보였다.

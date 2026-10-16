@@ -162,6 +162,13 @@
     <div class="admin-view" id="view-content">
       <div class="hint" style="margin-bottom:16px;">여기서 저장하면 메인 페이지에 바로 반영됩니다. 각 구역 상단에 메인 페이지 어느 탭에 해당하는지 표시되어 있어요. <strong>고친 내용은 그 구역의 저장 버튼을 눌러야 반영됩니다</strong> — 저장하지 않고 페이지를 벗어나면 브라우저가 한 번 더 확인해 줍니다.</div>
 
+      <!-- 예전에 올린 사진 WebP 최적화 (functions: optimizeSiteImages) -->
+      <div class="hint" id="imgopt-box" style="margin-bottom:16px;">
+        <strong>사진 최적화</strong> — 지금 올리는 사진은 자동으로 작은 WebP로 바뀌어 올라갑니다. 예전에 올려 둔 사진(휴대폰 원본 등)은 아래 버튼으로 한 번에 바꿀 수 있어요. 메인 화면 사진이 빨리 뜹니다. 원본 파일은 지우지 않습니다.
+        <div style="margin-top:10px;"><button type="button" class="btn btn-ghost" id="imgopt-run">등록된 사진 WebP로 최적화</button></div>
+        <div class="form-msg" id="imgopt-msg"></div>
+      </div>
+
       <!-- 학교장 인사말 -->
       <div class="content-editor-section" id="section-cg">
         <div class="content-editor-header">
@@ -280,6 +287,8 @@
      - 휴지통에서 "복구"하면 deleted 필드를 지워 원래대로 되돌리고,
        "완전 삭제"를 누르면 그때 실제로 문서를 지웁니다(되돌릴 수 없음).
      ========================================================= -->
+<!-- 서버 함수(사진 최적화) 요청에 App Check 토큰을 붙인다(enforce 모드에서도 동작하게) -->
+<script type="module" src="js/app-check.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
@@ -1039,7 +1048,8 @@
   // 올리기 전에 긴 변 1600px 이내 + WebP로 줄인다(보통 3~8MB → 150~300KB). 줄이지 못하면(GIF·SVG·오류) 원본 그대로 올린다.
   const IMG_MAX_SIDE = 1600, IMG_QUALITY = 0.82;
   async function shrinkImage(file){
-    if(!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+    // GIF(움직이는 그림)·SVG는 그대로. 그 밖의 사진(HEIC 등 브라우저가 열 수 있는 형식 포함)은 WebP로 바꿔 본다.
+    if(/^image\/(gif|svg\+xml)$/.test(file.type)) return file;
     try{
       const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
       const k = Math.min(1, IMG_MAX_SIDE / Math.max(bmp.width, bmp.height));
@@ -1047,15 +1057,19 @@
       const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
       cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
       if(bmp.close) bmp.close();
-      const blob = await new Promise(res => cv.toBlob(res, 'image/webp', IMG_QUALITY));
-      return blob && blob.type === 'image/webp' && blob.size < file.size ? blob : file;
+      // Safari는 WebP로 저장하지 못한다(PNG로 바꿔 줌). 그때는 줄인 JPG로 올리고, 나중에 "등록된 사진 WebP로 최적화" 버튼이 WebP로 바꾼다.
+      let blob = await new Promise(res => cv.toBlob(res, 'image/webp', IMG_QUALITY));
+      if(!blob || blob.type !== 'image/webp') blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', IMG_QUALITY));
+      if(!blob || !/^image\/(webp|jpeg)$/.test(blob.type)) return file;
+      // JPG·PNG·WebP는 작아질 때만 바꾸고, HEIC처럼 브라우저 대부분이 못 띄우는 형식은 크기와 상관없이 바꿔 올린다.
+      return blob.size < file.size || !/^image\/(jpeg|png|webp)$/.test(file.type) ? blob : file;
     }catch(err){ console.warn('사진 축소 실패, 원본으로 올립니다:', err); return file; }
   }
 
   async function uploadContentImage(file, prefix){
     const body = await shrinkImage(file);
     const base = file.name.replace(/\.[^.]+$/, '');
-    const path = `site-images/${prefix}-${Date.now()}-${body === file ? file.name : base + '.webp'}`;
+    const path = `site-images/${prefix}-${Date.now()}-${body === file ? file.name : base + (body.type === 'image/jpeg' ? '.jpg' : '.webp')}`;
     const storageRef = ref(storage, path);
     await uploadBytes(storageRef, body, { contentType: body.type || file.type, cacheControl: 'public, max-age=31536000' });
     return await getDownloadURL(storageRef);
@@ -1305,6 +1319,35 @@
     ]);
     ['cg', 'gl', 'ao'].forEach(markClean); // 방금 불러온 값은 "저장된" 상태로 취급
   }
+
+  // 예전에 올린 사진을 서버(optimizeSiteImages)에서 WebP로 바꾸고, 바뀐 주소로 편집 화면을 다시 불러온다.
+  // 편집 중인 내용이 있으면 먼저 저장하게 한다(다시 불러오면 저장 안 된 내용이 사라지고, 옛 주소로 다시 저장되는 것도 막기 위해).
+  const OPTIMIZE_URL = 'https://asia-northeast3-hello-cjhs.cloudfunctions.net/optimizeSiteImages';
+  const fmtKB = n => (n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.round(n / 1024) + 'KB');
+  document.getElementById('imgopt-run').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget, msg = document.getElementById('imgopt-msg');
+    msg.className = 'form-msg';
+    if(dirtySections.size){ msg.textContent = '저장하지 않은 구역이 있어요. 먼저 "이 구역 저장하기"를 눌러 주세요.'; msg.classList.add('show','err'); return; }
+    if(!auth.currentUser){ msg.textContent = '다시 로그인해 주세요.'; msg.classList.add('show','err'); return; }
+    btn.disabled = true;
+    msg.classList.add('show');
+    msg.textContent = '사진을 바꾸는 중이에요… (사진 수에 따라 1분 정도 걸릴 수 있어요)';
+    try{
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(OPTIMIZE_URL, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+      const r = await res.json().catch(() => ({}));
+      if(!res.ok) throw new Error(r.error || ('HTTP ' + res.status));
+      const parts = [`바꾼 사진 ${r.converted}장`, `이미 작음 ${r.skipped}장`];
+      if(r.failed) parts.push(`실패 ${r.failed}장`);
+      msg.textContent = '완료: ' + parts.join(' · ') + (r.savedBytes ? ` (총 ${fmtKB(r.savedBytes)} 줄임)` : '');
+      msg.classList.add('show', r.failed ? 'err' : 'ok');
+      if(r.converted){ contentEditorsLoaded = false; await loadContentEditors(); }
+    }catch(err){
+      console.error(err);
+      msg.textContent = '사진 최적화에 실패했어요: ' + (err.message || err);
+      msg.classList.add('show','err');
+    }finally{ btn.disabled = false; }
+  });
 </script>
 
 <script src="js/update-check.js" defer></script>
