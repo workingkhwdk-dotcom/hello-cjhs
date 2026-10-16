@@ -1,3 +1,39 @@
+# 2026-10-16 (3) main 병합 메모
+
+- main의 `js/greeting-first-paint.js`(인사글 첫 화면 동시 표시, 10-13)는 같은 일을 하면서 사진 교체까지 맡는 `js/greeting-view.js`로 합쳤다(첫 화면 그리기는 `renderGreetingFromCache` 하나). main의 언어 선택 창(`lang-picker.js`)·외국어 안내 바로가기·새 상단 배너는 그대로 유지.
+- 글꼴 CSS 지연 적용 코드의 따옴표 오류(`this.rel=\'stylesheet\'`)를 고쳤다 — 이 오류 때문에 직전 커밋 상태에서는 구글 글꼴이 적용되지 않았다(배포 전 발견).
+
+---
+
+# 2026-10-16 (2) 중복 파일 정리 · 등록 사진 WebP 최적화
+
+- **중복 파일 정리**: 동기화 중 생긴 복사본 16개(`index 2.html`, `qna 2.html`, `qna 3.html`, `js/subject-guide 2.js`, `functions/index 2.js` 등)를 지웠다. 모두 원본보다 옛 버전이거나 원본과 같은 내용이었다. `.gitignore`에 `* [0-9].*`를 넣어 다시 생겨도 저장소에 올라가지 않게 했다(`firebase.json`·`bump-version.js`의 복사본 제외 규칙은 안전망으로 그대로 둠).
+- **예전에 올린 사진을 한 번에 WebP로**(신규 `functions/image_optimize.js`, 함수 `optimizeSiteImages`, `admin.html` "학교 소개 관리" 맨 위 버튼): site_content의 모든 `photoUrl`(학교장 사진·갤러리 대표/이어지는 사진)을 찾아, 긴 변 1600px·WebP(품질 82)로 바꿔 `…-opt.webp`로 올리고 문서의 주소를 바꾼다. 이미 400KB 이하 WebP이거나 변환해도 작아지지 않으면 건너뛴다. 원본 파일은 지우지 않는다. 로그인한 관리자(admins 컬렉션)만 부를 수 있고(ID 토큰 확인), App Check 게이트도 거친다. 저장 안 한 편집 내용이 있으면 먼저 저장하라고 안내하고, 끝나면 편집 화면을 새 주소로 다시 불러온다. 변환은 서버에서 `sharp`로 한다(브라우저에서는 Storage CORS 설정이 없어 원본을 읽을 수 없음). 테스트: `npm run test:imgopt`(21건).
+- **업로드 자동 변환 보완**(`admin.html` `shrinkImage`): ① Safari는 WebP로 저장하지 못해 지금까지 **원본이 그대로** 올라갔다 → 줄인 JPG로 올리고, 위 버튼으로 WebP로 바꿀 수 있다. ② HEIC 등 JPG/PNG/WebP가 아닌 사진도 브라우저가 열 수 있으면 변환해 올린다(대부분 브라우저가 HEIC를 못 띄움).
+- `admin.html`에 `js/app-check.js` 추가(서버 함수 요청에 App Check 토큰).
+
+배포: `bash tools/deploy.sh` (서버 함수 + 사이트. 새 함수 `optimizeSiteImages`와 `sharp` 패키지가 추가됨). 배포 뒤 관리자 화면 → 학교 소개 관리 → **등록된 사진 WebP로 최적화**를 한 번 누른다.
+
+---
+
+# 2026-10-16 메인 화면 인사말: 글·사진이 함께, 빨리 뜨게
+
+- **증상**: 사진이 먼저 뜨고, 한참 뒤 본문 글만 보였다가(사진이 사라짐), 다시 시간이 지나서야 글과 사진이 같이 보였다.
+- **원인** ① 본문 글은 Firebase SDK(수백 KB) 다운로드 → Firestore 연결 → 문서 읽기가 다 끝나야 그려졌다. ② 등록 사진으로 바꿀 때 사진 칸을 통째로 갈아 끼워서, 새 사진이 그려지기 전 칸 높이가 0이 되었다(사진에 크기 정보가 없었음).
+- **본문 즉시 표시**(신규 `js/greeting-view.js`): `index/mobile.render.js`가 화면을 그리자마자 지난번 받은 내용(없으면 기본 문구)으로 본문을 채운다. 최신 내용이 오면 달라진 부분만 고친다(같으면 손대지 않아 깜빡임 없음). 모바일의 인사말 스켈레톤(회색 막대)은 없앰.
+- **가벼운 내용 읽기**(`js/img-preload.js`): `<head>`에서 바로 Firestore REST 주소로 인사말·갤러리 문서만 받는다(SDK 불필요, 6초 제한·최대 3회). 실패하면 기존처럼 SDK로 다시 읽고, 그것도 실패하면 저장된 내용을 쓴다.
+- **사진 교체**: 등록 사진을 다 받고 디코딩까지 끝난 그 `<img>`를 그대로 칸에 넣어, 빈 칸이 생기지 않는다. 사진 크기를 기억해 두어 다음 방문부터는 등록 사진을 처음부터 제자리 크기로 띄운다(실패 시 내장 사진). 내장 사진에 `width/height`와 preload 추가. 관리자가 사진을 지우면 내장 사진으로 돌아간다.
+- **Firebase SDK 지연 로딩**(`index.app.js`, `mobile.app.js`): SDK를 정적 import → 필요할 때 `import()`로 바꿔, 탭 버튼·방문자 수·교육과정 화면 등이 SDK 다운로드를 기다리지 않는다. Q&A 목록·입학 신청 옵션은 SDK가 준비되면 읽는다(SDK를 못 받으면 Q&A에 안내 문구).
+- 확인: 로컬 Chromium(아이폰 13·PC 1440px)에서 첫 방문·재방문 모두 글과 사진이 함께 뜨고, 교체 중 사진 칸 높이가 0이 되지 않음. 외부망 차단(SDK 로딩 실패) 상태에서도 화면이 정상 표시됨. `run_client_safety_checks`, `run_plan_chat_tests`, `run_visit_counter_tests` 통과.
+
+- **글꼴 늦게 바뀌는 현상 완화**(`index/mobile/qna/apply/chatbot.html`): 구글 폰트 CSS를 `media="print"` 방식(브라우저가 가장 낮은 우선순위로 받음) → `rel="preload" as="style"`(높은 우선순위, 화면은 막지 않음)로 바꿔, 본문이 기본 글꼴로 보였다가 한참 뒤 바뀌는 시간을 줄였다.
+- `index.html`·`mobile.html`의 `plan-chat.js`·`reply-guard.js`에 `defer`: `<head>`의 미리 받기 목록과 화면 해석을 막지 않는다(실행 순서는 그대로 render 스크립트보다 먼저).
+
+- **보안 확인(reCAPTCHA)·방문자 수를 화면이 다 뜬 뒤로**(`js/app-check.js`, `js/visitor-counter.js`): 페이지를 열자마자 받던 reCAPTCHA(수백 KB 스크립트)를 "우리 서버 함수를 처음 부를 때" 또는 "화면이 다 뜨고 한가해졌을 때" 중 먼저 오는 때에 준비한다. 방문자 수도 화면이 다 뜬 뒤에 센다. 휴대폰에서 첫 화면과 처리 시간을 다투지 않는다. 챗봇·분석 요청에는 예전처럼 토큰이 붙는다.
+- 구글 폰트 요청에서 실제로 쓰이지 않는 Gaegu(인사말 서명의 대체 글꼴로만 지정) 제거.
+
+배포: `bash tools/deploy.sh hosting`
+
 # 2026-10-14 AI 분석 "네트워크 오류" 근본 수정 · 챗봇 자동 재검색 · 입시 뉴스 허용
 
 ## AI 분석이 네트워크 문제로 실패하던 원인과 해결 (신규 `functions/analysis_job.js`, `js/analysis-client.js`)

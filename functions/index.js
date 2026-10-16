@@ -737,6 +737,46 @@ exports.visitCounter = onRequest(
 );
 
 /**
+ * 관리자 전용: 이미 올려 둔 학교소개 사진(site_content의 photoUrl)을 WebP로 바꾼다(image_optimize.js).
+ * admin.html "등록된 사진 WebP로 최적화" 버튼이 로그인한 관리자의 ID 토큰을 붙여 부른다.
+ * sharp는 이 함수에서만 쓰므로 여기서 불러온다(다른 함수의 시작 시간·테스트에 영향 없음).
+ */
+exports.optimizeSiteImages = onRequest(
+  { cors: true, region: "asia-northeast3", maxInstances: 1, timeoutSeconds: 300, memory: "1GiB" },
+  async (req, res) => {
+    if (await appCheckBlocked(req, res)) return;
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "POST 요청만 허용됩니다." });
+      return;
+    }
+    const m = String(req.headers.authorization || "").match(/^Bearer (.+)$/);
+    let uid = null;
+    try {
+      if (m) uid = (await admin.auth().verifyIdToken(m[1])).uid;
+    } catch (e) { /* 아래에서 거절 */ }
+    if (!uid || !(await db.collection("admins").doc(uid).get()).exists) {
+      res.status(403).json({ error: "관리자만 사용할 수 있어요. 다시 로그인해 주세요." });
+      return;
+    }
+    try {
+      const { optimizeSiteImages } = require("./image_optimize");
+      const result = await optimizeSiteImages({
+        db,
+        storage: admin.storage(),
+        sharp: require("sharp"),
+        uuid: () => require("crypto").randomUUID(),
+        allowedBucket: "hello-cjhs.firebasestorage.app",
+        logger,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      logger.error("optimizeSiteImages 실패", err);
+      res.status(500).json({ error: "사진 최적화 중 오류가 났어요. 잠시 후 다시 시도해 주세요." });
+    }
+  }
+);
+
+/**
  * 신청 내용을 사람이 읽기 좋은 텍스트로 정리한다. 이메일 본문에 쓴다.
  */
 function formatConsultationSummary(data) {
