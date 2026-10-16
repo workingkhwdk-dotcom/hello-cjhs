@@ -184,7 +184,7 @@
           <label>학교장 사진</label>
           <div class="content-photo-preview" id="cg-photo-preview"></div>
           <input type="file" id="cg-photo-file" accept="image/*">
-          <button type="button" class="btn btn-ghost" id="cg-photo-clear" style="margin-top:8px;">기본 일러스트로 되돌리기</button>
+          <button type="button" class="btn btn-ghost" id="cg-photo-clear" style="margin-top:8px;">기본 학교 사진으로 되돌리기</button>
         </div>
         <div class="field">
           <label>인사말 문단</label>
@@ -1113,7 +1113,7 @@
     document.getElementById('cg-tagline').value = data.tagline;
     document.getElementById('cg-signoff').value = data.signOff;
     cgPhotoUrl = data.photoUrl || null;
-    renderPhotoPreview('cg-photo-preview', cgPhotoUrl, '기본 일러스트 사용 중');
+    renderPhotoPreview('cg-photo-preview', cgPhotoUrl, '기본 학교 사진 사용 중');
     document.getElementById('cg-paragraphs').innerHTML = '';
     (data.paragraphs || []).forEach(p => addParagraphRow(p));
   }
@@ -1121,7 +1121,7 @@
   document.getElementById('cg-photo-clear').addEventListener('click', async ()=>{
     await deleteOldImage(cgPhotoUrl);
     cgPhotoUrl = null;
-    renderPhotoPreview('cg-photo-preview', null, '기본 일러스트 사용 중');
+    renderPhotoPreview('cg-photo-preview', null, '기본 학교 사진 사용 중');
   });
   document.getElementById('cg-photo-file').addEventListener('change', async (e)=>{
     const file = e.target.files[0];
