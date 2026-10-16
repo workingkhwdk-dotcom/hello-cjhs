@@ -1,6 +1,7 @@
 // '과목 선택 가이드' 탭의 "3년 과목 짜보기" — 우리 학교 선택군(A~I)에서 과목을 미리 골라 3개년 교육과정을 완성해 본다.
 // 과목·선택군·학점은 교육과정 탭과 같은 데이터(js/curriculum-2026.js)를 그대로 쓰고, 결과 계산·검증은 서버(evaluatePlan)가 한다.
 import { SEM, ELECTIVE, TOTALS, typeChip, badge } from "./curriculum-2026.js";
+import { requestAnalysis } from "./analysis-client.js";
 
 const PLAN_URL = "https://asia-northeast3-hello-cjhs.cloudfunctions.net/evaluatePlan";
 const ANALYZE_URL = "https://asia-northeast3-hello-cjhs.cloudfunctions.net/analyzePlan";
@@ -178,6 +179,9 @@ export function renderPlanner(root, { onChange } = {}) {
       </div>
     </div>`;
   }
+  // 네트워크가 흔들릴 때 대기 화면에 덧붙이는 안내(분석은 서버에서 계속 진행 중이고, 연결이 돌아오면 이어서 결과를 받는다).
+  const NET_NOTES = { reconnecting: " · 연결이 잠깐 불안정해서 다시 확인하는 중이에요. 분석은 서버에서 계속 진행돼요.", offline: " · 인터넷 연결이 끊겼어요. 연결되면 이어서 결과를 받아 올게요." };
+  let netNote = "";
   function startThinking(out) {
     const box = out.querySelector(".pl-think");
     if (!box) return () => {};
@@ -190,31 +194,34 @@ export function renderPlanner(root, { onChange } = {}) {
       THINK_STEPS.forEach((s, i) => { if (sec >= s.at) cur = i; });
       lis.forEach((li, i) => { li.className = i < cur ? "done" : i === cur ? "now" : ""; });
       bar.style.width = `${(94 * (1 - Math.exp(-sec / 32))).toFixed(1)}%`;
-      time.textContent = sec < 60 ? `${Math.floor(sec)}초째 살펴보는 중` : `${Math.floor(sec)}초째 · 평소보다 오래 걸리지만 멈춘 게 아니에요. 계속 처리하고 있어요.`;
+      time.textContent = (sec < 60 ? `${Math.floor(sec)}초째 살펴보는 중` : `${Math.floor(sec)}초째 · 평소보다 오래 걸리지만 멈춘 게 아니에요. 계속 처리하고 있어요.`) + netNote;
     };
     const iv = setInterval(tick, 500);
     tick();
     return () => clearInterval(iv);
   }
 
-  let aiSeq = 0;
+  let aiSeq = 0, aiCtl = null;
+  const retryBtn = `<button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
   async function runAnalysis() {
     const out = root.querySelector(".pl-ai-out");
     if (!out) return;
     const my = ++aiSeq, sentPicks = JSON.parse(JSON.stringify(picks));
+    if (aiCtl) aiCtl.abort(); // 이전 요청의 기다림은 멈춘다(서버 쪽 분석은 끝까지 가서 저장되므로 같은 선택이면 다음에 바로 보인다)
+    const ctl = aiCtl = new AbortController();
+    netNote = "";
     out.innerHTML = thinkingHtml();
     const stopThinking = startThinking(out);
     let html;
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 120000);
     try {
-      const res = await fetch(ANALYZE_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ picks: sentPicks, deviceId: deviceId() }), signal: ctl.signal });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.analysis) { saveAi(sentPicks, data.analysis); html = analysisHtml(data.analysis); }
-      else html = `<p class="pl-ai-wait">${esc(data.error || "AI 분석에 실패했어요. 잠시 후 다시 시도해 주세요.")}</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
+      // 끊김·재연결·재시작은 하네스(analysis-client.js)가 처리한다. 여기에 오는 실패는 "확정된" 실패(한도·서버 재시도 후 실패·끝내 연결 안 됨)뿐이다.
+      const r = await requestAnalysis({ url: ANALYZE_URL, picks: sentPicks, deviceId: deviceId(), signal: ctl.signal, onStatus: note => { netNote = NET_NOTES[note] || ""; } });
+      if (r.ok) { if (!r.fallback) saveAi(sentPicks, r.analysis); /* 간이 분석은 저장하지 않아 다음에 AI 분석을 다시 받을 수 있다 */ html = analysisHtml(r.analysis); }
+      else html = `<p class="pl-ai-wait">${esc(r.message)}</p>${retryBtn}`;
     } catch (err) {
       console.error(err);
-      html = `<p class="pl-ai-wait">${err && err.name === "AbortError" ? "분석이 너무 오래 걸려서 멈췄어요." : "AI 서버에 연결하지 못했어요."} 잠시 후 다시 시도해 주세요.</p><button type="button" class="btn btn-point pl-ai-go" data-ai="go">다시 시도</button>`;
-    } finally { clearTimeout(timer); stopThinking(); }
+      html = `<p class="pl-ai-wait">화면을 그리다 문제가 생겼어요. 잠시 후 다시 시도해 주세요.</p>${retryBtn}`;
+    } finally { stopThinking(); netNote = ""; }
     if (my === aiSeq && out.isConnected) out.innerHTML = html; // 그 사이 선택을 바꿨거나 탭을 옮겼다면 버린다
   }
 
@@ -226,7 +233,7 @@ export function renderPlanner(root, { onChange } = {}) {
     if (!pickedCount()) return;
     if (!confirm("지금까지 고른 과목을 모두 지울까요?")) return;
     ELECTIVE.forEach(g => { picks[g.id] = []; });
-    save(picks); clearAi(); aiSeq++;
+    save(picks); clearAi(); aiSeq++; if (aiCtl) aiCtl.abort();
     tab = 0;
     draw();
   }
