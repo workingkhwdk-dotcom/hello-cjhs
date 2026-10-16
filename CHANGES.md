@@ -8,6 +8,9 @@
 - **Firebase SDK 지연 로딩**(`index.app.js`, `mobile.app.js`): SDK를 정적 import → 필요할 때 `import()`로 바꿔, 탭 버튼·방문자 수·교육과정 화면 등이 SDK 다운로드를 기다리지 않는다. Q&A 목록·입학 신청 옵션은 SDK가 준비되면 읽는다(SDK를 못 받으면 Q&A에 안내 문구).
 - 확인: 로컬 Chromium(아이폰 13·PC 1440px)에서 첫 방문·재방문 모두 글과 사진이 함께 뜨고, 교체 중 사진 칸 높이가 0이 되지 않음. 외부망 차단(SDK 로딩 실패) 상태에서도 화면이 정상 표시됨. `run_client_safety_checks`, `run_plan_chat_tests`, `run_visit_counter_tests` 통과.
 
+- **글꼴 늦게 바뀌는 현상 완화**(`index/mobile/qna/apply/chatbot.html`): 구글 폰트 CSS를 `media="print"` 방식(브라우저가 가장 낮은 우선순위로 받음) → `rel="preload" as="style"`(높은 우선순위, 화면은 막지 않음)로 바꿔, 본문이 기본 글꼴로 보였다가 한참 뒤 바뀌는 시간을 줄였다.
+- `index.html`·`mobile.html`의 `plan-chat.js`·`reply-guard.js`에 `defer`: `<head>`의 미리 받기 목록과 화면 해석을 막지 않는다(실행 순서는 그대로 render 스크립트보다 먼저).
+
 배포: `bash tools/deploy.sh hosting`
 
 ---
