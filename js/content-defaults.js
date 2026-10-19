@@ -35,5 +35,17 @@ export const SITE_CONTENT_DEFAULTS = {
 export const APPLY_OPTIONS_DEFAULTS = {
   schools: ['반송중', '반림중'],
   topics: ['고교학점제', '창원중앙고 교육과정', '창원중앙고 특색활동', '고등학생 자녀 학습·생활 지원 방법'],
-  visitDates: ['10월 17일(토) 18:30', '10월 19일(월) 18:30', '10월 21일(수) 18:30']
+  visitDates: ['10월 17일(토) 18:30', '10월 19일(월) 18:30', '10월 21일(수) 18:30'],
+  // Q1 상담 유형 on/off(관리자 "상담 신청 항목 관리"). 켜진 것만 신청 화면에 나온다.
+  // functions/index.js 의 CONSULT_TYPES_DEFAULT 와 같게 유지.
+  consultTypes: { online: true, phone: true, visit: false, seminar: false },
+  // 입학 설명회 참가 신청 일시(한 번뿐이라 선택지가 아니라 안내 문구로 보여 준다)
+  seminarDate: '11월 7일(토)',
+  // 입학 설명회 메뉴명(Q1 버튼 글자)과 세부 질문. 보호자 성함·연락처는 취소 조회에 필요해 항상 고정으로 묻고,
+  // 그 아래 질문만 여기서 정한다. type: 'choice'(보기 중 하나) | 'text'(짧은 답) | 'textarea'(긴 답)
+  seminarTitle: '입학 설명회 참가 신청',
+  seminarQuestions: [
+    { label: '참석 인원', type: 'choice', options: ['1명', '2명', '3명 이상'], required: true },
+    { label: '설명회에서 궁금하신 내용', type: 'textarea', options: [], required: false }
+  ]
 };
