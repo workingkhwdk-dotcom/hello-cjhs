@@ -695,7 +695,7 @@
               관심분야: ${escapeHtml(topicsText)}<br>
               연락처: ${escapeHtml(d.phone) || '-'}<br>
               ${visitText ? `${d.consultType === '설명회' ? '설명회 일시' : '희망일시'}: ${escapeHtml(visitText)}<br>` : ''}
-              ${d.consultType === '설명회' ? '응답' : '문의내용'}: ${(escapeHtml(d.detail) || '-').replace(/\n/g, '<br>')}
+              ${d.answers || d.seminarAnswers ? '응답' : '문의내용'}: ${(escapeHtml(d.detail) || '-').replace(/\n/g, '<br>')}
             </div>
             <div style="margin-top:10px; text-align:right;">
               <button class="btn btn-ghost btn-table consult-delete-btn" data-id="${d.id}" data-name="${escapeHtml(d.guardianName) || ''}">삭제</button>
