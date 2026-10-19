@@ -403,7 +403,11 @@ input[type="checkbox"].chk:focus-visible{ outline:2px solid var(--accent-2); out
 .conditional-block .cta-link:hover{ text-decoration:underline; }
 
 /* 상담 유형 선택 — 아이콘이 있는 큰 칩 */
-.consult-type-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+/* 칸 수는 켜 둔 유형 수만큼(관리자에서 on/off). 숨긴 칩은 자리를 차지하지 않는다. */
+.consult-type-grid{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:10px; }
+.consult-type-chip[hidden]{ display:none; }
+.consult-type-sub{ display:block; font-size:.88em; font-weight:600; opacity:.75; margin-top:2px; }
+.consult-type-empty{ font-size:13.5px; color:var(--ink-3); padding:6px 2px; }
 .consult-type-chip{
   display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
   border:1.5px solid var(--sep); border-radius:14px; padding:16px 10px; cursor:pointer;
@@ -413,7 +417,7 @@ input[type="checkbox"].chk:focus-visible{ outline:2px solid var(--accent-2); out
 .consult-type-chip svg{ width:24px; height:24px; color:var(--ink-3); transition:color .15s ease; }
 .consult-type-chip.checked{ border-color:var(--accent-2); background:var(--accent-tint); color:var(--accent); }
 .consult-type-chip.checked svg{ color:var(--accent-2); }
-@media (max-width:480px){ .consult-type-grid{ gap:8px; } .consult-type-chip{ padding:12px 6px; font-size:12px; } .consult-type-chip svg{ width:20px; height:20px; } }
+@media (max-width:480px){ .consult-type-grid{ gap:8px; } .consult-type-grid[data-count="4"]{ grid-auto-flow:row; grid-template-columns:repeat(2,minmax(0,1fr)); } .consult-type-chip{ padding:12px 6px; font-size:12px; } .consult-type-chip svg{ width:20px; height:20px; } }
 
 /* 온라인 상담 안내 — AI 챗봇 / Q&A 게시판 두 갈래를 명확히 보여주는 카드 */
 .online-options{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
@@ -1443,3 +1447,4 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .plan-ctx-txt{ display:flex; flex-direction:column; gap:1px; min-width:0; word-break:keep-all; } .plan-ctx-txt small{ color:var(--ink-2); font-size:12px; }
 .plan-ctx-off{ flex:0 0 auto; border:none; background:#fff; color:var(--accent); font:inherit; font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer; }
 .plan-ctx-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+#seminar-questions .field:last-child{ margin-bottom:0; }

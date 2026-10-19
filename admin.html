@@ -89,6 +89,7 @@
         <button class="on" data-filter="all">전체</button>
         <button data-filter="전화">전화 상담</button>
         <button data-filter="방문">방문 상담</button>
+        <button data-filter="설명회">입학 설명회</button>
       </div>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
         <input id="consult-search" type="search" placeholder="이름·연락처·중학교·내용 검색" style="flex:1; min-width:220px; max-width:360px; font-family:var(--ui); font-size:13.5px; border:1.5px solid var(--sep); border-radius:12px; padding:9px 13px; background:#fff;">
@@ -126,6 +127,28 @@
             <h3>상담 신청 항목 관리</h3>
             <div class="content-editor-target">상담 신청 페이지(apply.html)의 선택지 — 문항 구성은 그대로 두고 보기만 편집됩니다</div>
           </div>
+        </div>
+        <div class="field">
+          <label>Q1 상담 유형 표시 (켜 둔 유형만 신청 화면에 나옵니다 — 하나 이상 켜 주세요)</label>
+          <div id="ao-types" style="display:flex; flex-wrap:wrap; gap:8px 18px;">
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600;"><input type="checkbox" data-type="online"> 온라인 상담</label>
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600;"><input type="checkbox" data-type="phone"> 전화 상담</label>
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600;"><input type="checkbox" data-type="visit"> 방문/대면 상담</label>
+            <label style="display:flex; align-items:center; gap:6px; font-weight:600;"><input type="checkbox" data-type="seminar"> 입학 설명회 참가 신청</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>입학 설명회 메뉴명 (Q1 버튼에 표시)</label>
+          <input id="ao-seminar-title" type="text" style="max-width:320px;">
+        </div>
+        <div class="field">
+          <label>입학 설명회 일시 (신청 화면에 그대로 표시됩니다. 예: 11월 7일(토) 14:00)</label>
+          <input id="ao-seminar-date" type="text" style="max-width:320px;">
+        </div>
+        <div class="field">
+          <label>입학 설명회 세부 질문 (보호자 성함·연락처는 취소 조회에 필요해 항상 먼저 묻고, 그 아래에 이 질문들이 순서대로 나옵니다)</label>
+          <div id="ao-seminar-questions"></div>
+          <button type="button" class="btn btn-ghost" id="ao-add-seminar-q" style="margin-top:8px;">+ 질문 추가</button>
         </div>
         <div class="field">
           <label>중학교 선택지 ("그 외"는 자동으로 항상 맨 뒤에 추가됩니다)</label>
@@ -650,7 +673,7 @@
 
     statsEl.innerHTML = `
       <div class="stat-card"><div class="stat-num">${all.length}</div><div class="stat-label">총 신청 건수</div></div>
-      <div class="stat-card"><div class="stat-num">${byType['전화'] || 0} / ${byType['방문'] || 0}</div><div class="stat-label">전화 / 방문</div></div>
+      <div class="stat-card"><div class="stat-num">${byType['전화'] || 0} / ${byType['방문'] || 0} / ${byType['설명회'] || 0}</div><div class="stat-label">전화 / 방문 / 설명회</div></div>
       <div class="stat-card"><div class="stat-num">${doneCount} / ${all.length - doneCount}</div><div class="stat-label">처리완료 / 신규</div></div>
       <div class="stat-card stat-wide"><div class="stat-label">중학교별</div><div class="stat-detail">${escapeHtml(topSchools)}</div></div>
       <div class="stat-card stat-wide"><div class="stat-label">관심 분야별</div><div class="stat-detail">${escapeHtml(topTopics)}</div></div>
@@ -1252,6 +1275,42 @@
   function readListItems(containerId){
     return [...document.querySelectorAll(`#${containerId} .list-item-input`)].map(i => i.value.trim()).filter(Boolean);
   }
+  // 설명회 질문 한 줄: 질문 글 / 답 형식 / (선택형이면) 보기 / 필수 여부
+  function addSeminarQuestionRow(q){
+    q = q || { label: '', type: 'text', options: [], required: false };
+    const row = document.createElement('div');
+    row.className = 'stacked-row seminar-q-row';
+    row.style.flexWrap = 'wrap';
+    row.innerHTML = `
+      <input class="sq-label" placeholder="질문 (예: 참석 인원)" value="${escapeHtml(q.label || '')}" style="flex:2; min-width:180px;">
+      <select class="sq-type" style="flex:0 0 auto;">
+        <option value="text">짧은 답</option>
+        <option value="textarea">긴 답</option>
+        <option value="choice">보기 중 선택</option>
+      </select>
+      <input class="sq-options" placeholder="보기를 쉼표로 구분 (예: 1명, 2명, 3명 이상)" value="${escapeHtml((q.options || []).join(', '))}" style="flex:2; min-width:180px;">
+      <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; font-size:13px;"><input type="checkbox" class="sq-required"${q.required ? ' checked' : ''}> 필수</label>
+      <button type="button" class="btn btn-ghost btn-table remove-row">삭제</button>`;
+    const typeSel = row.querySelector('.sq-type');
+    const optInput = row.querySelector('.sq-options');
+    typeSel.value = ['text', 'textarea', 'choice'].includes(q.type) ? q.type : 'text';
+    const syncOpt = () => { optInput.style.display = typeSel.value === 'choice' ? '' : 'none'; };
+    typeSel.addEventListener('change', syncOpt);
+    syncOpt();
+    row.querySelector('.remove-row').addEventListener('click', ()=> row.remove());
+    document.getElementById('ao-seminar-questions').appendChild(row);
+  }
+  function readSeminarQuestions(){
+    return [...document.querySelectorAll('#ao-seminar-questions .seminar-q-row')].map(row => {
+      const type = row.querySelector('.sq-type').value;
+      return {
+        label: row.querySelector('.sq-label').value.trim(),
+        type,
+        options: type === 'choice' ? row.querySelector('.sq-options').value.split(',').map(o => o.trim()).filter(Boolean) : [],
+        required: row.querySelector('.sq-required').checked
+      };
+    }).filter(q => q.label);
+  }
   async function loadApplyOptionsEditor(){
     const data = Object.assign({}, APPLY_OPTIONS_DEFAULTS, (await fetchSiteContent('applyOptions')) || {});
     document.getElementById('ao-schools').innerHTML = '';
@@ -1260,18 +1319,41 @@
     (data.topics || []).forEach(t => addListRow('ao-topics', t));
     document.getElementById('ao-dates').innerHTML = '';
     (data.visitDates || []).forEach(d => addListRow('ao-dates', d));
+    const types = Object.assign({}, APPLY_OPTIONS_DEFAULTS.consultTypes, data.consultTypes || {});
+    document.querySelectorAll('#ao-types input[data-type]').forEach(cb => { cb.checked = !!types[cb.dataset.type]; });
+    document.getElementById('ao-seminar-date').value = data.seminarDate || APPLY_OPTIONS_DEFAULTS.seminarDate;
+    document.getElementById('ao-seminar-title').value = data.seminarTitle || APPLY_OPTIONS_DEFAULTS.seminarTitle;
+    document.getElementById('ao-seminar-questions').innerHTML = '';
+    (Array.isArray(data.seminarQuestions) ? data.seminarQuestions : APPLY_OPTIONS_DEFAULTS.seminarQuestions).forEach(addSeminarQuestionRow);
   }
   document.getElementById('ao-add-school').addEventListener('click', ()=> addListRow('ao-schools', ''));
   document.getElementById('ao-add-topic').addEventListener('click', ()=> addListRow('ao-topics', ''));
   document.getElementById('ao-add-date').addEventListener('click', ()=> addListRow('ao-dates', ''));
+  document.getElementById('ao-add-seminar-q').addEventListener('click', ()=> addSeminarQuestionRow());
   document.getElementById('ao-save').addEventListener('click', async ()=>{
     const msg = document.getElementById('ao-msg');
     msg.className = 'form-msg';
+    const consultTypes = {};
+    document.querySelectorAll('#ao-types input[data-type]').forEach(cb => { consultTypes[cb.dataset.type] = cb.checked; });
+    if(!Object.values(consultTypes).some(Boolean)){
+      msg.textContent = '상담 유형을 하나 이상 켜 주세요.'; msg.classList.add('show','err');
+      return;
+    }
+    const seminarQuestions = readSeminarQuestions();
+    const badChoice = seminarQuestions.find(q => q.type === 'choice' && q.options.length < 2);
+    if(badChoice){
+      msg.textContent = `'${badChoice.label}' 질문은 보기를 두 개 이상 쉼표로 구분해 적어 주세요.`; msg.classList.add('show','err');
+      return;
+    }
     try{
       await setDoc(doc(db, 'site_content', 'applyOptions'), {
         schools: readListItems('ao-schools'),
         topics: readListItems('ao-topics'),
-        visitDates: readListItems('ao-dates')
+        visitDates: readListItems('ao-dates'),
+        consultTypes,
+        seminarDate: document.getElementById('ao-seminar-date').value.trim() || APPLY_OPTIONS_DEFAULTS.seminarDate,
+        seminarTitle: document.getElementById('ao-seminar-title').value.trim() || APPLY_OPTIONS_DEFAULTS.seminarTitle,
+        seminarQuestions
       });
       msg.textContent = '저장했습니다.'; msg.classList.add('show','ok');
       markClean('ao');
