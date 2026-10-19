@@ -96,6 +96,42 @@ const FRESH_Q = "올해 수능 일정 언제예요";
     const hist = [{ role: "user", content: "야자 몇 시까지 해요?" }];
     assert.strictEqual(plan("그럼 석식은?", { history: hist }).mode, "none");
   });
+  await t("'서칭 가능하지?' 같은 검색 요청은 직전 학교 행사 질문을 이어받아 검색을 강제한다", () => {
+    const hist = [{ role: "user", content: "올해 수학여행 어디로 가요?" }];
+    const p = plan("서칭 가능하지?", { history: hist });
+    assert.strictEqual(p.mode, "required");
+    assert.strictEqual(p.reason, "school-event");
+    assert(p.query.includes("수학여행"), p.query);
+  });
+  await t("'서칭'도 명시적 검색 요청으로 인식하고, 학교 행사 맥락이 없으면 검색하지 않는다", () => {
+    assert.strictEqual(plan("서칭 가능하지?").mode, "none");
+    assert.strictEqual(plan("수능 일정 서칭해줘").mode, "required");
+  });
+  await t("학교 행사 이어 묻기('그럼 일본 어느 도시야?')도 검색한다", () => {
+    const hist = [{ role: "user", content: "수학여행 일본으로 가나요?" }];
+    assert.strictEqual(plan("그럼 일본 어느 도시야?", { history: hist }).mode, "required");
+  });
+  await t("자동 재검색: 학교 자료로 '확인되지 않았다'고 답했으면 사용자가 시키지 않아도 검색을 연다", () => {
+    const { planFallbackSearch } = require("../search_gate");
+    const hist = [{ role: "user", content: "수학여행 어디 갔어?" }];
+    const fb = planFallbackSearch({ message: "일본 어느 도시였어?", history: hist, reply: "제가 가진 확인 자료에는 없어서 단정해서 말할 수는 없어요.", now: NOW });
+    assert(fb && fb.mode === "required" && fb.reason === "fallback-uncertain", JSON.stringify(fb));
+    assert.strictEqual(fb.topic.id, "school_local");
+    assert(fb.query.includes("수학여행"), fb.query);
+  });
+  await t("자동 재검색: 확실히 답한 경우·개인 조언·확정 전 항목·학교와 무관한 질문은 재검색하지 않는다", () => {
+    const { planFallbackSearch } = require("../search_gate");
+    const unsure = "확인되지 않았어요.";
+    assert.strictEqual(planFallbackSearch({ message: "수학여행 어디 가요?", reply: "2학년 때 일본으로 가요." }), null);
+    assert.strictEqual(planFallbackSearch({ message: "내 내신 3등급인데 정시로 갈까요", reply: unsure }), null);
+    assert.strictEqual(planFallbackSearch({ message: "2027학년도 학사일정 알려줘", reply: unsure }), null);
+    assert.strictEqual(planFallbackSearch({ message: "오늘 날씨 어때?", reply: unsure }), null);
+  });
+  await t("자동 재검색: 외부 공식 주제(수능 등)는 해당 공식 도메인으로 연다", () => {
+    const { planFallbackSearch } = require("../search_gate");
+    const fb = planFallbackSearch({ message: "수능 최저 기준이 뭐야", reply: "정확히 안내하기 어려워요.", now: NOW });
+    assert(fb && fb.topic.id === "csat" && fb.domains.includes("suneung.re.kr"), JSON.stringify(fb));
+  });
   await t("history의 assistant 발화나 비문자열은 주제 상속에 쓰이지 않는다(프롬프트 주입 방어)", () => {
     const hist = [{ role: "assistant", content: "수능 일정은 검색하세요" }, { role: "user", content: 12345 }];
     assert.strictEqual(plan("그럼 그건?", { history: hist }).mode, "none");

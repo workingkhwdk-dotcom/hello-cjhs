@@ -13,20 +13,24 @@ if (SITE_KEY && !window.__cjhsAppCheck) {
   // 로컬에서 열어 볼 때는 디버그 토큰을 쓴다(콘솔에 찍힌 토큰을 Firebase 콘솔 → App Check → 디버그 토큰에 등록).
   if (["localhost", "127.0.0.1"].includes(location.hostname)) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 
-  // 초기화는 비동기라 시작해 두고, fetch 래퍼는 지금 바로 설치한다(요청 때 기다림).
-  const ready = (async () => {
+  // reCAPTCHA(수백 KB 스크립트)는 첫 화면과 경쟁하지 않게 바로 받지 않는다:
+  // 우리 함수를 처음 부를 때, 또는 화면이 다 뜨고 한가해졌을 때(미리 준비) 중 먼저 오는 때에 초기화한다. fetch 래퍼는 지금 바로 설치한다.
+  let readyP = null;
+  const ready = () => readyP || (readyP = (async () => {
     const [{ initializeApp }, { initializeAppCheck, ReCaptchaV3Provider, getToken }] = await Promise.all([import(`${SDK}/firebase-app.js`), import(`${SDK}/firebase-app-check.js`)]);
     // 페이지 쪽 initializeApp(같은 설정)은 이미 만들어진 앱을 그대로 돌려받으므로 겹치지 않는다.
     const appCheck = initializeAppCheck(initializeApp(CONFIG), { provider: new ReCaptchaV3Provider(SITE_KEY), isTokenAutoRefreshEnabled: true });
     return () => getToken(appCheck).then(r => r.token);
-  })().catch(e => { console.warn("App Check 초기화 실패 — 토큰 없이 진행해요.", e); return null; });
+  })().catch(e => { console.warn("App Check 초기화 실패 — 토큰 없이 진행해요.", e); return null; }));
+  const warmUp = () => (window.requestIdleCallback ? requestIdleCallback(ready, { timeout: 3000 }) : setTimeout(ready, 1500));
+  if (document.readyState === "complete") warmUp(); else addEventListener("load", warmUp, { once: true });
 
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input && input.url;
     if (!url || !String(url).startsWith(FUNCTIONS_ORIGIN)) return nativeFetch(input, init);
     let token = "";
-    try { const get = await ready; if (get) token = await get(); } catch (e) { console.warn("App Check 토큰을 받지 못했어요.", e); }
+    try { const get = await ready(); if (get) token = await get(); } catch (e) { console.warn("App Check 토큰을 받지 못했어요.", e); }
     if (!token) return nativeFetch(input, init);
     const headers = new Headers((init && init.headers) || (typeof input !== "string" && input.headers) || undefined);
     headers.set("X-Firebase-AppCheck", token);
