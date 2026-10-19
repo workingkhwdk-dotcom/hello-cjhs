@@ -786,14 +786,14 @@ function formatConsultationSummary(data) {
   const lines = [
     `재학 중인 중학교: ${data.middleSchool || "-"}`,
     `관심 분야: ${topicsText}`,
-    `상담 유형: ${data.consultType || "-"}`,
+    `상담 유형: ${data.typeLabel || data.consultType || "-"}`,
   ];
   if (data.guardianName) lines.push(`보호자 성함: ${data.guardianName}`);
   if (data.phone) lines.push(`연락처: ${data.phone}`);
   if (data.visitDates && data.visitDates.length) {
     lines.push(`${data.consultType === "설명회" ? "설명회 일시" : "희망 방문 일시"}: ${data.visitDates.join(", ")}`);
   }
-  if (data.detail) lines.push(`문의 내용: ${data.detail}`);
+  if (data.detail) lines.push(data.answers ? data.detail : `문의 내용: ${data.detail}`);
   return lines.join("\n");
 }
 
@@ -813,7 +813,7 @@ exports.onNewConsultation = onDocumentCreated(
     try {
       await sendAdminPush(
         "새 상담 신청이 접수됐어요",
-        `${data.guardianName || "보호자"} · ${data.consultType === "설명회" ? "입학 설명회 참가" : `${data.consultType || ""} 상담`}`,
+        `${data.guardianName || "보호자"} · ${data.typeLabel || `${data.consultType || ""} 상담`}`,
         `/admin.html?open=consult&id=${event.params.docId}`
       );
     } catch (err) {
@@ -873,18 +873,20 @@ function cleanStrList(v, maxItems, maxLen) {
 
 /**
  * POST { middleSchool, topics[], topicOther, consultType, guardianName, phone,
- *        detail, visitDates[], seminarAnswers[{q,a}], email, pin } -> { ok: true, id }
+ *        visitDates[], answers[{q,a}], email, pin } -> { ok: true, id }
  *
  * consultType: "전화" | "방문" | "설명회"(입학 설명회 참가). 관리자 페이지
  * "상담 신청 항목 관리"에서 꺼 둔 유형(site_content/applyOptions.consultTypes)은 받지 않는다.
  * 설명회는 일시가 하나로 정해져 있어(applyOptions.seminarDate) 서버가 그 값을 visitDates에 넣는다.
- * 설명회 세부 질문은 관리자가 편집하므로(applyOptions.seminarQuestions) 답을 {q,a} 목록으로 받아
- * seminarAnswers에 두고, 관리자 화면·메일·취소 목록이 그대로 보이도록 "질문: 답" 줄로 detail도 만든다.
+ * 유형별 Q4 추가 질문은 관리자가 편집하므로(applyOptions.typeQuestions, 필수 여부는 신청서가 검사)
+ * 답을 {q,a} 목록(answers)으로 받아 두고, 관리자 화면·메일·취소 목록이 그대로 보이도록
+ * "질문: 답" 줄로 detail도 만든다. 예전 화면이 보내는 detail(문의 내용 한 칸)·seminarAnswers도 받는다.
  */
 // 상담 유형 on/off 기본값 — js/content-defaults.js 의 APPLY_OPTIONS_DEFAULTS 와 같게 유지.
 const CONSULT_TYPES_DEFAULT = { online: true, phone: true, visit: false, seminar: false };
 const SEMINAR_DATE_DEFAULT = "11월 7일(토)";
 const CONSULT_TYPE_KEYS = { "전화": "phone", "방문": "visit", "설명회": "seminar" };
+const CONSULT_TYPE_LABELS_DEFAULT = { phone: "전화 상담", visit: "방문/대면 상담", seminar: "입학 설명회 참가 신청" };
 
 exports.createConsultation = onRequest(
   { cors: true, region: "asia-northeast3", maxInstances: API_MAX_INSTANCES },
@@ -904,7 +906,8 @@ exports.createConsultation = onRequest(
     const middleSchool = cleanStr(b.middleSchool, 50);
     const topics = cleanStrList(b.topics, 20, 100);
     let visitDates = cleanStrList(b.visitDates, 20, 50);
-    const seminarAnswers = (Array.isArray(b.seminarAnswers) ? b.seminarAnswers : [])
+    const rawAnswers = Array.isArray(b.answers) ? b.answers : Array.isArray(b.seminarAnswers) ? b.seminarAnswers : null;
+    const answers = (rawAnswers || [])
       .slice(0, 20)
       .map((x) => ({ q: cleanStr(x && x.q, 100), a: cleanStr(x && x.a, 1000) }))
       .filter((x) => x.q);
@@ -927,8 +930,13 @@ exports.createConsultation = onRequest(
     }
     if (consultType === "설명회") {
       visitDates = [cleanStr(applyOptions.seminarDate, 50) || SEMINAR_DATE_DEFAULT];
-      detail = seminarAnswers.filter((x) => x.a).map((x) => `${x.q}: ${x.a}`).join("\n").slice(0, 2000);
     }
+    if (rawAnswers) {
+      detail = answers.filter((x) => x.a).map((x) => `${x.q}: ${x.a}`).join("\n").slice(0, 2000);
+    }
+    const typeKey = CONSULT_TYPE_KEYS[consultType];
+    const typeLabel = cleanStr((applyOptions.typeLabels || {})[typeKey], 50) ||
+      (typeKey === "seminar" && cleanStr(applyOptions.seminarTitle, 50)) || CONSULT_TYPE_LABELS_DEFAULT[typeKey];
     if (!CONSULT_PHONE_RE.test(phone)) {
       res.status(400).json({ error: "연락처를 010-0000-0000 형식으로 입력해 주세요." });
       return;
@@ -937,7 +945,7 @@ exports.createConsultation = onRequest(
       res.status(400).json({ error: "비밀번호는 숫자 4자리로 입력해 주세요." });
       return;
     }
-    if (!guardianName || (!detail && consultType !== "설명회") || !middleSchool || topics.length === 0) {
+    if (!guardianName || !middleSchool || topics.length === 0) {
       res.status(400).json({ error: "필수 항목이 누락되었습니다." });
       return;
     }
@@ -952,6 +960,7 @@ exports.createConsultation = onRequest(
         topics,
         topicOther: topics.includes("기타") ? cleanStr(b.topicOther, 200) : "",
         consultType,
+        typeLabel,
         email: cleanStr(b.email, 200) || null,
         guardianName,
         phone,
@@ -961,7 +970,7 @@ exports.createConsultation = onRequest(
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
       if (consultType === "방문" || consultType === "설명회") doc.visitDates = visitDates;
-      if (consultType === "설명회") doc.seminarAnswers = seminarAnswers;
+      if (rawAnswers) doc.answers = answers;
       const ref = await db.collection("consultations").add(doc);
       res.status(200).json({ ok: true, id: ref.id });
     } catch (err) {
