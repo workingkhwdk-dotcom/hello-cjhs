@@ -41,12 +41,12 @@ t("당일 23:59(KST)까지는 검색된다", () => assert(ids("학교 박람회 
 
 t("시간표 자료에 회차·장소가 정확히 있다", () => {
   const r = KNOWLEDGE.find((x) => x.id === "FAIR02").retrieval_text;
-  for (const s of ["11:10~11:40", "11:40~12:10", "12:10~12:40", "용비관 강당", "6개 부스", "학습카페와 중강의실(도서관)", "기념품"]) assert(r.includes(s), s);
+  for (const s of ["11:10~11:40", "11:40~12:10", "12:10~12:40", "용비관 강당", "6개 부스", "학습카페와 중강의실(도서관)", "기념품", "확정된 장소는 추후 안내"]) assert(r.includes(s), s);
 });
 t("상시 블록: 행사 전에는 D-day와 핵심 사실", () => {
   const b = buildFairBlock(BEFORE);
   assert(b.includes("2026년 10월 22일(목)") && b.includes("16일 남았습니다"), b.slice(0, 120));
-  for (const s of ["10:00~13:00", "https://m.site.naver.com/2iU5e", "본관 뒤편", "'학교 박람회' 탭"]) assert(b.includes(s), s);
+  for (const s of ["10:00~13:00", "https://script.google.com/macros/s/AKfycbw1kJhe1LRRiqvqRnF98uJ0Xfjvs3uEkK0fQv3fwXe__mczApRbZZAWF5SDUsOK9UUJ/exec", "본관 뒤편", "'학교 박람회' 탭"]) assert(b.includes(s), s);
 });
 t("상시 블록: 당일은 '오늘이 박람회 당일'", () => assert(buildFairBlock(DAY).includes("오늘이 박람회 당일")));
 t("상시 블록: 11/8 0시(KST)부터 빈 문자열", () => { assert.strictEqual(buildFairBlock(AFTER), ""); assert(buildFairBlock(LAST)); });
