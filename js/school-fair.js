@@ -1,14 +1,13 @@
 // '학교 박람회' 탭 — 2027학년도 고등학교 입학 상담 및 학교 박람회(2026.11.7 토) 포스터를 화면에 맞게 다시 짠 것.
 // PC(index, 학교소개의 '학교 박람회' 탭)와 모바일(mobile, 하단 '학교 박람회' 탭)이 함께 쓴다. 레이아웃 차이는 css/style.css의 .sf-* 규칙(화면 폭 기준)이 맡는다.
 // 포스터 윗부분(제목·사진)은 image/school-fair-hero.webp?v=22cb4e70 한 장으로, 나머지(일시·장소·프로그램·사전 신청)는 글자로 옮겼다.
-// 자료가 더 생기면 renderSchoolFair 안의 "sf-more" 칸에 이어 붙이면 된다.
+// 장소는 바뀔 수 있어 모두 "(예정)"으로 표시하고, 확정되면 추후 안내한다(PLACE_NOTE).
 
 export const FAIR = {
   // 행사 다음 날 0시(한국 시간)가 되면 박람회 버튼·탭·화면·첫 방문 안내를 모두 없앤다(setupSchoolFair).
   day: new Date("2026-11-07T00:00:00+09:00"),
   endsAt: new Date("2026-11-08T00:00:00+09:00"),
-  applyUrl: "https://m.site.naver.com/2iU5e", // 포스터의 '1:1 맞춤형 상담 사전 신청' QR 주소
-  posterUrl: "image/school-fair-poster.webp?v=64c14540",
+  applyUrl: "https://script.google.com/macros/s/AKfycbw1kJhe1LRRiqvqRnF98uJ0Xfjvs3uEkK0fQv3fwXe__mczApRbZZAWF5SDUsOK9UUJ/exec", // 1:1 맞춤형 상담 사전 신청 페이지(학교 제공, 2026-10-22)
 };
 
 export const fairEnded = (now = new Date()) => now >= FAIR.endsAt;
@@ -20,11 +19,13 @@ function ddayLabel(now = new Date()) {
   return n <= 0 ? "오늘 열려요" : `D-${n}`;
 }
 
+const PLACE_NOTE = "장소는 바뀔 수 있어요. 확정된 장소는 추후 안내됩니다.";
+
 const ZONES = [
-  { key: "a", title: "특강", time: "10:00 ~ 11:00", place: "용덕관", items: ["고교학점제", "교육과정 편성", "과목선택의 중요성", "대입전형"] },
-  { key: "b", title: "체험 부스", time: "11:10 ~ 12:40", place: "용비관 강당 · 6개 부스", items: ["AI랑 교실에서 놀자", "두근두근, 나의 동아리 찾기", "꿈을 그리는 디자인 LAB", "재학생과의 토크"] },
-  { key: "c", title: "1:1 맞춤형 상담", time: "11:10 ~ 12:40", place: "12개 상담실 · 30분씩 3회", items: ["진로별 선택과목", "학교 특색 프로그램", "학교생활기록부 및 대입", "고등학교 생활 전반"] },
-  { key: "d", title: "전시", time: "11:10 ~ 12:40", place: "학습카페 · 중강의실(도서관)", items: ["교육과정 편제표 및 선택과목 예시", "본교 채택 교과서 전시", "교육활동 사진 및 영상"] },
+  { key: "a", title: "특강", time: "10:00 ~ 11:00", place: "용덕관(예정)", items: ["고교학점제", "교육과정 편성", "과목선택의 중요성", "대입전형"] },
+  { key: "b", title: "체험 부스", time: "11:10 ~ 12:40", place: "용비관 강당(예정) · 6개 부스", items: ["AI랑 교실에서 놀자", "두근두근, 나의 동아리 찾기", "꿈을 그리는 디자인 LAB", "재학생과의 토크"] },
+  { key: "c", title: "1:1 맞춤형 상담", time: "11:10 ~ 12:40", place: "12개 상담실(예정) · 30분씩 3회", items: ["진로별 선택과목", "학교 특색 프로그램", "학교생활기록부 및 대입", "고등학교 생활 전반"] },
+  { key: "d", title: "전시", time: "11:10 ~ 12:40", place: "도서관 학습카페·중강의실(예정)", items: ["교육과정 편제표 및 선택과목 예시", "본교 채택 교과서 전시", "교육활동 사진 및 영상"] },
 ];
 
 const ICON = {
@@ -63,18 +64,19 @@ export function renderSchoolFair(el, opt = {}) {
       <h4 class="sf-h">당일 시간표</h4>
       <ol class="sf-tt">
         <li><time>09:30 ~</time><div class="sf-tt-b"><b>현장 접수 및 등록</b><span>학생회가 등록·행사 안내와 현장 접수를 진행해요</span></div></li>
-        <li class="sf-a"><time>10:00 ~ 11:00</time><div class="sf-tt-b"><b>특강 (공통 강의)</b><span>용덕관</span></div></li>
+        <li class="sf-a"><time>10:00 ~ 11:00</time><div class="sf-tt-b"><b>특강 (공통 강의)</b><span>용덕관(예정)</span></div></li>
         <li class="sf-tt-multi"><time>11:10 ~ 12:40</time>
           <div class="sf-tt-par">
-            <div class="sf-c"><b>1:1 맞춤형 상담</b><span>12개 상담실 · 해당 교사</span>
+            <div class="sf-c"><b>1:1 맞춤형 상담</b><span>12개 상담실(예정) · 해당 교사</span>
               <ol class="sf-rounds"><li><em>1회차</em>11:10 ~ 11:40</li><li><em>2회차</em>11:40 ~ 12:10</li><li><em>3회차</em>12:10 ~ 12:40</li></ol></div>
-            <div class="sf-b"><b>체험 부스</b><span>용비관 강당 · 6개 부스</span></div>
-            <div class="sf-d"><b>전시</b><span>학습카페 · 중강의실(도서관)</span></div>
+            <div class="sf-b"><b>체험 부스</b><span>용비관 강당(예정) · 6개 부스</span></div>
+            <div class="sf-d"><b>전시</b><span>도서관 학습카페·중강의실(예정)</span></div>
           </div>
           <p class="sf-tt-tip">체험 부스와 전시는 이 시간 동안 자유롭게 오가며 둘러볼 수 있어요.</p>
         </li>
         <li><time>13:00</time><div class="sf-tt-b"><b>정리</b><span>박람회 기념품 배부 및 행사장 정리</span></div></li>
       </ol>
+      <p class="sf-place-note">${PLACE_NOTE}</p>
     </section>
 
     <section class="sf-sec">
@@ -91,7 +93,7 @@ export function renderSchoolFair(el, opt = {}) {
           </div>
         </div>`).join("")}
       </div>
-      <p class="sf-note">* 운영 상황에 따라 일정 및 프로그램 구성이 일부 변동될 수 있습니다.</p>
+      <p class="sf-note">* 운영 상황에 따라 일정 및 프로그램 구성이 일부 변동될 수 있습니다. 존별 장소는 바뀔 수 있으며, 확정된 장소는 추후 안내됩니다.</p>
     </section>
 
     <section class="sf-sec sf-apply">
@@ -110,10 +112,6 @@ export function renderSchoolFair(el, opt = {}) {
       ${ended ? "" : `<div class="sf-qr" hidden><div class="sf-qr-img"></div><div class="sf-qr-cap">휴대폰 카메라로 찍으면<br>사전 신청 화면이 열려요</div></div>`}
     </section>
 
-    <div class="sf-more">
-      <p>박람회 세부 자료는 준비되는 대로 이 탭에 올라와요.</p>
-      <a href="${FAIR.posterUrl}" target="_blank" rel="noopener">포스터 원본 보기</a>
-    </div>
   </div>`;
 
   // PC에서만 의미 있는 QR(휴대폰으로 넘겨 신청). 화면에 안 보이는(모바일) 경우 CSS가 숨긴다.
