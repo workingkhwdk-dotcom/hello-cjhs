@@ -24,7 +24,7 @@ const PLACE_NOTE = "장소는 바뀔 수 있어요. 확정된 장소는 추후 �
 const ZONES = [
   { key: "a", title: "특강", time: "10:00 ~ 11:00", place: "용덕관(예정)", items: ["고교학점제", "교육과정 편성", "과목선택의 중요성", "대입전형"] },
   { key: "b", title: "체험 부스", time: "11:10 ~ 12:40", place: "용비관 강당(예정) · 6개 부스", items: ["AI랑 교실에서 놀자", "두근두근, 나의 동아리 찾기", "꿈을 그리는 디자인 LAB", "재학생과의 토크"] },
-  { key: "c", title: "1:1 맞춤형 상담", time: "11:10 ~ 12:40", place: "12개 상담실(예정) · 30분씩 3회", items: ["진로별 선택과목", "학교 특색 프로그램", "학교생활기록부 및 대입", "고등학교 생활 전반"] },
+  { key: "c", title: "1:1 맞춤형 상담", time: "11:10 ~ 12:40", place: "본관 · 회차별 선착순 10명", items: ["진로별 선택과목", "학교 특색 프로그램", "학교생활기록부 및 대입", "고등학교 생활 전반"] },
   { key: "d", title: "전시", time: "11:10 ~ 12:40", place: "도서관 학습카페·중강의실(예정)", items: ["교육과정 편제표 및 선택과목 예시", "본교 채택 교과서 전시", "교육활동 사진 및 영상"] },
 ];
 
@@ -67,7 +67,7 @@ export function renderSchoolFair(el, opt = {}) {
         <li class="sf-a"><time>10:00 ~ 11:00</time><div class="sf-tt-b"><b>특강 (공통 강의)</b><span>용덕관(예정)</span></div></li>
         <li class="sf-tt-multi"><time>11:10 ~ 12:40</time>
           <div class="sf-tt-par">
-            <div class="sf-c"><b>1:1 맞춤형 상담</b><span>12개 상담실(예정) · 해당 교사</span>
+            <div class="sf-c"><b>1:1 맞춤형 상담</b><span>본관 · 회차별 선착순 10명</span>
               <ol class="sf-rounds"><li><em>1회차</em>11:10 ~ 11:40</li><li><em>2회차</em>11:40 ~ 12:10</li><li><em>3회차</em>12:10 ~ 12:40</li></ol></div>
             <div class="sf-b"><b>체험 부스</b><span>용비관 강당(예정) · 6개 부스</span></div>
             <div class="sf-d"><b>전시</b><span>도서관 학습카페·중강의실(예정)</span></div>
@@ -101,7 +101,9 @@ export function renderSchoolFair(el, opt = {}) {
         <h4 class="sf-h">1:1 맞춤형 상담 사전 신청</h4>
         <p class="sf-period"><b>신청기간</b> 2026. 10. 22. (목) 10:00 ~ 선착순 마감</p>
         <ul class="sf-rules">
-          <li><span class="c">1:1 상담</span>은 사전 신청자 우선, 현장 접수는 소수 인원 가능(당일 접수)</li>
+          <li><span class="c">1:1 상담</span>은 <b>회차(타임)별 선착순 10명</b> 마감, 예비 3명 추가 접수</li>
+          <li>마감되어도 <b>당일 현장 접수</b>로 상담에 참여할 수 있어요</li>
+          <li>세부 상담 장소(본관)는 신청을 마친 분께 입력한 연락처로 문자 안내해요</li>
           <li><span class="a">특강</span> · <span class="b">체험 부스</span> · <span class="d">전시</span>는 사전 신청 없이 현장에서 자유 참여</li>
         </ul>
         <div class="sf-btns">

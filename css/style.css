@@ -1538,6 +1538,7 @@ table.admin-table tr:hover td{ background:rgba(20,40,79,0.02); }
 .sf-period b{ font-weight:900; margin-right:8px; }
 .sf-rules{ margin:0 0 14px; padding-left:18px; font-size:14px; line-height:1.7; color:#334155; word-break:keep-all; }
 .sf-rules span{ font-weight:800; }
+.sf-rules b{ font-weight:800; color:var(--sf-navy); }
 .sf-btns{ display:flex; flex-wrap:wrap; gap:10px; }
 .sf-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; border:none; cursor:pointer; text-decoration:none; font-family:var(--ui); font-size:15px; font-weight:800; color:#fff; padding:13px 20px; border-radius:999px; transition:filter .15s ease, transform .15s ease; }
 .sf-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
