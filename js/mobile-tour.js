@@ -19,6 +19,20 @@ const STEPS = [
   { sel: '.m-tabbar .m-tab[data-sec="qna"]', title: "Q&A 게시판", text: "직접 질문을 남기면 선생님이 답변해 드려요." },
 ];
 
+// js/update-check.js 가 "업데이트 후 첫 방문"이면 가이드 기록을 지운다. 그 판단이 끝난 뒤에 가이드 여부를 본다(최대 3초).
+// (update-check.js 는 페이지 맨 끝의 defer 스크립트라, 화면을 그리는 모듈보다 늦게 실행될 수 있다 → 생길 때까지 잠깐 기다린다)
+function buildChecked() {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    (function wait() {
+      if (window.cjhsBuildChecked) return window.cjhsBuildChecked.then(resolve, resolve);
+      if (Date.now() - started > 3000) return resolve();
+      setTimeout(wait, 50);
+    })();
+    setTimeout(resolve, 3000); // version.json 이 늦어도 가이드가 막히지 않게
+  });
+}
+
 function store(fn) { try { return fn(localStorage); } catch (e) { return null; } }
 const visible = (el) => !!el && el.getClientRects().length > 0;
 const inView = (el) => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight; };
@@ -123,7 +137,8 @@ export function startTour(stepDefs, opt = {}) {
 }
 
 /** 첫 방문이고 홈 화면이 떠 있을 때만 자동으로 시작한다. */
-export function maybeStartMobileTour() {
+export async function maybeStartMobileTour() {
+  await buildChecked();
   const toured = store((ls) => ls.getItem(KEY));
   // 전체 안내를 이미 본 사람: 박람회 안내만 아직 안 봤고 행사 전이면 그 한 단계만
   const start = !toured ? startMobileTour : !store((ls) => ls.getItem(FAIR_KEY)) && !fairEnded() ? () => startFairTip() : null;
@@ -133,7 +148,8 @@ export function maybeStartMobileTour() {
 }
 
 /** PC(index): 박람회 안내를 한 번 띄운다. "휴대폰으로도 볼 수 있어요" 창이 떠 있으면 닫힌 뒤에 띄운다. */
-export function maybeShowFairTipPc() {
+export async function maybeShowFairTipPc() {
+  await buildChecked();
   if (store((ls) => ls.getItem(FAIR_KEY)) || fairEnded()) return;
   const sel = "#fair-open-btn";
   let waited = 0;
