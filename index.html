@@ -9,7 +9,7 @@
     if(new URLSearchParams(location.search).get('force') === 'desktop') return;
     var ua = navigator.userAgent || '';
     var isMobile = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua) || window.innerWidth <= 768;
-    if(isMobile) location.replace('mobile.html');
+    if(isMobile) location.replace('mobile.html' + (new URLSearchParams(location.search).get('tab') === 'fair' ? '?section=fair' : '')); // 박람회 링크(?tab=fair)는 모바일 박람회 탭으로
   })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -39,6 +39,8 @@
 <link rel="modulepreload" href="js/visitor-counter.js">
 <link rel="modulepreload" href="js/greeting-photo.js">
 <link rel="modulepreload" href="js/content-defaults.js">
+<link rel="modulepreload" href="js/school-fair.js">
+<link rel="modulepreload" href="js/mobile-tour.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Brush+Script&display=swap" media="print" onload="this.media='all'">

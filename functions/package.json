@@ -9,7 +9,7 @@
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "npm run test:knowledge && npm run test:brochure && npm run test:curriculum && npm run test:course && npm run test:results && npm run test:regulation && npm run test:ratelimit && npm run test:chatlimit && npm run test:unanswered && npm run test:websearch && npm run test:replyguard && npm run test:searchgate && npm run test:clientsafety && npm run test:schoolfacts && npm run test:appcheck && npm run test:advice && npm run test:plan && npm run test:visit && npm run test:curguard",
+    "test": "npm run test:knowledge && npm run test:brochure && npm run test:curriculum && npm run test:course && npm run test:results && npm run test:regulation && npm run test:ratelimit && npm run test:chatlimit && npm run test:unanswered && npm run test:websearch && npm run test:replyguard && npm run test:searchgate && npm run test:clientsafety && npm run test:schoolfacts && npm run test:appcheck && npm run test:advice && npm run test:plan && npm run test:visit && npm run test:curguard && npm run test:fair",
     "test:knowledge": "node test/run_knowledge_retrieval_tests.js",
     "test:brochure": "node test/run_brochure_tests.js",
     "test:curriculum": "node test/run_curriculum_tests.js",
@@ -29,7 +29,8 @@
     "test:curguard": "node test/run_curriculum_guard_tests.js && node test/run_curriculum_guard_integration.js",
     "test:pdf": "python3 ../tools/verify-curriculum-pdf.py",
     "test:plan": "node test/run_plan_tests.js && node test/run_plan_analysis_tests.js && node test/run_plan_chat_tests.js",
-    "test:visit": "node test/run_visit_counter_tests.js"
+    "test:visit": "node test/run_visit_counter_tests.js",
+    "test:fair": "node test/run_fair_tests.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
