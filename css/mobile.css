@@ -137,3 +137,4 @@ html.ig-open{ overflow:hidden; }
 .m-tab.key-fair.on::after{ display:none; }
 @media (max-width:360px){ .m-tab{ font-size:10.5px; } }
 .m-section[data-sec="fair"] .m-card{ padding:12px; }
+.m-lang-pill{position:relative;z-index:1;margin-left:auto;flex:none;font-size:11.5px;padding:6px 9px;gap:4px;white-space:nowrap}.m-lang-pill svg{width:13px;height:13px}

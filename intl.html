@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Changwon Jungang High School — Admission Guide</title>
+<meta name="description" content="Admission guide for international families — English, 日本語, 中文">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=69c17ce5">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png?v=af9a5493">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4dd5ad47">
+<meta name="theme-color" content="#14284F">
+<!-- 다문화 가정 학부모용 안내 페이지(영어·일본어·중국어 간체).
+     한국어 사이트의 핵심 내용(입학 배정, 고교학점제, 학교생활, 상담 신청 방법)을 요약 번역한 정적 페이지다.
+     문구는 아래 <script>의 T 객체에 언어별로 있고, 학교 사실은 functions/index.js의 CORE_CONFIRMED_FACTS(확인된 사실)만 옮겼다.
+     방문 설명회 날짜만 Firestore(site_content/applyOptions, 공개 읽기)에서 읽어 지금 날짜로 보여 준다(실패하면 기본값).
+     PC/모바일 자동 이동은 하지 않는다(이 페이지 하나가 두 화면을 모두 지원). -->
+<style>
+:root{
+  --bg:#F2F6FB; --surface:#FFFFFF;
+  --ink:#0F172A; --ink-2:#475569; --ink-3:#94A3B8;
+  --sep:rgba(15,23,42,0.10); --fill:rgba(15,23,42,0.05);
+  --accent:#14284F; --accent-2:#2F56A3; --accent-tint:rgba(20,40,79,0.08);
+  --point:#FFC72C; --point-tint:rgba(255,199,44,0.22); --point-ink:#7A5600;
+  --grad:linear-gradient(135deg,#14284F 0%,#1F3E7A 45%,#2F56A3 100%);
+  --shadow:0 1px 2px rgba(15,23,42,0.04), 0 14px 32px -18px rgba(20,40,79,0.35);
+  --radius:18px;
+  --ui:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', Meiryo, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--ui); -webkit-text-size-adjust:100%; }
+body{ line-height:1.65; font-size:15.5px; overflow-x:clip; }
+a{ color:var(--accent-2); }
+.wrap{ max-width:880px; margin:0 auto; padding:0 16px; }
+
+/* 상단 */
+.hero{ background:var(--grad); color:#fff; position:relative; overflow:hidden; padding:calc(14px + env(safe-area-inset-top)) 0 26px; }
+.hero::before{ content:""; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(rgba(255,255,255,.14) 1px,transparent 1px); background-size:16px 16px; }
+.hero .wrap{ position:relative; }
+.topbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.back-ko{ display:inline-flex; align-items:center; gap:6px; color:#fff; text-decoration:none; font-size:13px; font-weight:700; opacity:.9; padding:6px 0; }
+.back-ko:hover{ opacity:1; text-decoration:underline; }
+.back-ko svg{ width:16px; height:16px; }
+.langs{ display:flex; gap:4px; padding:4px; background:rgba(255,255,255,.14); border-radius:999px; }
+.langs button{ border:0; background:transparent; color:#fff; font:inherit; font-size:13.5px; font-weight:700; padding:7px 13px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+.langs button[aria-pressed="true"]{ background:#fff; color:var(--accent); }
+.langs button:focus-visible{ outline:2px solid var(--point); outline-offset:2px; }
+.eyebrow{ font-size:12.5px; font-weight:800; letter-spacing:.04em; color:var(--point); margin:0 0 6px; text-transform:uppercase; }
+.hero h1{ margin:0 0 10px; font-size:clamp(23px,5.4vw,32px); line-height:1.25; font-weight:800; letter-spacing:-.01em; }
+.hero .lede{ margin:0; font-size:15px; color:rgba(255,255,255,.88); max-width:640px; }
+
+/* 목차 */
+.toc{ position:sticky; top:0; z-index:20; background:rgba(242,246,251,.94); backdrop-filter:saturate(1.4) blur(8px); -webkit-backdrop-filter:saturate(1.4) blur(8px); border-bottom:1px solid var(--sep); }
+.toc .wrap{ display:flex; gap:6px; overflow-x:auto; padding:10px 16px; scrollbar-width:none; }
+.toc .wrap::-webkit-scrollbar{ display:none; }
+.toc a{ flex:none; text-decoration:none; color:var(--ink-2); font-size:13px; font-weight:700; padding:6px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--sep); white-space:nowrap; }
+.toc a:hover{ color:var(--accent); border-color:var(--accent); }
+
+main{ padding:18px 0 36px; }
+.callout{ display:flex; gap:12px; align-items:flex-start; background:var(--point-tint); border:1px solid rgba(255,199,44,.55); border-radius:14px; padding:13px 15px; margin:0 0 18px; font-size:14.5px; }
+.callout svg{ flex:none; width:22px; height:22px; color:var(--point-ink); margin-top:1px; }
+.callout b{ color:var(--point-ink); }
+
+section.card{ background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 22px 20px; margin:0 0 16px; scroll-margin-top:64px; }
+section.card h2{ display:flex; align-items:center; gap:10px; margin:0 0 12px; font-size:19px; line-height:1.35; color:var(--accent); }
+section.card h2 .num{ flex:none; display:inline-grid; place-items:center; width:28px; height:28px; border-radius:9px; background:var(--accent); color:#fff; font-size:14px; }
+section.card h3{ margin:18px 0 8px; font-size:15.5px; color:var(--ink); }
+section.card p{ margin:0 0 10px; }
+ul.facts{ margin:0; padding:0; list-style:none; }
+ul.facts li{ position:relative; padding:0 0 0 18px; margin:0 0 8px; }
+ul.facts li::before{ content:""; position:absolute; left:3px; top:.62em; width:7px; height:7px; border-radius:50%; background:var(--accent-2); }
+.ko{ font-size:.92em; color:var(--ink-2); background:var(--fill); border-radius:6px; padding:1px 6px; white-space:nowrap; }
+.muted{ color:var(--ink-2); font-size:13.5px; }
+
+/* 표 */
+.tbl-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin:4px 0 6px; }
+table{ width:100%; border-collapse:collapse; font-size:14.5px; }
+th,td{ text-align:left; vertical-align:top; padding:10px 10px; border-bottom:1px solid var(--sep); }
+th{ font-size:12.5px; color:var(--ink-2); font-weight:800; background:var(--fill); }
+td:first-child{ font-weight:700; width:34%; }
+@media (max-width:560px){
+  table.stack thead{ display:none; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td{ display:block; width:100%; }
+  table.stack tr{ border-bottom:1px solid var(--sep); padding:9px 0; }
+  table.stack td{ border:0; padding:2px 0; }
+}
+
+/* 상담 방법 카드 */
+.ways{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:6px 0 4px; }
+@media (max-width:720px){ .ways{ grid-template-columns:1fr; } }
+.way{ border:1.5px solid var(--sep); border-radius:14px; padding:15px 15px 14px; display:flex; flex-direction:column; gap:6px; }
+.way .tag{ align-self:flex-start; font-size:12px; font-weight:800; color:var(--accent); background:var(--accent-tint); padding:3px 9px; border-radius:999px; }
+.way h3{ margin:2px 0 0; }
+.way p{ margin:0; font-size:14.5px; }
+.way .actions{ margin-top:auto; padding-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
+.btn{ display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-weight:800; font-size:14px; border-radius:999px; padding:9px 15px; border:1.5px solid var(--accent); color:var(--accent); background:#fff; }
+.btn:hover{ background:var(--accent-tint); }
+.btn.primary{ background:var(--accent); color:#fff; }
+.btn.primary:hover{ background:var(--accent-2); border-color:var(--accent-2); }
+.btn svg{ width:16px; height:16px; }
+.dates{ margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; }
+.dates li{ font-size:14px; font-weight:700; background:var(--fill); border-radius:9px; padding:6px 10px; }
+.examples{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px; }
+.examples span{ font-size:13px; background:var(--accent-tint); color:var(--accent); border-radius:999px; padding:4px 10px; }
+
+.phone{ font-weight:800; white-space:nowrap; }
+footer{ padding:8px 0 calc(28px + env(safe-area-inset-bottom)); }
+footer p{ margin:0 0 6px; font-size:13px; color:var(--ink-2); }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="back-ko" href="index.html" lang="ko"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>한국어 사이트</a>
+      <div class="langs" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en">English</button>
+        <button type="button" data-lang="ja" lang="ja">日本語</button>
+        <button type="button" data-lang="zh" lang="zh-CN">中文</button>
+      </div>
+    </div>
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 id="h1"></h1>
+    <p class="lede" id="lede"></p>
+  </div>
+</header>
+<nav class="toc" id="toc" aria-label="Contents"><div class="wrap" id="toc-links"></div></nav>
+<main class="wrap" id="main"></main>
+<footer class="wrap" id="footer"></footer>
+
+<script>
+(function () {
+  // ---- 언어별 문구 ---------------------------------------------------------------
+  // 학교 사실은 functions/index.js CORE_CONFIRMED_FACTS·CONTACT_BLOCK, 상담 신청 문항은 apply.render.js 기준.
+  // 사실을 바꿀 때는 세 언어를 함께 고친다. 한국어 표기(K)는 한국어 화면의 실제 문구와 똑같이 둔다.
+  var K = function (s) { return '<span class="ko" lang="ko">' + s + '</span>'; };
+  var TEL = function (n) { return '<a class="phone" href="tel:' + n.replace(/-/g, '') + '">' + n + '</a>'; };
+  var HOME = 'https://cwjungang-h.gne.go.kr/cwjungang-h/main.do';
+
+  var T = {
+    en: {
+      htmlLang: 'en', locale: 'en-US',
+      title: 'Changwon Jungang High School — Admission Guide',
+      eyebrow: 'Class of 2027 · For international families',
+      h1: 'Welcome to Changwon Jungang High School',
+      lede: 'A summary, in your language, of our Korean admission site: how students are assigned to schools, what school life looks like, and how to ask us your questions.',
+      callout: '<b>The main site and its forms are in Korean.</b> Our AI chatbot <b>“Jungang-i”</b> ' + K('중앙이') + ' understands English — just write your question in English and it will answer in English.',
+      toc: ['About', 'Placement', 'Credit system', 'School life', 'Counseling', 'Korean form guide', 'Help in your language'],
+      about: { title: 'About the school', items: [
+        'A public, general (day) high school <b>for boys</b> under the Gyeongsangnam-do Office of Education. (Changwon Jungang <i>Girls’</i> High School is a different school.)',
+        'Address: 16 Yongho-ro, Seongsan-gu, Changwon-si, Gyeongsangnam-do ' + K('경상남도 창원시 성산구 용호로 16'),
+        'Opened in 1984 — more than 40 years of history.',
+        '24 classes (8 per grade), about 548 students and 56 teachers. (Official school-disclosure figures; they change slightly every year.)',
+        'Runs the High School Credit System and AI-based education.'
+      ] },
+      placement: { title: 'How students are assigned to schools', items: [
+        'Changwon is a <b>high-school “equalization” area</b> ' + K('평준화 지역') + '. Students do not enroll directly at a school of their choice; they are assigned through the placement procedure of the Gyeongsangnam-do Office of Education.',
+        'Living close to the school does <b>not</b> by itself give priority.',
+        'For the 2027 school year, applications for general high schools in equalization areas are reported to run <b>December 10–14, 2026</b>, with results on <b>January 8, 2027</b>. The Office of Education’s official notice always takes precedence — please ask your child’s middle-school homeroom teacher about the exact procedure.',
+        'Missing the pre-enrollment orientation ' + K('예비소집') + ' does not by itself cancel admission, but please attend if you can: a lot of important information is given there.'
+      ] },
+      credit: { title: 'The High School Credit System', items: [
+        'Under the High School Credit System ' + K('고교학점제') + ', students choose many of their own courses (mainly from 2nd year) according to their interests and career plans.',
+        'Students who chose the same course study together, so the classroom and classmates change from course to course.',
+        'The <b>student</b> makes the course choices. The school provides counseling and guidance; parents help by checking information and deadlines.',
+        'On the Korean site, the ' + K('교육과정') + ' (Curriculum) and ' + K('과목 선택 가이드') + ' (Course selection guide) tabs show the full 3-year curriculum and let students try planning their courses.'
+      ] },
+      life: { title: 'School life at a glance', head: ['Topic', 'Details'], rows: [
+        ['School hours', 'Students must be seated in class by 8:30; regular classes end at 16:30.'],
+        ['Evening self-study ' + K('야자'), '<b>Optional</b>, Monday–Thursday 18:30–21:00. Sign up each month (you can change every month). The school recommends it as quiet time to review what was learned that day.'],
+        ['Dinner', 'Paid, only for students who apply (applied for separately from evening study).'],
+        ['Mobile phones', 'Collected before class and returned at the end-of-day homeroom meeting.'],
+        ['Uniform', 'School uniform or school PE uniform. Indoor shoes are required.'],
+        ['Dormitory / school bus', 'There is no dormitory and no school bus.'],
+        ['Laptop / tablet', 'No need to buy one — the Gyeongsangnam-do Office of Education provides a learning device (“i-Book”).'],
+        ['Books', 'No need to buy workbooks in advance; each subject teacher will advise after entrance.'],
+        ['Absence for family trips', 'Can be counted as attendance (“experiential learning” ' + K('체험학습') + ') if you apply in advance (about 3–7 days before) and submit a report afterwards (within about 3–7 days).'],
+        ['Who to contact after entrance', 'Homeroom teacher for school life in general; curriculum department for course choices; career counselor for career plans; the subject teacher for classes and grading.']
+      ] },
+      counsel: {
+        title: 'Admission counseling — choose one of three ways',
+        intro: 'For families of students entering in March 2027 (currently in their final year of middle school, ninth grade).',
+        online: { tag: 'Any time', h: 'Online', p: 'Ask the AI chatbot in English, or post a question on the Q&A board. Tick ' + K('비밀글') + ' (private post) and only you can read it, with your password.', chat: 'Ask the AI chatbot', qna: 'Q&A board' },
+        phone: { tag: 'Form', h: 'Phone', p: 'Submit the counseling form and choose ' + K('전화 상담') + '. The school will arrange a time with you and call you. Calls are in Korean — see “Help in your language” below.' },
+        visit: { tag: 'Form', h: 'Visit (group briefing)', p: 'Not one-on-one: a briefing session at the school together with other families. Choose ' + K('방문/대면 상담') + ' on the form.', dates: 'Upcoming sessions:', none: 'No visit sessions are scheduled right now. Please use online or phone counseling.' },
+        form: 'Open the counseling form (Korean)',
+        examples: ['Is evening self-study required?', 'How are students assigned to this school?', 'What courses can my child choose?']
+      },
+      form: {
+        title: 'How to fill in the Korean form', intro: 'The form shows the Korean text on the left. Here is what each item means.',
+        head: ['On the form', 'Meaning'],
+        rows: [
+          [K('신청하기') + ' / ' + K('취소하기'), 'Apply / Cancel an application you already made.'],
+          [K('희망하시는 상담 유형'), 'Type of counseling: ' + K('온라인 상담') + ' online · ' + K('전화 상담') + ' phone · ' + K('방문/대면 상담') + ' visit.'],
+          [K('자녀가 재학 중인 중학교'), 'Your child’s middle school. If it is not listed, choose ' + K('그 외') + ' (other) and type the full name ending in “중학교”, e.g. ' + K('반림중학교') + '.'],
+          [K('궁금하신 분야'), 'Topics (choose any): ' + K('고교학점제') + ' credit system · ' + K('창원중앙고 교육과정') + ' our curriculum · ' + K('창원중앙고 특색활동') + ' special programs · ' + K('고등학생 자녀 학습·생활 지원 방법') + ' supporting a high-school student · ' + K('기타') + ' other.'],
+          [K('보호자 성함'), 'Parent / guardian name. Used only to confirm the applicant and deleted after the admission season.'],
+          [K('연락받을 전화번호') + ' / ' + K('연락처'), 'Phone number, in the form 010-0000-0000.'],
+          [K('희망 날짜'), 'Preferred visit dates (you may choose more than one).'],
+          [K('궁금하신 내용'), 'Your questions. You may write in English; adding a short Korean translation helps the teacher reply faster.'],
+          [K('취소용 비밀번호 (숫자 4자리)'), 'A 4-digit PIN you choose. You need it, with your phone number, to cancel later — please remember it.'],
+          [K('이메일 (선택)'), 'Email (optional) — you will receive a confirmation email.'],
+          [K('개인정보 수집·이용에 동의합니다'), 'Consent to the collection and use of personal information (required). Kept until December 15, 2026.'],
+          [K('상담 신청서 제출하기'), 'Submit.']
+        ],
+        cancel: 'To cancel: open the form, choose ' + K('취소하기') + ', and enter the phone number and 4-digit PIN you used.'
+      },
+      help: { title: 'Help in your language', items: [
+        '<b>AI chatbot</b> — write in English and it answers in English, any time.',
+        '<b>Danuri Call Center</b> ' + TEL('1577-1366') + ' — a free multilingual helpline (24 hours) for multicultural families and foreign residents in Korea (government-run). It can help with interpretation, including three-way calls with the school.',
+        '<b>School phone (Korean)</b> — Academic Affairs Office ' + TEL('055-239-3109') + ' (schedules, curriculum) · Administration Office ' + TEL('055-239-3107') + ' (scholarships, fees).',
+        '<b>After entrance</b> — school notices come through the <b>Riroschool</b> ' + K('리로스쿨') + ' app; grades and attendance can be checked on the <b>NEIS parent service</b> ' + K('나이스 학부모서비스') + '.',
+        'Official school homepage (Korean): <a href="' + HOME + '" target="_blank" rel="noopener">cwjungang-h.gne.go.kr</a>'
+      ] },
+      footer: ['This page is a summary translation of the Korean site. If anything differs, the Korean original and official notices take precedence.', '© 2026 Changwon Jungang High School']
+    },
+
+    ja: {
+      htmlLang: 'ja', locale: 'ja-JP',
+      title: '昌原中央高等学校 — 入学案内',
+      eyebrow: '2027年度 新入生 · 外国につながるご家庭へ',
+      h1: '昌原中央高等学校へようこそ',
+      lede: '韓国語の入学相談サイトの要点を日本語でまとめました。入学校の決まり方、学校生活、相談の申し込み方法をご案内します。',
+      callout: '<b>本サイトと申込フォームは韓国語です。</b> AI相談チャットボット<b>「チュンアンイ」</b>' + K('중앙이') + 'は日本語がわかります。日本語で質問すれば、日本語で答えます。',
+      toc: ['学校紹介', '入学校の決まり方', '高校単位制', '学校生活', '入学相談', 'フォームの書き方', '母語での支援'],
+      about: { title: '学校紹介', items: [
+        '慶尚南道教育庁所管の公立一般高校（全日制）で、<b>男子校</b>です。（名前の似た「昌原中央女子高校」は別の学校です。）',
+        '所在地：慶尚南道 昌原市 城山区 龍湖路16 ' + K('경상남도 창원시 성산구 용호로 16'),
+        '1984年開校、40年以上の歴史があります。',
+        '24学級（各学年8学級）、生徒約548名・教員56名（学校情報公示の数値。年によって少しずつ変わります）。',
+        '高校単位制とAI教育を実施しています。'
+      ] },
+      placement: { title: '入学校の決まり方', items: [
+        '昌原市は<b>高校「平準化」地域</b> ' + K('평준화 지역') + 'です。生徒が自分で学校を選んで入学するのではなく、慶尚南道教育庁の割り当て（配定）手続きによって進学先が決まります。',
+        '学校の近くに住んでいるという理由だけで、優先的に割り当てられることは<b>ありません</b>。',
+        '2027年度の平準化地域一般高校の願書受付は<b>2026年12月10日〜14日</b>、発表は<b>2027年1月8日</b>と報道されています。必ず教育庁の公式公告を優先し、具体的な手続きはお子さまの中学校の担任の先生にご確認ください。',
+        '入学前の説明会（予備招集）' + K('예비소집') + 'を欠席しても、それだけで入学が取り消されることはありません。ただし大切な案内が多いので、できるだけご参加ください。'
+      ] },
+      credit: { title: '韓国の高校単位制', items: [
+        '高校単位制 ' + K('고교학점제') + 'では、主に2年生から、生徒が自分の興味や進路に合わせて多くの科目を自分で選びます。',
+        '同じ科目を選んだ生徒同士で授業を受けるため、科目ごとに教室と一緒に学ぶ友だちが変わります。',
+        '科目を選ぶのは<b>生徒本人</b>です。学校が十分な相談と案内を行い、保護者は情報や日程の確認でサポートします。',
+        '韓国語サイトの ' + K('교육과정') + '（教育課程）と ' + K('과목 선택 가이드') + '（科目選択ガイド）タブで、3年間の教育課程を確認し、科目選びを試せます。'
+      ] },
+      life: { title: '学校生活のポイント', head: ['項目', '内容'], rows: [
+        ['登下校時刻', '8:30までに教室で着席。通常の授業は16:30に終わります。'],
+        ['夜間自習 ' + K('야자'), '<b>希望者のみ</b>。月〜木曜 18:30〜21:00。毎月申し込み制で、月ごとに参加するかどうかを変えられます。その日に学んだ内容を自分で復習する時間として、学校は参加を勧めています。'],
+        ['夕食', '申し込んだ生徒にのみ有料で提供（夜間自習とは別に申し込み）。'],
+        ['携帯電話', '授業前に回収し、終礼時に返却します。'],
+        ['服装', '制服または学校指定の体操服。上履きが必要です。'],
+        ['寮・通学バス', '寮も学校運営の通学バスもありません。'],
+        ['ノートPC・タブレット', '購入不要です。慶尚南道教育庁が学習用端末（アイブック）を支給します。'],
+        ['参考書・問題集', '事前に買う必要はありません。入学後に各教科の先生が案内します。'],
+        ['家族旅行での欠席', '事前に申請（約3〜7日前）し、旅行後に報告書（約3〜7日以内）を出せば「体験学習」' + K('체험학습') + 'として出席扱いになります。'],
+        ['入学後の相談先', '学校生活全般は担任、科目選択は教育課程部の先生、進路は進路相談の先生、授業・評価は各教科の先生です。']
+      ] },
+      counsel: {
+        title: '入学相談 — 3つの方法から選べます',
+        intro: '2027年3月に入学する新入生（現在の中学3年生）のご家庭が対象です。',
+        online: { tag: 'いつでも', h: 'オンライン', p: 'AIチャットボットに日本語で質問するか、Q&A掲示板に質問を書き込めます。' + K('비밀글') + '（非公開）にチェックすると、パスワードを知っているご本人だけが読めます。', chat: 'AIチャットボットに聞く', qna: 'Q&A掲示板' },
+        phone: { tag: 'フォーム', h: '電話', p: '相談申込フォームで ' + K('전화 상담') + 'を選んで送信してください。学校が日時を調整し、お電話します。電話は韓国語です。下の「母語での支援」もご覧ください。' },
+        visit: { tag: 'フォーム', h: '来校（説明会）', p: '1対1ではなく、複数のご家庭と一緒に学校で行う説明会です。フォームで ' + K('방문/대면 상담') + 'を選んでください。', dates: '今後の日程：', none: '現在、予定されている来校説明会はありません。オンラインまたは電話相談をご利用ください。' },
+        form: '相談申込フォームを開く（韓国語）',
+        examples: ['夜間自習は必須ですか？', 'この学校への入学はどうやって決まりますか？', 'どんな科目を選べますか？']
+      },
+      form: {
+        title: '韓国語フォームの書き方', intro: 'フォームの韓国語の文言（左）と、その意味（右）です。',
+        head: ['フォームの表示', '意味'],
+        rows: [
+          [K('신청하기') + ' / ' + K('취소하기'), '申し込む / 申し込みを取り消す'],
+          [K('희망하시는 상담 유형'), '相談の種類：' + K('온라인 상담') + ' オンライン · ' + K('전화 상담') + ' 電話 · ' + K('방문/대면 상담') + ' 来校'],
+          [K('자녀가 재학 중인 중학교'), 'お子さまの在籍中学校。一覧にない場合は ' + K('그 외') + '（その他）を選び、「중학교」で終わる正式名を入力（例：' + K('반림중학교') + '）。'],
+          [K('궁금하신 분야'), '知りたい分野（複数可）：' + K('고교학점제') + ' 高校単位制 · ' + K('창원중앙고 교육과정') + ' 本校の教育課程 · ' + K('창원중앙고 특색활동') + ' 特色活動 · ' + K('고등학생 자녀 학습·생활 지원 방법') + ' 高校生の学習・生活のサポート · ' + K('기타') + ' その他'],
+          [K('보호자 성함'), '保護者のお名前。申込者の確認にのみ使い、入学シーズン終了後に破棄します。'],
+          [K('연락받을 전화번호') + ' / ' + K('연락처'), '電話番号（010-0000-0000 の形式）'],
+          [K('희망 날짜'), '来校希望日（複数選択可）'],
+          [K('궁금하신 내용'), '質問内容。日本語で書いても構いません。短い韓国語訳を添えると、より早く回答できます。'],
+          [K('취소용 비밀번호 (숫자 4자리)'), '取り消し用の4桁の暗証番号。後で取り消すときに電話番号と一緒に必要です。忘れないようにしてください。'],
+          [K('이메일 (선택)'), 'メールアドレス（任意）。受付確認メールが届きます。'],
+          [K('개인정보 수집·이용에 동의합니다'), '個人情報の収集・利用への同意（必須）。保有期間は2026年12月15日まで。'],
+          [K('상담 신청서 제출하기'), '送信']
+        ],
+        cancel: '取り消すには：フォームを開いて ' + K('취소하기') + 'を選び、申込時の電話番号と4桁の暗証番号を入力します。'
+      },
+      help: { title: '母語での支援', items: [
+        '<b>AIチャットボット</b> — 日本語で質問すれば日本語で答えます。いつでも利用できます。',
+        '<b>ダヌリコールセンター</b> ' + TEL('1577-1366') + ' — 韓国政府が運営する、多文化家族・在韓外国人のための無料多言語相談窓口（24時間）。学校との三者通話による通訳など、通訳の支援を受けられます。',
+        '<b>学校の電話（韓国語）</b> — 教務室 ' + TEL('055-239-3109') + '（日程・教育課程）· 事務室（行政室）' + TEL('055-239-3107') + '（奨学金・費用）',
+        '<b>入学後</b> — 学校からのお知らせは<b>リロスクール</b> ' + K('리로스쿨') + 'アプリで届きます。成績・出欠は<b>NEIS保護者サービス</b> ' + K('나이스 학부모서비스') + 'で確認できます。',
+        '学校公式ホームページ（韓国語）：<a href="' + HOME + '" target="_blank" rel="noopener">cwjungang-h.gne.go.kr</a>'
+      ] },
+      footer: ['このページは韓国語サイトの要約翻訳です。内容が異なる場合は、韓国語の原文と公式のお知らせが優先されます。', '© 2026 昌原中央高等学校']
+    },
+
+    zh: {
+      htmlLang: 'zh-CN', locale: 'zh-CN',
+      title: '昌原中央高中 — 入学指南',
+      eyebrow: '2027级新生 · 致多元文化家庭',
+      h1: '欢迎来到昌原中央高中',
+      lede: '我们用中文整理了韩语入学咨询网站的要点：入学分配方式、学校生活，以及如何向我们咨询。',
+      callout: '<b>主网站和申请表是韩语的。</b> AI 入学咨询机器人<b>“中央伊”</b>' + K('중앙이') + '看得懂中文——用中文提问，它就会用中文回答。',
+      toc: ['学校简介', '入学分配', '高中学分制', '学校生活', '入学咨询', '韩语表格填写', '母语帮助'],
+      about: { title: '学校简介', items: [
+        '隶属庆尚南道教育厅的公立普通高中（日间制），是一所<b>男子高中</b>。（名字相近的“昌原中央女子高中”是另一所学校。）',
+        '地址：庆尚南道 昌原市 城山区 龙湖路16 ' + K('경상남도 창원시 성산구 용호로 16'),
+        '1984年建校，已有40多年历史。',
+        '共24个班（每个年级8个班），学生约548名、教师56名（学校信息公示数据，每年略有变化）。',
+        '实行高中学分制，并开展AI教育。'
+      ] },
+      placement: { title: '入学分配方式', items: [
+        '昌原市是<b>高中“平准化”地区</b> ' + K('평준화 지역') + '。学生不能自己选校直接入学，而是由庆尚南道教育厅按分配程序分配学校。',
+        '仅凭住得离学校近，<b>不会</b>获得优先分配。',
+        '据报道，2027学年平准化地区普通高中的报名时间为<b>2026年12月10日至14日</b>，<b>2027年1月8日</b>公布结果。请以教育厅的正式公告为准，具体手续请向孩子初中的班主任确认。',
+        '缺席入学前的新生预备集合（说明会）' + K('예비소집') + '本身不会导致取消入学资格，但会公布很多重要信息，请尽量参加。'
+      ] },
+      credit: { title: '高中学分制', items: [
+        '在高中学分制 ' + K('고교학점제') + '下，学生（主要从高二开始）根据自己的兴趣和未来规划，自主选择许多课程。',
+        '选了同一门课的学生一起上课，所以每门课的教室和同学都会不同。',
+        '选课由<b>学生本人</b>决定。学校会提供充分的咨询和指导，家长主要帮助确认信息和时间安排。',
+        '在韩语网站的 ' + K('교육과정') + '（课程）和 ' + K('과목 선택 가이드') + '（选课指南）标签中，可以查看三年课程并尝试规划选课。'
+      ] },
+      life: { title: '学校生活一览', head: ['项目', '说明'], rows: [
+        ['上下学时间', '8:30前到教室就座，常规课程16:30结束。'],
+        ['晚自习 ' + K('야자'), '<b>自愿参加</b>，周一至周四 18:30–21:00。按月报名，每个月都可以调整是否参加。学校推荐把它作为自己复习当天所学内容的时间。'],
+        ['晚餐', '仅向报名的学生收费提供（与晚自习分开报名）。'],
+        ['手机', '上课前统一收取，放学前班会时归还。'],
+        ['校服', '校服或学校指定的运动服。需要准备室内鞋。'],
+        ['宿舍 / 校车', '学校没有宿舍，也没有校车。'],
+        ['笔记本电脑 / 平板', '不需要购买，庆尚南道教育厅会发放学习用设备（i-Book）。'],
+        ['教辅书', '不需要提前购买，入学后各科老师会告知。'],
+        ['家庭旅行请假', '提前（约3–7天前）提交申请，回来后（约3–7天内）提交报告，即可按“体验学习”' + K('체험학습') + '算作出勤。'],
+        ['入学后联系谁', '学校生活找班主任，选课找课程部老师，升学和职业规划找生涯规划咨询老师，上课和评分找该科老师。']
+      ] },
+      counsel: {
+        title: '入学咨询 — 三种方式任选',
+        intro: '面向2027年3月入学的新生（目前初三学生）的家庭。',
+        online: { tag: '随时', h: '线上', p: '用中文向AI机器人提问，或在问答板（Q&A）留言。勾选 ' + K('비밀글') + '（私密帖）后，只有知道密码的本人才能查看。', chat: '向AI机器人提问', qna: '问答板（Q&A）' },
+        phone: { tag: '表格', h: '电话', p: '提交咨询申请表并选择 ' + K('전화 상담') + '。学校会和您约定时间后打电话给您。电话沟通使用韩语，请参看下方“母语帮助”。' },
+        visit: { tag: '表格', h: '到校（说明会）', p: '不是一对一咨询，而是与其他家庭一起在学校参加的说明会。请在表格中选择 ' + K('방문/대면 상담') + '。', dates: '近期场次：', none: '目前没有安排到校说明会，请使用线上或电话咨询。' },
+        form: '打开咨询申请表（韩语）',
+        examples: ['晚自习是必须的吗？', '怎样被分配到这所学校？', '孩子可以选哪些课程？']
+      },
+      form: {
+        title: '韩语申请表填写说明', intro: '左边是表格上的韩语文字，右边是它的意思。',
+        head: ['表格上的文字', '意思'],
+        rows: [
+          [K('신청하기') + ' / ' + K('취소하기'), '申请 / 取消已提交的申请'],
+          [K('희망하시는 상담 유형'), '咨询方式：' + K('온라인 상담') + ' 线上 · ' + K('전화 상담') + ' 电话 · ' + K('방문/대면 상담') + ' 到校'],
+          [K('자녀가 재학 중인 중학교'), '孩子就读的初中。如果列表里没有，请选 ' + K('그 외') + '（其他），并输入以“중학교”结尾的完整校名（例：' + K('반림중학교') + '）。'],
+          [K('궁금하신 분야'), '想了解的内容（可多选）：' + K('고교학점제') + ' 高中学分制 · ' + K('창원중앙고 교육과정') + ' 本校课程 · ' + K('창원중앙고 특색활동') + ' 特色活动 · ' + K('고등학생 자녀 학습·생활 지원 방법') + ' 如何支持高中生的学习和生活 · ' + K('기타') + ' 其他'],
+          [K('보호자 성함'), '家长 / 监护人姓名。仅用于确认申请人，招生季结束后销毁。'],
+          [K('연락받을 전화번호') + ' / ' + K('연락처'), '电话号码（010-0000-0000 格式）'],
+          [K('희망 날짜'), '希望到校的日期（可多选）'],
+          [K('궁금하신 내용'), '想咨询的内容。可以用中文填写；附上简短的韩语翻译，老师能更快回复。'],
+          [K('취소용 비밀번호 (숫자 4자리)'), '自己设定的4位数字密码。以后取消申请时需要和电话号码一起输入，请记住。'],
+          [K('이메일 (선택)'), '电子邮箱（选填），会收到受理确认邮件。'],
+          [K('개인정보 수집·이용에 동의합니다'), '同意收集和使用个人信息（必选）。保存至2026年12月15日。'],
+          [K('상담 신청서 제출하기'), '提交']
+        ],
+        cancel: '取消方法：打开申请表，选择 ' + K('취소하기') + '，输入申请时填写的电话号码和4位密码。'
+      },
+      help: { title: '母语帮助', items: [
+        '<b>AI机器人</b> — 用中文提问就会用中文回答，随时可用。',
+        '<b>Danuri 呼叫中心</b> ' + TEL('1577-1366') + ' — 韩国政府运营的免费多语种咨询热线（24小时），面向多元文化家庭和在韩外国人，可提供口译帮助，包括与学校的三方通话口译。',
+        '<b>学校电话（韩语）</b> — 教务室 ' + TEL('055-239-3109') + '（日程、课程）· 行政室 ' + TEL('055-239-3107') + '（奖学金、费用）',
+        '<b>入学后</b> — 学校通知通过<b>Riroschool</b> ' + K('리로스쿨') + ' 应用发送；成绩和出勤可在<b>NEIS家长服务</b> ' + K('나이스 학부모서비스') + '中查询。',
+        '学校官方网站（韩语）：<a href="' + HOME + '" target="_blank" rel="noopener">cwjungang-h.gne.go.kr</a>'
+      ] },
+      footer: ['本页是韩语网站的摘要翻译。如有不一致，以韩语原文和官方公告为准。', '© 2026 昌原中央高中']
+    }
+  };
+
+  var ICON = {
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+    form: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>'
+  };
+  var IDS = ['about', 'placement', 'credit', 'life', 'counsel', 'form', 'help'];
+
+  // ---- 방문 설명회 날짜 ----------------------------------------------------------
+  // 관리자 화면에서 고치는 한국어 문자열("10월 17일(토) 18:30")을 날짜로 읽어 각 언어로 다시 적는다.
+  // 지난 날짜는 숨기고, 읽지 못하는 문자열은 한국어 그대로 보여 준다.
+  var DEFAULT_VISIT_DATES = ['10월 17일(토) 18:30', '10월 19일(월) 18:30', '10월 21일(수) 18:30']; // js/content-defaults.js와 같게
+  var visitDates = DEFAULT_VISIT_DATES;
+  function parseKoDate(s) {
+    var m = /(\d{1,2})\s*월\s*(\d{1,2})\s*일[^\d]*(?:(\d{1,2}):(\d{2}))?/.exec(s);
+    if (!m) return null;
+    var now = new Date(), y = now.getFullYear();
+    var hh = m[3] ? +m[3] : 0, mm = m[4] ? +m[4] : 0;
+    // 한국 시각(UTC+9) 기준으로 만든다. 연도가 적혀 있지 않으니, 반년 넘게 지난 날짜면 내년으로 본다.
+    var mk = function (yr) { return new Date(Date.UTC(yr, +m[1] - 1, +m[2], hh - 9, mm)); };
+    var d = mk(y);
+    if (now - d > 183 * 864e5) d = mk(y + 1);
+    return { date: d, hasTime: !!m[3] };
+  }
+  function visitItems(locale) {
+    var out = [];
+    visitDates.forEach(function (s) {
+      var p = parseKoDate(String(s));
+      if (!p) { out.push({ ko: true, text: String(s) }); return; }
+      if (p.date.getTime() < Date.now()) return;
+      var opt = { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric', weekday: 'short' };
+      if (p.hasTime) { opt.hour = '2-digit'; opt.minute = '2-digit'; opt.hour12 = false; }
+      var text;
+      try { text = new Intl.DateTimeFormat(locale, opt).format(p.date); } catch (e) { text = String(s); }
+      out.push({ ko: false, text: text });
+    });
+    return out;
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  // ---- 그리기 --------------------------------------------------------------------
+  var current = 'en';
+  function list(items) { return '<ul class="facts">' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>'; }
+  function table(head, rows) {
+    return '<div class="tbl-scroll"><table class="stack"><thead><tr><th>' + head[0] + '</th><th>' + head[1] + '</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  function section(i, title, body) {
+    return '<section class="card" id="' + IDS[i] + '"><h2><span class="num">' + (i + 1) + '</span>' + title + '</h2>' + body + '</section>';
+  }
+  function datesHtml(t) {
+    var items = visitItems(t.locale);
+    if (!items.length) return '<p class="muted">' + t.counsel.visit.none + '</p>';
+    return '<p class="muted" style="margin:6px 0 4px">' + t.counsel.visit.dates + '</p><ul class="dates">' +
+      items.map(function (d) { return '<li' + (d.ko ? ' lang="ko"' : '') + '>' + esc(d.text) + '</li>'; }).join('') + '</ul>';
+  }
+  function render(lang) {
+    var t = T[lang];
+    current = lang;
+    document.documentElement.lang = t.htmlLang;
+    document.title = t.title;
+    document.getElementById('eyebrow').textContent = t.eyebrow;
+    document.getElementById('h1').textContent = t.h1;
+    document.getElementById('lede').textContent = t.lede;
+    document.querySelectorAll('.langs button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+    document.getElementById('toc-links').innerHTML = t.toc.map(function (label, i) { return '<a href="#' + IDS[i] + '">' + label + '</a>'; }).join('');
+
+    var c = t.counsel;
+    var ways =
+      '<div class="ways">' +
+        '<div class="way"><span class="tag">' + c.online.tag + '</span><h3>' + c.online.h + '</h3><p>' + c.online.p + '</p>' +
+          '<div class="examples">' + c.examples.map(function (e) { return '<span>' + e + '</span>'; }).join('') + '</div>' +
+          '<div class="actions"><a class="btn primary" href="chatbot.html">' + ICON.chat + c.online.chat + '</a><a class="btn" href="qna.html">' + c.online.qna + '</a></div></div>' +
+        '<div class="way"><span class="tag">' + c.phone.tag + '</span><h3>' + c.phone.h + '</h3><p>' + c.phone.p + '</p>' +
+          '<div class="actions"><a class="btn" href="apply.html">' + ICON.form + c.form + '</a></div></div>' +
+        '<div class="way" id="visit-way"><span class="tag">' + c.visit.tag + '</span><h3>' + c.visit.h + '</h3><p>' + c.visit.p + '</p>' +
+          '<div id="visit-dates">' + datesHtml(t) + '</div>' +
+          '<div class="actions"><a class="btn" href="apply.html">' + ICON.form + c.form + '</a></div></div>' +
+      '</div>';
+
+    document.getElementById('main').innerHTML =
+      '<div class="callout">' + ICON.info + '<div>' + t.callout + '</div></div>' +
+      section(0, t.about.title, list(t.about.items)) +
+      section(1, t.placement.title, list(t.placement.items)) +
+      section(2, t.credit.title, list(t.credit.items)) +
+      section(3, t.life.title, table(t.life.head, t.life.rows)) +
+      section(4, c.title, '<p>' + c.intro + '</p>' + ways) +
+      section(5, t.form.title, '<p>' + t.form.intro + '</p>' + table(t.form.head, t.form.rows) + '<p class="muted" style="margin-top:10px">' + t.form.cancel + '</p>') +
+      section(6, t.help.title, list(t.help.items));
+    document.getElementById('footer').innerHTML = t.footer.map(function (f) { return '<p>' + f + '</p>'; }).join('');
+  }
+
+  // ---- 언어 고르기: ?lang= → 지난번 선택 → 브라우저 언어 → 영어 -------------------------
+  var KEY = 'cjhs_intl_lang';
+  function norm(l) { l = String(l || '').toLowerCase(); return l.indexOf('ja') === 0 ? 'ja' : l.indexOf('zh') === 0 ? 'zh' : l.indexOf('en') === 0 ? 'en' : null; }
+  function pickLang() {
+    var q = norm(new URLSearchParams(location.search).get('lang'));
+    if (q) return q;
+    try { var s = norm(localStorage.getItem(KEY)); if (s) return s; } catch (e) {}
+    var langs = navigator.languages || [navigator.language];
+    for (var i = 0; i < langs.length; i++) { var n = norm(langs[i]); if (n) return n; }
+    return 'en';
+  }
+  function setLang(lang) {
+    render(lang);
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+    var u = new URL(location.href); u.searchParams.set('lang', lang);
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
+  document.querySelectorAll('.langs button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.lang); }); });
+  setLang(pickLang());
+  try { sessionStorage.setItem('cjhs_lang_picker_seen', '1'); } catch (e) {} // js/lang-picker.js의 SESSION_KEY: 여기서 한국어 사이트로 가도 언어 선택 창을 다시 띄우지 않는다
+  if (location.hash) { var el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
+
+  // 관리자가 바꾼 방문 날짜(공개 읽기 문서)를 읽어 온다. 실패하면 기본값 그대로.
+  fetch('https://firestore.googleapis.com/v1/projects/hello-cjhs/databases/(default)/documents/site_content/applyOptions')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (doc) {
+      var field = doc && doc.fields && doc.fields.visitDates;
+      if (!field || !field.arrayValue) return;
+      var vals = field.arrayValue.values || []; // 빈 배열이면 values가 없다(= 예정된 설명회 없음)
+      visitDates = vals.map(function (v) { return v.stringValue; }).filter(Boolean);
+      var box = document.getElementById('visit-dates');
+      if (box) box.innerHTML = datesHtml(T[current]);
+    })
+    .catch(function () {});
+})();
+</script>
+<script src="js/update-check.js" defer></script>
+</body>
+</html>

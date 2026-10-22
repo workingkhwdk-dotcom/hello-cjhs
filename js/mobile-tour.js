@@ -147,15 +147,18 @@ export async function maybeStartMobileTour() {
   setTimeout(() => { if (document.querySelector('.m-section.on[data-sec="home"]')) start(); }, 700);
 }
 
-/** PC(index): 박람회 안내를 한 번 띄운다. "휴대폰으로도 볼 수 있어요" 창이 떠 있으면 닫힌 뒤에 띄운다. */
+/** PC(index): 박람회 안내를 한 번 띄운다. 언어 선택 창·"휴대폰으로도 볼 수 있어요" 창이 모두 닫힌 뒤에 띄운다. */
 export async function maybeShowFairTipPc() {
   await buildChecked();
   if (store((ls) => ls.getItem(FAIR_KEY)) || fairEnded()) return;
   const sel = "#fair-open-btn";
-  let waited = 0;
+  // 언어 선택 창이 닫힌 뒤 휴대폰 안내 창이 0.9초 뒤에 열리므로, 다른 창이 없는 상태가 1.2초 이어질 때 띄운다(최대 10분 대기)
+  let waited = 0, clear = 0;
   const tick = () => {
-    if (document.querySelector(".pmn-layer")) { if ((waited += 400) < 600000) setTimeout(tick, 400); return; }
-    startFairTip(sel);
+    if ((waited += 400) > 600000) return;
+    if (document.querySelector(".lp-layer, .pmn-layer, .mt-layer")) clear = 0;
+    else if (++clear >= 3) return startFairTip(sel);
+    setTimeout(tick, 400);
   };
-  setTimeout(tick, 1400); // 휴대폰 안내 창(0.9초 뒤 열림)보다 늦게 확인
+  setTimeout(tick, 1400);
 }

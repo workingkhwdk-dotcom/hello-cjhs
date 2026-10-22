@@ -8,8 +8,17 @@ const kstDate = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 1
 const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
 function store(fn) { try { return fn(localStorage); } catch (e) { return null; } }
 
+// 화면이 다 뜨고 한가해진 뒤에 센다(첫 화면 그리기·사진 받기와 네트워크·처리 시간을 다투지 않게).
+function afterLoadIdle() {
+  return new Promise((resolve) => {
+    const idle = () => (window.requestIdleCallback ? requestIdleCallback(resolve, { timeout: 2000 }) : setTimeout(resolve, 300));
+    if (document.readyState === "complete") idle(); else addEventListener("load", idle, { once: true });
+  });
+}
+
 export async function mountVisitorCounter(el) {
   if (!el) return;
+  await afterLoadIdle();
   const today = kstDate();
   const newVisit = store((ls) => ls.getItem(KEY)) !== today;
   // 먼저 표시해 두어야 PC 페이지와 모바일 페이지가 거의 동시에 열려도 두 번 세지 않는다. 실패하면 되돌린다.

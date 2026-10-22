@@ -27,14 +27,18 @@
 <link rel="modulepreload" href="js/visitor-counter.js">
 <link rel="modulepreload" href="js/greeting-photo.js">
 <link rel="modulepreload" href="js/content-defaults.js">
+<link rel="modulepreload" href="js/consult-form.js">
+<link rel="preload" as="image" href="image/greeting.webp?v=8bd82dbe" fetchpriority="high">
+<link rel="modulepreload" href="js/lang-picker.js">
+<link rel="modulepreload" href="js/greeting-view.js">
 <link rel="modulepreload" href="js/mobile-tour.js">
 <link rel="modulepreload" href="js/school-fair.js">
 <link rel="modulepreload" href="js/image-zoom.js">
 <link rel="modulepreload" href="js/install-guide.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Brush+Script&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gaegu:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Brush+Script&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Brush+Script&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700&family=Nanum+Brush+Script&display=swap"></noscript>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/mobile.css">
 <link rel="stylesheet" href="css/zoom.css">
@@ -42,8 +46,8 @@
 <body>
 <div id="app"></div>
 <script type="module" src="js/app-check.js"></script>
-<script src="js/plan-chat.js"></script>
-<script src="js/reply-guard.js"></script>
+<script src="js/plan-chat.js" defer></script>
+<script src="js/reply-guard.js" defer></script>
 <script type="module" src="mobile.render.js"></script>
 <script src="js/update-check.js" defer></script>
 </body>
