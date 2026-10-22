@@ -5,6 +5,9 @@
 const assert = require("assert");
 const { retrieveKnowledge, KNOWLEDGE } = require("../knowledge");
 const { buildFairBlock } = require("../school_fair");
+// index.js는 bcryptjs 등 실제 패키지를 불러오므로, 패키지 설치 전(배포 스크립트가 npm ci보다 테스트를 먼저 돌림)에도
+// 돌 수 있게 test_harness.js가 스텁 모듈 경로를 끼워 넣은 뒤에 불러온다(다른 테스트와 같은 방식).
+require("./test_harness.js");
 const { buildSystemPrompt } = require("../index.js");
 
 let pass = 0, fail = 0;
