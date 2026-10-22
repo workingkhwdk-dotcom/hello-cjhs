@@ -54,7 +54,7 @@ export function renderSchoolFair(el, opt = {}) {
 
     <div class="sf-facts">
       <div class="sf-fact"><div class="sf-fact-k">${ICON.cal}일시</div><div class="sf-fact-v">2026. 11. 7. (토) 10:00 ~ 13:00</div><div class="sf-fact-s">09:30부터 등록</div></div>
-      <div class="sf-fact"><div class="sf-fact-k">${ICON.pin}장소</div><div class="sf-fact-v">창원중앙고등학교</div><div class="sf-fact-s">용덕관 및 교내</div></div>
+      <div class="sf-fact"><div class="sf-fact-k">${ICON.pin}장소</div><div class="sf-fact-v">교내</div><div class="sf-fact-s">리플릿 안내 예정</div></div>
       <div class="sf-fact"><div class="sf-fact-k">${ICON.users}대상</div><div class="sf-fact-v">예비 고등학생 및 학부모</div></div>
       <div class="sf-fact"><div class="sf-fact-k">${ICON.car}주차 안내</div><div class="sf-fact-v">본관 뒤편 주차장</div><div class="sf-fact-s">주차 공간이 협소하니 가급적 도보나 대중교통을 이용해 주세요.</div></div>
     </div>
