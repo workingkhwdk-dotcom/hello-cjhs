@@ -658,9 +658,10 @@ exports.analyzePlan = onRequest(
 );
 
 /**
- * 메인 화면 방문자 수 (index.html·mobile.html 하단의 TODAY / TOTAL)
- * POST { newVisit: boolean } -> { today, total }
- * newVisit:true 면 오늘·전체를 1씩 올린 뒤 돌려준다(같은 IP는 하루 visitPerDay 회까지만 올림).
+ * 방문자 수 (index.html·mobile.html 하단의 TODAY / TOTAL + 모든 페이지의 방문 집계)
+ * POST { newVisit?: boolean, page?: string, newPage?: boolean } -> { today, total, pages: { [page]: { today, total } } }
+ * newVisit:true 면 사이트 전체 오늘·누적을, newPage:true 면 해당 page 의 오늘·누적을 1씩 올린 뒤 돌려준다
+ * (같은 IP는 하루 visitPerDay 회까지만 올림). 집계 대상 page 는 functions/visit_counter.js 의 PAGES.
  */
 exports.visitCounter = onRequest(
   { cors: true, region: "asia-northeast3", maxInstances: API_MAX_INSTANCES },
@@ -671,10 +672,16 @@ exports.visitCounter = onRequest(
       return;
     }
     if (blocked(req, res, visitReadLimiters, TOO_MANY_MSG)) return;
-    const wantsInc = (req.body || {}).newVisit === true;
-    const newVisit = wantsInc && visitIncLimiter.check(clientIp(req)).ok;
+    const body = req.body || {};
+    const wantsSite = body.newVisit === true;
+    const page = typeof body.page === "string" ? body.page : "";
+    const wantsPage = body.newPage === true;
+    // 올리려는 요청이 있을 때만 IP 한도를 한 번 소모한다(사이트 전체·페이지 증가를 한 요청에 같이 보내므로 1회).
+    const allowed = (wantsSite || wantsPage) && visitIncLimiter.check(clientIp(req)).ok;
+    const newVisit = wantsSite && allowed;
+    const newPage = wantsPage && allowed;
     try {
-      const counts = await recordVisit(db, admin.firestore.FieldValue, { newVisit, date: kstDate() });
+      const counts = await recordVisit(db, admin.firestore.FieldValue, { newVisit, page, newPage, date: kstDate() });
       res.status(200).json(counts);
     } catch (err) {
       logger.error("visitCounter 실패", err);
