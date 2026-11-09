@@ -7,3 +7,6 @@ functions/.env
 
 # 배포 직전 tools/bump-version.js 가 만드는 빌드 번호 파일
 version.json
+
+# 동기화(iCloud 등) 과정에서 생기는 "파일 2.js" 같은 복사본은 올리지 않는다
+* [0-9].*

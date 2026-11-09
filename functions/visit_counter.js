@@ -20,8 +20,8 @@ const TOTAL_PATH = ["site_stats", "visitors"];
 const DAILY_COLLECTION = "site_stats_daily";
 // 집계하는 페이지. 이 목록에 없는 값은 페이지별 집계에서 무시한다(필드가 무한히 늘어나는 것 방지).
 //   index: PC 메인·모바일 홈 / chatbot: 챗봇(chatbot.html, 모바일 챗봇 탭) / qna: Q&A / apply: 상담 신청
-//   curriculum: 교육과정 원문 / results: 교육활동 결과물
-const PAGES = ["index", "chatbot", "qna", "apply", "curriculum", "results"];
+//   curriculum: 교육과정 원문 / results: 교육활동 결과물 / fair: 학교 박람회(모바일 탭)
+const PAGES = ["index", "chatbot", "qna", "apply", "curriculum", "results", "fair"];
 const field = (page) => `p_${page}`;
 
 /** db: admin.firestore(), FieldValue: admin.firestore.FieldValue. 테스트에서는 가짜를 넣는다. */

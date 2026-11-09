@@ -30,6 +30,14 @@ const ALLOWED_DOMAINS = [
   "yna.co.kr", // 연합뉴스
   "news1.kr",
   "v.daum.net", // 언론사 기사 전재
+  // 2026-10-14 추가: 입시·수능 보도용 전국 단위 주요 언론(search_gate.js의 NATIONAL_NEWS_DOMAINS와 같은 값).
+  "hani.co.kr", // 한겨레
+  "khan.co.kr", // 경향신문
+  "chosun.com", // 조선일보
+  "joongang.co.kr", // 중앙일보
+  "donga.com", // 동아일보
+  "hankookilbo.com", // 한국일보
+  "kbs.co.kr", // KBS
 ];
 
 const { repairReply } = require("./reply_guard");

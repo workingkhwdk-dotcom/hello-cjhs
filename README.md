@@ -8,6 +8,7 @@
 ├── chatbot.html         AI 입학 상담 챗봇 UI (Cloud Function 호출, 답변에 굵게/색상/표 등 서식 지원)
 ├── qna.html             입학 상담 Q&A 게시판 (로그인 없이 비밀번호로 본인 확인, "qna_questions" 컬렉션)
 ├── admin.html            관리자 페이지 — 상담 신청 현황 / 상담 신청 항목 관리 / Q&A 관리 / 학교 소개 관리 / 휴지통 탭 (Firebase Auth 로그인 필요, PC 전용)
+├── intl.html           외국어 안내(영어·일본어·중국어) — 다문화 가정 학부모용 입학·학교생활·상담 신청 방법 요약 (PC/모바일 공용)
 ├── mobile.html           모바일 통합 페이지 — 홈/상담신청/챗봇/Q&A를 한 파일에서 하단 탭으로 전환 (PC/모바일 자동 감지로 진입)
 ├── admin-mobile.html     관리자 모바일 페이지 — 상담신청/Q&A/휴지통 (admin.html에서 모바일 자동 감지로 진입)
 ├── firebase-messaging-sw.js  FCM 푸시 알림용 서비스워커 (반드시 최상위 경로에 있어야 함)

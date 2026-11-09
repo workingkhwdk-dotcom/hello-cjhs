@@ -30,6 +30,8 @@ const LIMITS = {
   analyzeDevicePerHour: 10,
   analyzeDevicePerDay: 30,
   analyzeGlobalPerDay: 2000,
+  // 분석 결과 확인(폴링): 분석 한 번에 3~4초 간격으로 여러 번 가벼운 조회가 오므로 분석 요청과 따로 센다. 학교 와이파이를 여럿이 쓰는 경우를 고려해 넉넉히.
+  analyzePollPerMin: { windowMs: MIN, max: 900 },
   // 메인 화면 방문자 수 올리기(visitCounter): 한 IP에서 하루 300회까지만 숫자를 올린다(학교 와이파이 공유 고려).
   //   넘어도 오류 없이 현재 숫자만 돌려준다. 숫자 조회 자체는 분당 120회.
   visitPerDay: { windowMs: DAY, max: 300 },
@@ -116,6 +118,18 @@ async function consumeDaily(db, name, cap, now = Date.now()) {
   }
 }
 
+/** consumeDaily로 올린 횟수를 하나 되돌린다(0 아래로는 내려가지 않음). 저장소 오류는 무시. */
+async function refundDaily(db, name, now = Date.now()) {
+  try {
+    const ref = db.collection("usage_daily").doc(`${kstDate(now)}_${name}`);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const count = snap.exists ? snap.data().count || 0 : 0;
+      if (count > 0) tx.set(ref, { count: count - 1 }, { merge: true });
+    });
+  } catch (err) { /* 되돌리지 못해도 서비스는 계속 */ }
+}
+
 /** 클라이언트가 보낸 기기 ID(브라우저가 만든 무작위 문자열)를 검증해 저장용 해시로 바꾼다. 형식이 이상하면 null. */
 function deviceHash(id) {
   if (typeof id !== "string" || !/^[A-Za-z0-9_-]{16,64}$/.test(id)) return null;
@@ -133,4 +147,11 @@ async function consumeDeviceQuota(db, name, hash, now = Date.now()) {
   return { ok: true };
 }
 
-module.exports = { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, deviceHash, consumeDeviceQuota };
+/** consumeDeviceQuota로 올린 기기별(시간·하루) 횟수를 되돌린다. quotaAt은 차감했던 시각(시간 구간이 같아야 한다). */
+async function refundDeviceQuota(db, name, hash, quotaAt) {
+  const hourBucket = Math.floor((quotaAt + 9 * 3600 * 1000) / 3600000);
+  await refundDaily(db, `${name}_h${hourBucket}_${hash}`, quotaAt);
+  await refundDaily(db, `${name}_d_${hash}`, quotaAt);
+}
+
+module.exports = { LIMITS, createLimiter, clientIp, blocked, kstDate, consumeDaily, refundDaily, deviceHash, consumeDeviceQuota, refundDeviceQuota };

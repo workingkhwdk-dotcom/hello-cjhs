@@ -172,6 +172,7 @@
         <button class="on" data-filter="all">전체</button>
         <button data-filter="전화">전화</button>
         <button data-filter="방문">방문</button>
+        <button data-filter="설명회">설명회</button>
       </div>
       <div class="am-toolbar-row">
         <input id="am-consult-search" class="am-sort-select" type="search" placeholder="이름·연락처·중학교·내용 검색">
@@ -693,8 +694,8 @@
             <div class="q-body" style="font-size:12.5px;">
               관심분야: ${escapeHtml(topicsText)}<br>
               연락처: ${escapeHtml(d.phone) || '-'}<br>
-              ${visitText ? `희망일시: ${escapeHtml(visitText)}<br>` : ''}
-              문의내용: ${escapeHtml(d.detail) || '-'}
+              ${visitText ? `${d.consultType === '설명회' ? '설명회 일시' : '희망일시'}: ${escapeHtml(visitText)}<br>` : ''}
+              ${d.answers || d.seminarAnswers ? '응답' : '문의내용'}: ${(escapeHtml(d.detail) || '-').replace(/\n/g, '<br>')}
             </div>
             <div style="margin-top:10px; text-align:right;">
               <button class="btn btn-ghost btn-table consult-delete-btn" data-id="${d.id}" data-name="${escapeHtml(d.guardianName) || ''}">삭제</button>

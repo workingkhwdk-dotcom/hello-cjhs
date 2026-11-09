@@ -6,12 +6,12 @@
 //
 // 사용: mountVisitorCounter(el) — el 이 있으면 TODAY/TOTAL 을 그려 준다(메인 화면). el 이 null 이면 집계만 한다(그 밖의 페이지).
 //   page 는 주소로 알아낸다: index.html→index, chatbot.html→chatbot, qna.html→qna, apply.html→apply, curriculum-original.html→curriculum, results.html→results.
-//   mobile.html 은 한 페이지 안에서 탭(home/chat/qna/apply)이 바뀌므로, 처음 열린 탭과 이후에 연 탭을 각각 그 페이지로 센다.
+//   mobile.html 은 한 페이지 안에서 탭(home/chat/qna/apply/fair)이 바뀌므로, 처음 열린 탭과 이후에 연 탭을 각각 그 페이지로 센다.
 const URL_ = "https://asia-northeast3-hello-cjhs.cloudfunctions.net/visitCounter";
 const KEY = "cjhs_visit_day";
 const PAGE_KEY = (page) => `${KEY}:${page}`;
 const FILE_PAGE = { "": "index", "index.html": "index", "chatbot.html": "chatbot", "qna.html": "qna", "apply.html": "apply", "curriculum-original.html": "curriculum", "results.html": "results" };
-const TAB_PAGE = { home: "index", chat: "chatbot", qna: "qna", apply: "apply" }; // mobile.html 의 탭 → 페이지
+const TAB_PAGE = { home: "index", chat: "chatbot", qna: "qna", apply: "apply", fair: "fair" }; // mobile.html 의 탭 → 페이지
 
 const kstDate = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
@@ -59,7 +59,16 @@ function show(el, d) {
   el.hidden = false;
 }
 
+// 화면이 다 뜨고 한가해진 뒤에 센다(첫 화면 그리기·사진 받기와 네트워크·처리 시간을 다투지 않게).
+function afterLoadIdle() {
+  return new Promise((resolve) => {
+    const idle = () => (window.requestIdleCallback ? requestIdleCallback(resolve, { timeout: 2000 }) : setTimeout(resolve, 300));
+    if (document.readyState === "complete") idle(); else addEventListener("load", idle, { once: true });
+  });
+}
+
 export async function mountVisitorCounter(el) {
+  await afterLoadIdle();
   if (isMobileShell()) {
     // 첫 탭은 숫자 표시와 함께, 이후 탭 전환은 집계만(탭을 처음 연 날 한 번).
     // ?section=chat 으로 바로 들어온 경우, 앱 코드가 탭을 바꾸기 전이라도 처음부터 그 탭으로 센다.

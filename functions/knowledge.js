@@ -19,7 +19,7 @@ const DATA_PATH = path.join(__dirname, "knowledge_data.json");
 // 2026-10-04 추가: 출처를 확인해 만든 학교 사실(knowledge_verified.json)과
 // 생활규정 PDF에서 조문 단위로 만든 규정 DB(knowledge_regulation.json)를 같은 검색 대상에 합친다.
 // 두 파일은 knowledge_data.json과 같은 필드(id·title·tags·retrieval_text)를 쓴다.
-const EXTRA_DATA_FILES = ["knowledge_verified.json", "knowledge_regulation.json", "knowledge_reality.json"];
+const EXTRA_DATA_FILES = ["knowledge_verified.json", "knowledge_regulation.json", "knowledge_reality.json", "knowledge_fair.json"];
 const KNOWLEDGE = [
   ...JSON.parse(fs.readFileSync(DATA_PATH, "utf8")),
   ...EXTRA_DATA_FILES.flatMap((f) => JSON.parse(fs.readFileSync(path.join(__dirname, f), "utf8"))),
@@ -39,6 +39,10 @@ const EXCLUDED_MODULE_IDS = new Set([
 ]);
 
 const SAFE_KNOWLEDGE = KNOWLEDGE.filter((r) => !EXCLUDED_MODULE_IDS.has(r.module_id));
+
+// 2026-10-22 추가: 기한이 있는 행사 자료(knowledge_fair.json 등)는 expires_at이 지나면 검색에서 뺀다.
+// 함수 인스턴스는 오래 살아 있으므로 불러올 때가 아니라 검색할 때마다 시각을 확인한다.
+const isLive = (r, now = new Date()) => !r.expires_at || now < new Date(r.expires_at);
 
 // 학생들이 흔히 쓰는 줄임말/속어를 지식 문서에 쓰인 표현으로 정규화한다.
 // 문서(retrieval_text) 쪽은 그대로 두고, 검색 질의에만 적용한다.
@@ -211,12 +215,12 @@ const UNIVERSITY_INTENT_SIGNALS = ["대학", "전형"];
  * @param {string} [contextText] 최근 대화 이력 등 보조 문맥(가중치 낮게 반영)
  * @param {number} [topK]
  */
-function scoreKnowledge(query, contextText = "") {
+function scoreKnowledge(query, contextText = "", now = new Date()) {
   const normalizedQuery = normalizeQuery(query);
   const qGrams = bigrams(normalizedQuery);
   const ctxGrams = bigrams(contextText);
 
-  const scored = SAFE_KNOWLEDGE.map((r) => {
+  const scored = SAFE_KNOWLEDGE.filter((r) => isLive(r, now)).map((r) => {
     const hay = bigrams(
       [r.title, (r.tags || []).join(" "), r.retrieval_text].filter(Boolean).join(" ")
     );
@@ -252,8 +256,8 @@ function scoreKnowledge(query, contextText = "") {
   return scored;
 }
 
-function retrieveKnowledge(query, contextText = "", topK = 6) {
-  const scored = scoreKnowledge(query, contextText);
+function retrieveKnowledge(query, contextText = "", topK = 6, now = new Date()) {
+  const scored = scoreKnowledge(query, contextText, now);
   const MIN_SCORE = 0.12;
   const candidates = scored.filter((s) => s.score >= MIN_SCORE);
   if (!candidates.length) return [];
