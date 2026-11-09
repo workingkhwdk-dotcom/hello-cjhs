@@ -1,3 +1,15 @@
+# 2026-11-09 방문자 집계를 페이지별·사이트 전체로 확장
+
+- **어느 페이지로 들어와도 집계**: 이전에는 메인(index.html·mobile.html)만 셌고 챗봇 등으로 바로 들어온 방문자는 어디에도 기록되지 않았다. 이제 `chatbot.html`, `qna.html`, `apply.html`, `curriculum-original.html`, `results.html`에도 집계 코드를 넣었다(화면에는 아무것도 표시하지 않음). 관리자 화면은 집계하지 않는다.
+- **세는 방식**(`js/visitor-counter.js`): 같은 브라우저는 한국 날짜 기준으로 ① 사이트 전체 하루 1회(어느 페이지로 들어오든), ② 페이지별 하루 1회만 센다. 한 사람이 메인과 챗봇을 모두 열면 사이트 전체는 1, index·chatbot은 각각 1. `mobile.html`은 한 페이지 안에서 탭이 바뀌므로 처음 연 탭과 이후 연 탭(home→index, chat→chatbot, qna, apply)을 각각 그 페이지로 센다(`?section=chat`으로 바로 들어와도 챗봇으로 센다).
+- **저장**(`functions/visit_counter.js`): `site_stats/visitors`에 `total`(사이트 전체 누적)과 `p_index`·`p_chatbot`·`p_qna`·`p_apply`·`p_curriculum`·`p_results`·`p_fair`(페이지별 누적), `site_stats_daily/{YYYY-MM-DD}`에 `count`(그날 사이트 전체)와 같은 `p_*` 필드(그날 페이지별)를 쌓는다. 목록에 없는 페이지 이름은 무시한다. Firestore 규칙 변경 없음. 숫자는 Firebase 콘솔 → Firestore에서 바로 볼 수 있다.
+- **서버 응답**(`visitCounter`): 기존 `today`·`total`에 `pages: { index: {today,total}, chatbot: {...}, ... }`가 추가됐다. 예전 화면(캐시된 옛 버전)이 `newVisit`만 보내도 그대로 동작한다. 같은 IP 하루 300회 한도는 요청당 1회만 소모한다.
+- **주의**: `total`은 이제 챗봇 직행 등을 포함하므로 이전 값과 의미가 조금 다르다(집계를 시작하기 전 챗봇 직행 방문은 복구할 수 없다). 페이지별 숫자는 이 배포 시점부터 쌓인다.
+- 테스트: `npm run test:visit`에 페이지별 케이스 추가.
+
+배포: `firebase deploy --only functions:visitCounter,hosting` (함수를 먼저 배포해야 한다. 배포 전에는 새 필드가 무시될 뿐 화면은 그대로 동작한다.)
+---
+
 # 2026-10-22 (2) 업데이트 후 첫 방문: 이전 캐시 정리 + 가이드 다시 보이기
 
 - `js/update-check.js`: 지난번에 본 빌드 번호(`localStorage.cjhs_last_build`)와 지금 `version.json` 번호가 다르면(= 배포 후 첫 방문, 또는 열어 둔 화면이 새 버전을 감지해 새로고침한 직후)
